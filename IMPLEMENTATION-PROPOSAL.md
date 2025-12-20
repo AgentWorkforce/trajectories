@@ -959,31 +959,268 @@ npm install -D vitest @types/node @types/better-sqlite3
 | Distribution | NPM (core + plugins) | Mix and match |
 | Testing | Vitest | Standard |
 
+### Scenario 5: Solo Dev to Enterprise (Recommended)
+
+This is the recommended path—a progressive architecture that works for a solo developer on day one but scales to enterprise teams without rewrites.
+
+| Choice | Recommendation | Rationale |
+|--------|----------------|-----------|
+| Language | **TypeScript** | Broadest contributor pool, ecosystem alignment |
+| Structure | **Single package → Monorepo** | Start simple, split when needed |
+| Storage | **Pluggable with sensible defaults** | File for solo, SQLite for power users, Postgres for teams |
+| CLI | **Commander + Clack** | Simple, beautiful, scriptable |
+| Distribution | **NPM + optional binaries** | Easy install, optional standalone |
+| Testing | **Vitest** | Fast, modern, great DX |
+
+#### The Progressive Enhancement Model
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     PROGRESSIVE ENHANCEMENT                              │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  SOLO DEV (Day 1)                                                        │
+│  ├── npm install agent-trajectories                                      │
+│  ├── File storage (.trajectories/ in repo)                               │
+│  ├── CLI: start, status, complete, export                                │
+│  └── Zero config, works immediately                                      │
+│                                                                          │
+│  POWER USER (Week 2)                                                     │
+│  ├── Enable SQLite for search                                            │
+│  ├── Claude Code hooks for auto-capture                                  │
+│  ├── Custom export templates                                             │
+│  └── Config file for preferences                                         │
+│                                                                          │
+│  SMALL TEAM (Month 1)                                                    │
+│  ├── Shared SQLite or PostgreSQL                                         │
+│  ├── Multiple agent coordination                                         │
+│  ├── Team patterns and decisions                                         │
+│  └── PR integration                                                      │
+│                                                                          │
+│  ENTERPRISE (Month 3+)                                                   │
+│  ├── PostgreSQL + S3 for scale                                           │
+│  ├── SSO/auth integration                                                │
+│  ├── Audit logging                                                       │
+│  ├── Custom adapters (Jira, ServiceNow, etc.)                            │
+│  └── Dashboard/reporting                                                 │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Why This Works for Both
+
+| Need | Solo Dev Solution | Enterprise Solution |
+|------|-------------------|---------------------|
+| **Quick start** | `npx agent-trajectories init` | Same, then configure |
+| **Storage** | Files in repo (git-friendly) | Postgres + S3 |
+| **Search** | SQLite FTS (local) | Elasticsearch/Postgres FTS |
+| **Auth** | None needed | SSO via config |
+| **Compliance** | Git history IS the audit log | Dedicated audit tables |
+| **Integrations** | Claude Code hooks | + Jira, Linear, custom |
+
+#### Configuration Layers
+
+```typescript
+// No config = sensible defaults for solo dev
+// .trajectoriesrc.json for customization
+
+// Solo dev (zero config)
+{}
+
+// Power user
+{
+  "storage": "sqlite",
+  "hooks": { "claudeCode": true }
+}
+
+// Team
+{
+  "storage": {
+    "type": "postgresql",
+    "url": "$DATABASE_URL"
+  },
+  "team": {
+    "sharedPatterns": true,
+    "requireRetrospective": true
+  }
+}
+
+// Enterprise
+{
+  "storage": {
+    "type": "postgresql",
+    "url": "$DATABASE_URL",
+    "archive": { "type": "s3", "bucket": "trajectories-archive" }
+  },
+  "auth": {
+    "type": "oidc",
+    "issuer": "$AUTH_ISSUER"
+  },
+  "audit": { "enabled": true },
+  "adapters": ["jira", "servicenow"]
+}
+```
+
 ---
 
 ## Open Questions for Discussion
 
-1. **Primary user persona?**
-   - Solo developer with Claude Code?
-   - Team with multiple agents?
-   - Enterprise with compliance needs?
+### 1. Integration Priority
 
-2. **Integration priority?**
-   - Claude Code hooks (capture automatically)?
-   - Standalone CLI (explicit recording)?
-   - MCP server (agent-accessible)?
+How should trajectories be captured? This determines the v1 focus and user experience.
 
-3. **Storage default?**
-   - File-only (simplest, git-friendly)?
+#### Option A: Claude Code Hooks (Automatic Capture)
+
+```typescript
+// .claude/hooks/trajectory.ts
+export default {
+  onSessionStart: async () => {
+    // Auto-detect or prompt for trajectory context
+    return { systemPrompt: `Recording trajectory for: ${activeTask}` };
+  },
+
+  onToolCall: async (tool, args, result) => {
+    // Silently capture tool usage
+    await trajectory.appendEvent({ type: 'tool_call', tool, summary: ... });
+  },
+
+  onSessionEnd: async () => {
+    // Prompt for retrospective
+    return { prompt: 'Please summarize key decisions made...' };
+  }
+};
+```
+
+**User experience:**
+- Install hook once, trajectories captured automatically
+- Agent explicitly prompted for decisions/retrospectives
+- Works passively in background
+
+**Pros:**
+- Lowest friction—just works
+- Captures everything (no forgotten recordings)
+- Integrates with existing Claude Code workflow
+
+**Cons:**
+- Coupled to Claude Code
+- Less control over what's captured
+- May capture noise
+
+**Best for:** Claude Code users who want zero-effort capture
+
+---
+
+#### Option B: Standalone CLI (Explicit Recording)
+
+```bash
+# User explicitly starts/stops trajectories
+$ traj start "Implement auth"
+Trajectory started: traj_abc123
+
+# User works with any tool (Claude Code, Cursor, manual coding)
+
+# User explicitly records decisions
+$ traj decision "Chose JWT over sessions" --reasoning "Stateless scaling"
+
+# User explicitly completes
+$ traj complete
+Please enter retrospective summary: ...
+```
+
+**User experience:**
+- Full control over what's recorded
+- Works with ANY coding tool/workflow
+- Trajectory is a deliberate artifact
+
+**Pros:**
+- Tool-agnostic (works with Cursor, Copilot, manual coding)
+- User controls signal vs noise
+- Simpler implementation (no hook infrastructure)
+
+**Cons:**
+- Friction—user must remember to record
+- Incomplete trajectories likely
+- More typing/commands
+
+**Best for:** Users who want explicit control, multi-tool workflows
+
+---
+
+#### Option C: MCP Server (Agent-Accessible)
+
+```typescript
+// Agent can directly read/write trajectories via MCP
+const server = new MCPServer({
+  tools: {
+    'trajectory.start': { ... },
+    'trajectory.decision': { ... },
+    'trajectory.search': { ... },  // Query past trajectories
+    'trajectory.getSuggestions': { ... }  // "How did we solve X before?"
+  },
+  resources: {
+    'trajectory://active': { ... },
+    'trajectory://patterns': { ... }
+  }
+});
+```
+
+**User experience:**
+- Agent can autonomously record its own work
+- Agent can query past trajectories for context
+- Enables the "Agent Workspace" vision
+
+**Pros:**
+- Agents can learn from past trajectories
+- Self-documenting agents
+- Enables workspace/pattern features
+
+**Cons:**
+- More complex infrastructure
+- Requires MCP-capable client
+- Agent must be taught to use it
+
+**Best for:** Advanced multi-agent setups, workspace features
+
+---
+
+#### Option D: Hybrid (Recommended)
+
+Start with CLI as the foundation, add hooks and MCP as layers:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    INTEGRATION LAYERS                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   MCP Server (Layer 3) ─── Agent-accessible queries/writes      │
+│         │                                                        │
+│         ▼                                                        │
+│   Claude Code Hooks (Layer 2) ─── Automatic capture             │
+│         │                                                        │
+│         ▼                                                        │
+│   CLI Core (Layer 1) ─── Explicit commands, always available    │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**v1 scope options:**
+- **Minimal:** CLI only (4 commands: start, status, complete, export)
+- **Standard:** CLI + Claude Code hooks
+- **Full:** CLI + Hooks + MCP Server
+
+**Recommendation:** Start with CLI + Hooks. MCP in v1.1.
+
+2. **Storage default?**
+   - File-only (simplest, git-friendly)? ← Recommended for v1
    - SQLite (searchable)?
-   - Cloud-ready from day one?
+   - Both available from start?
 
-4. **Retrospective enforcement?**
+3. **Retrospective enforcement?**
    - Required to complete?
-   - Optional but prompted?
+   - Optional but prompted? ← Recommended
    - Fully optional?
 
-5. **Scope of v1?**
+4. **Scope of v1?**
    - Core capture + export only?
    - Include workspace features?
    - Include all adapters?
