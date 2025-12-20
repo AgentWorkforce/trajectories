@@ -119,8 +119,8 @@ describe("CLI Commands", () => {
       const result = await runCommand(["status"]);
 
       // Assert
-      expect(result.output).toContain("Chapters: 1");
-      expect(result.output).toContain("Events: 1");
+      expect(result.output).toMatch(/Chapters:\s+1/);
+      expect(result.output).toMatch(/Events:\s+1/);
     });
   });
 
