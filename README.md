@@ -136,17 +136,67 @@ Each layer is independent and can be used alone, but together they form a comple
 
 Trajectories are stored as `.trajectory.json` files (machine-readable) with auto-generated `.trajectory.md` summaries (human-readable).
 
-## Why This Matters
+## Why Trajectories Matter
 
 > "The trajectory is as valuable as the code."
 
-Just as we version control source code, we should version control the reasoning that produced it. Trajectories transform ephemeral agent work into durable knowledge that:
+As AI agents write more code faster than ever before, a critical gap emerges: **we're shipping code without understanding**. Trajectories close this gap.
 
-- Makes code review meaningful
-- Accelerates bug diagnosis
-- Preserves institutional memory
-- Enables learning from past work
-- Builds trust in agent-generated code
+### The Health of Your Codebase
+
+Without trajectories, agent-generated code becomes a black box:
+
+| Problem | Impact | How Trajectories Help |
+|---------|--------|----------------------|
+| **Silent assumptions** | Bugs hide in undocumented edge cases | Decisions and reasoning are captured explicitly |
+| **Inconsistent patterns** | Each agent reinvents approaches | Past solutions are queryable, patterns emerge |
+| **Lost context** | Nobody knows why code exists | The "why" lives alongside the "what" |
+| **Review theater** | PRs approved without real understanding | Reviewers see the full decision history |
+| **Debugging blind** | Hours spent reverse-engineering intent | Original context is one query away |
+
+### The Flywheel Effect
+
+Trajectories create a virtuous cycle that compounds over time:
+
+```
+More trajectories → More extracted knowledge → Better agent context →
+Better decisions → Better retrospectives → Richer trajectories → ...
+```
+
+Each completed task makes future tasks easier:
+- Agents make fewer mistakes by learning from past gotchas
+- Decisions are more consistent across the codebase
+- Onboarding new agents (or humans) becomes instant
+- Institutional memory persists even as team members change
+
+### Future-Proofing Your Project
+
+As agent usage scales, trajectories become essential infrastructure:
+
+**Today (1-2 agents):**
+- Nice to have for code review
+- Helpful for debugging
+
+**Tomorrow (5-10 agents working in parallel):**
+- Critical for coordination
+- Required for understanding who did what and why
+- Enables agents to learn from each other
+
+**Long-term (agents as primary contributors):**
+- The authoritative record of how the system evolved
+- Training data for project-specific agent improvements
+- Audit trail for compliance and security review
+
+### Trust Through Transparency
+
+Agent-generated code faces a trust problem. Developers hesitate to ship code they don't understand. Trajectories solve this by making agent reasoning transparent:
+
+- **Confidence scores** tell you when to scrutinize more carefully
+- **Decision logs** show trade-offs were considered
+- **Retrospectives** surface known limitations and risks
+- **Challenge documentation** reveals what was hard (and might break)
+
+The result: teams can ship agent code with the same confidence as human-written code—because they understand it just as well.
 
 ## Status
 
