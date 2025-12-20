@@ -6,18 +6,340 @@ This document outlines implementation options, trade-offs, and recommendations f
 
 ## Table of Contents
 
-1. [Language & Runtime](#language--runtime)
-2. [Code Structure](#code-structure)
-3. [Storage Layer](#storage-layer)
-4. [CLI Framework](#cli-framework)
-5. [Integration Architecture](#integration-architecture)
-6. [Distribution & Packaging](#distribution--packaging)
-7. [Testing Strategy](#testing-strategy)
-8. [Recommendations](#recommendations)
+1. [User Workflow](#user-workflow)
+2. [Language Recommendation](#language-recommendation)
+3. [Language & Runtime Options](#language--runtime-options)
+4. [Code Structure](#code-structure)
+5. [Storage Layer](#storage-layer)
+6. [CLI Framework](#cli-framework)
+7. [Integration Architecture](#integration-architecture)
+8. [Distribution & Packaging](#distribution--packaging)
+9. [Testing Strategy](#testing-strategy)
+10. [Recommendations](#recommendations)
 
 ---
 
-## Language & Runtime
+## User Workflow
+
+What does using agent-trajectories look like day-to-day?
+
+### Workflow 1: Solo Developer with Claude Code
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     SOLO DEV WORKFLOW                                    │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────┐
+  │ 1. START     │  User begins work on a feature
+  └──────┬───────┘
+         │
+         ▼
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  $ traj start "Add user authentication"                              │
+  │  ✓ Trajectory started: traj_a1b2c3                                   │
+  │                                                                       │
+  │  OR (with Claude Code hooks installed):                               │
+  │  Claude detects new work → auto-prompts "What are you working on?"   │
+  └──────────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+  ┌──────────────┐
+  │ 2. WORK      │  User works with Claude Code (or any tool)
+  └──────┬───────┘
+         │
+         ▼
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  Claude Code session:                                                 │
+  │  > "Implement JWT auth with refresh tokens"                          │
+  │                                                                       │
+  │  [Hook auto-captures: tool calls, file changes, timestamps]          │
+  │                                                                       │
+  │  Claude outputs (explicitly or prompted):                             │
+  │  [[TRAJECTORY:decision]]                                              │
+  │  { "question": "Auth strategy",                                       │
+  │    "chosen": "JWT with refresh tokens",                               │
+  │    "alternatives": ["sessions", "OAuth only"],                        │
+  │    "reasoning": "Stateless for horizontal scaling" }                  │
+  │  [[/TRAJECTORY]]                                                      │
+  └──────────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+  ┌──────────────┐
+  │ 3. COMPLETE  │  User finishes the task
+  └──────┬───────┘
+         │
+         ▼
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  $ traj complete                                                      │
+  │                                                                       │
+  │  ┌─ Retrospective ──────────────────────────────────────────────┐    │
+  │  │ Summary: Implemented JWT auth with refresh token rotation     │    │
+  │  │ Challenges: Existing UserContext types were wrong             │    │
+  │  │ Confidence: 0.85                                              │    │
+  │  │ Would do differently: Check types earlier                     │    │
+  │  └───────────────────────────────────────────────────────────────┘    │
+  │                                                                       │
+  │  ✓ Trajectory completed                                               │
+  │  ✓ Exported to .trajectories/traj_a1b2c3.json                        │
+  │  ✓ Summary written to .trajectories/traj_a1b2c3.md                   │
+  └──────────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+  ┌──────────────┐
+  │ 4. USE       │  Later: review, debug, learn
+  └──────┬───────┘
+         │
+         ▼
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  # In PR description (auto-generated):                                │
+  │  ## Trajectory Summary                                                │
+  │  - **Approach:** JWT with refresh tokens for stateless scaling        │
+  │  - **Key decisions:** 3 recorded                                      │
+  │  - **Confidence:** 85%                                                │
+  │  - [Full trajectory](./trajectories/traj_a1b2c3.md)                  │
+  │                                                                       │
+  │  # Months later, debugging:                                           │
+  │  $ traj search "refresh token"                                        │
+  │  Found 1 trajectory:                                                  │
+  │    traj_a1b2c3: "Add user authentication" (2024-01-15)               │
+  │                                                                       │
+  │  $ traj show traj_a1b2c3 --decisions                                  │
+  │  Decision 1: JWT over sessions (stateless scaling)                    │
+  │  Decision 2: HttpOnly cookies (XSS protection)                        │
+  │  Decision 3: 15min access / 7day refresh (security balance)          │
+  └──────────────────────────────────────────────────────────────────────┘
+```
+
+### Workflow 2: Team with Multiple Agents
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     TEAM WORKFLOW                                        │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  AGENT ALICE                           AGENT BOB
+  ────────────                          ─────────
+       │                                     │
+       ▼                                     │
+  ┌────────────────┐                         │
+  │ traj start     │                         │
+  │ "Auth module"  │                         │
+  └───────┬────────┘                         │
+          │                                  │
+          ▼                                  │
+  ┌────────────────┐                         │
+  │ Working...     │                         │
+  │ Records:       │                         │
+  │ - decisions    │                         │
+  │ - tool calls   │                         │
+  └───────┬────────┘                         │
+          │                                  │
+          │  ┌───────────────────────────┐   │
+          └─▶│ @Bob: Can you review the  │───┘
+             │ token rotation logic?     │
+             └───────────────────────────┘
+                           │
+                           ▼
+                    ┌────────────────┐
+                    │ Bob joins      │
+                    │ trajectory     │
+                    │ (new chapter)  │
+                    └───────┬────────┘
+                            │
+                            ▼
+                    ┌────────────────┐
+                    │ Reviews, adds  │
+                    │ own decisions  │
+                    └───────┬────────┘
+                            │
+       ┌────────────────────┘
+       ▼
+  ┌────────────────┐
+  │ traj complete  │
+  │                │
+  │ Trajectory:    │
+  │ - 2 agents     │
+  │ - 3 chapters   │
+  │ - 5 decisions  │
+  └────────────────┘
+```
+
+### Workflow 3: Learning from Past Trajectories
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     LEARNING WORKFLOW                                    │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  NEW TASK: "Add rate limiting to API"
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  Agent (or human) queries workspace:                                 │
+  │                                                                      │
+  │  $ traj suggest "rate limiting"                                      │
+  │                                                                      │
+  │  ┌─ Relevant Trajectories ─────────────────────────────────────────┐│
+  │  │ traj_x1: "Auth rate limiting" (90% match)                       ││
+  │  │   └─ Gotcha: Redis connection pooling was tricky                ││
+  │  │ traj_y2: "API throttling" (75% match)                           ││
+  │  └─────────────────────────────────────────────────────────────────┘│
+  │                                                                      │
+  │  ┌─ Related Decisions ─────────────────────────────────────────────┐│
+  │  │ "Use Redis for distributed state" (from traj_x1)                ││
+  │  │ "Sliding window over fixed window" (from traj_y2)               ││
+  │  └─────────────────────────────────────────────────────────────────┘│
+  │                                                                      │
+  │  ┌─ Suggested Patterns ────────────────────────────────────────────┐│
+  │  │ middleware-pattern.md: "How we add cross-cutting concerns"      ││
+  │  └─────────────────────────────────────────────────────────────────┘│
+  └─────────────────────────────────────────────────────────────────────┘
+
+  Agent now has context BEFORE writing a single line of code.
+```
+
+### CLI Command Summary
+
+```bash
+# Lifecycle
+traj start "Task description"       # Start a new trajectory
+traj status                         # Show active trajectory
+traj complete                       # Complete with retrospective
+traj abandon                        # Abandon without completing
+
+# Recording
+traj decision "What" --reasoning "Why" --alternatives "A,B,C"
+traj chapter "New phase"            # Start a new chapter
+traj note "Observation"             # Add a note
+
+# Querying
+traj list                           # List recent trajectories
+traj show <id>                      # Show trajectory details
+traj search "query"                 # Full-text search
+traj suggest "task description"     # Get suggestions for new work
+
+# Export
+traj export <id> --format md        # Export as markdown
+traj export <id> --format json      # Export as JSON
+traj export <id> --format timeline  # Export as timeline view
+```
+
+---
+
+## Language Recommendation
+
+**Recommendation: TypeScript**
+
+After weighing all factors, TypeScript is the clear choice for agent-trajectories:
+
+### Why TypeScript Wins
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     WHY TYPESCRIPT                                       │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  1. ECOSYSTEM ALIGNMENT                                                  │
+│     ├── Claude Code: TypeScript                                          │
+│     ├── agent-relay: TypeScript                                          │
+│     ├── claude-mem: TypeScript                                           │
+│     ├── Most MCP servers: TypeScript                                     │
+│     └── One language across the entire stack                             │
+│                                                                          │
+│  2. CONTRIBUTOR POOL                                                     │
+│     ├── TypeScript: ~15M developers                                      │
+│     ├── Rust: ~3M developers                                             │
+│     ├── Go: ~4M developers                                               │
+│     └── Lower barrier = more contributions                               │
+│                                                                          │
+│  3. JSON-NATIVE                                                          │
+│     ├── Trajectories ARE JSON                                            │
+│     ├── No serialization friction                                        │
+│     ├── Type inference from schemas                                      │
+│     └── Zod for runtime validation                                       │
+│                                                                          │
+│  4. DEVELOPMENT VELOCITY                                                 │
+│     ├── Faster iteration                                                 │
+│     ├── Hot reload during development                                    │
+│     ├── Rich IDE support                                                 │
+│     └── Ship v1 faster                                                   │
+│                                                                          │
+│  5. INTEGRATION SIMPLICITY                                               │
+│     ├── Claude Code hooks: direct integration                            │
+│     ├── MCP server: same runtime                                         │
+│     ├── agent-relay: import directly                                     │
+│     └── No FFI boundaries                                                │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Addressing TypeScript's Weaknesses
+
+| Concern | Mitigation |
+|---------|------------|
+| **Startup time (~150ms)** | Acceptable for trajectory operations (not hot path). For CI/scripting, batch commands. Future: Bun binary. |
+| **Dependency bloat** | Strict dependency policy. Core has <10 deps. Use `bundleDependencies`. |
+| **Runtime type safety** | Zod for all external input. Schema validation on read/write. |
+| **Distribution** | NPM primary. Optional: pkg/bun binaries for standalone. |
+
+### The TypeScript Stack
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     RECOMMENDED STACK                                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  RUNTIME         Node.js 20+ (LTS)                                       │
+│                  └── Future: Bun for faster startup                      │
+│                                                                          │
+│  LANGUAGE        TypeScript 5.3+                                         │
+│                  └── Strict mode, ESM-only                               │
+│                                                                          │
+│  VALIDATION      Zod                                                     │
+│                  └── Runtime types from schema                           │
+│                                                                          │
+│  CLI             Commander + Clack                                       │
+│                  └── Simple parsing + beautiful prompts                  │
+│                                                                          │
+│  STORAGE         better-sqlite3 (default)                                │
+│                  └── File fallback for zero-dep mode                     │
+│                                                                          │
+│  TESTING         Vitest                                                  │
+│                  └── Fast, TypeScript-native                             │
+│                                                                          │
+│  BUILD           tsup                                                    │
+│                  └── Zero-config bundling                                │
+│                                                                          │
+│  FORMATTING      Biome                                                   │
+│                  └── Fast, replaces ESLint + Prettier                    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Minimal Dependencies
+
+```json
+{
+  "dependencies": {
+    "commander": "^12.0.0",        // CLI parsing
+    "@clack/prompts": "^0.7.0",    // Interactive prompts
+    "better-sqlite3": "^11.0.0",   // Storage (optional)
+    "zod": "^3.23.0"               // Validation
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^2.0.0",
+    "tsup": "^8.0.0",
+    "@biomejs/biome": "^1.8.0"
+  }
+}
+```
+
+**Total production deps: 4** (and SQLite is optional)
+
+---
+
+## Language & Runtime Options
 
 ### Option A: TypeScript + Node.js
 
