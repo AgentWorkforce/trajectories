@@ -5,10 +5,10 @@
  * Active trajectories go in active/, completed in completed/YYYY-MM/.
  */
 
-import { mkdir, readdir, readFile, writeFile, unlink, rm } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile, unlink } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { join, dirname } from "node:path";
-import type { StorageAdapter, StorageConfig } from "./interface.js";
+import { join } from "node:path";
+import type { StorageAdapter } from "./interface.js";
 import type {
   Trajectory,
   TrajectorySummary,

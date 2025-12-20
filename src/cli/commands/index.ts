@@ -16,6 +16,8 @@ import { registerListCommand } from "./list.js";
 import { registerShowCommand } from "./show.js";
 import { registerSearchCommand } from "./search.js";
 import { registerExportCommand } from "./export.js";
+import { registerViewCommand } from "./view.js";
+import { registerWorkspaceCommand } from "./workspace.js";
 
 /**
  * Register all CLI commands
@@ -32,4 +34,6 @@ export function registerCommands(program: Command): void {
   registerShowCommand(program);
   registerSearchCommand(program);
   registerExportCommand(program);
+  registerViewCommand(program);
+  registerWorkspaceCommand(program);
 }

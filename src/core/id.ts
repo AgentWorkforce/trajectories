@@ -13,7 +13,7 @@ const ID_LENGTH = 12;
  * @param length - Length of the ID (default: 12)
  * @returns Random alphanumeric string
  */
-function generateRandomId(length: number = ID_LENGTH): string {
+export function generateRandomId(length: number = ID_LENGTH): string {
   let id = "";
   const randomValues = new Uint8Array(length);
   crypto.getRandomValues(randomValues);
