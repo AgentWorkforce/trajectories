@@ -18,6 +18,7 @@ import { registerSearchCommand } from "./search.js";
 import { registerExportCommand } from "./export.js";
 import { registerViewCommand } from "./view.js";
 import { registerWorkspaceCommand } from "./workspace.js";
+import { registerContextCommand } from "./context.js";
 
 /**
  * Register all CLI commands
@@ -36,4 +37,5 @@ export function registerCommands(program: Command): void {
   registerExportCommand(program);
   registerViewCommand(program);
   registerWorkspaceCommand(program);
+  registerContextCommand(program);
 }
