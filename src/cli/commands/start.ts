@@ -1,5 +1,5 @@
 /**
- * traj start command
+ * trail start command
  */
 
 import type { Command } from "commander";
@@ -22,7 +22,7 @@ export function registerStartCommand(program: Command): void {
       const active = await storage.getActive();
       if (active) {
         console.error(`Error: Trajectory already active: ${active.id}`);
-        console.error(`Complete or abandon it first with: traj complete or traj abandon`);
+        console.error(`Complete or abandon it first with: trail complete or trail abandon`);
         throw new Error("Trajectory already active");
       }
 

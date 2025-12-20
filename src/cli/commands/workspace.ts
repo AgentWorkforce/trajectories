@@ -1,5 +1,5 @@
 /**
- * traj workspace commands - manage the knowledge workspace
+ * trail workspace commands - manage the knowledge workspace
  */
 
 import type { Command } from "commander";

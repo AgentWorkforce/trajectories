@@ -185,7 +185,7 @@ describe("Web Generator", () => {
       const html = generateIndexHtml([]);
 
       expect(html).toContain("No trajectories yet");
-      expect(html).toContain("traj start");
+      expect(html).toContain("trail start");
     });
 
     it("should show total count", () => {

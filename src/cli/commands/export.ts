@@ -1,5 +1,5 @@
 /**
- * traj export command
+ * trail export command
  */
 
 import type { Command } from "commander";

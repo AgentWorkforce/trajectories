@@ -18,7 +18,7 @@ describe("CLI Commands", () => {
   let originalCwd: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), "traj-cli-test-"));
+    tempDir = await mkdtemp(join(tmpdir(), "trail-cli-test-"));
     originalCwd = process.cwd();
     process.chdir(tempDir);
   });
@@ -28,7 +28,7 @@ describe("CLI Commands", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  describe("traj start", () => {
+  describe("trail start", () => {
     it("should create a new trajectory", async () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");
@@ -81,7 +81,7 @@ describe("CLI Commands", () => {
     });
   });
 
-  describe("traj status", () => {
+  describe("trail status", () => {
     it("should show active trajectory details", async () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");
@@ -124,7 +124,7 @@ describe("CLI Commands", () => {
     });
   });
 
-  describe("traj decision", () => {
+  describe("trail decision", () => {
     it("should record a decision in the active trajectory", async () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");
@@ -176,7 +176,7 @@ describe("CLI Commands", () => {
     });
   });
 
-  describe("traj chapter", () => {
+  describe("trail chapter", () => {
     it("should start a new chapter", async () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");
@@ -214,7 +214,7 @@ describe("CLI Commands", () => {
     });
   });
 
-  describe("traj note", () => {
+  describe("trail note", () => {
     it("should add a note event", async () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");
@@ -229,7 +229,7 @@ describe("CLI Commands", () => {
     });
   });
 
-  describe("traj complete", () => {
+  describe("trail complete", () => {
     it("should complete the trajectory with retrospective", async () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");
@@ -274,7 +274,7 @@ describe("CLI Commands", () => {
     });
   });
 
-  describe("traj abandon", () => {
+  describe("trail abandon", () => {
     it("should abandon the active trajectory", async () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");
@@ -289,7 +289,7 @@ describe("CLI Commands", () => {
     });
   });
 
-  describe("traj list", () => {
+  describe("trail list", () => {
     it("should list trajectories", async () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");
@@ -356,7 +356,7 @@ describe("CLI Commands", () => {
     });
   });
 
-  describe("traj show", () => {
+  describe("trail show", () => {
     it("should show trajectory details", async () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");
@@ -409,7 +409,7 @@ describe("CLI Commands", () => {
     });
   });
 
-  describe("traj search", () => {
+  describe("trail search", () => {
     it("should search trajectories by text", async () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");
@@ -440,7 +440,7 @@ describe("CLI Commands", () => {
     });
   });
 
-  describe("traj export", () => {
+  describe("trail export", () => {
     it("should export trajectory as markdown", async () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");

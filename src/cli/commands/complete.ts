@@ -1,5 +1,5 @@
 /**
- * traj complete command
+ * trail complete command
  */
 
 import type { Command } from "commander";
@@ -20,7 +20,7 @@ export function registerCompleteCommand(program: Command): void {
       const active = await storage.getActive();
       if (!active) {
         console.error("Error: No active trajectory");
-        console.error("Start one with: traj start \"Task description\"");
+        console.error("Start one with: trail start \"Task description\"");
         throw new Error("No active trajectory");
       }
 

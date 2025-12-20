@@ -58,19 +58,33 @@ Over time, trajectories become a searchable knowledge base:
 
 ```bash
 # Start tracking a task
-agent-relay trajectory start "Implement auth module"
+trail start "Implement auth module"
 
-# View current trajectory
-agent-relay trajectory status
+# View current status
+trail status
 
-# Add a decision point
-agent-relay trajectory decision "Chose JWT over sessions" \
+# Record a decision
+trail decision "Chose JWT over sessions" \
   --reasoning "Stateless scaling requirements"
 
-# Complete and export
-agent-relay trajectory complete
-agent-relay trajectory export --format markdown
+# Complete with retrospective
+trail complete --summary "Added JWT auth" --confidence 0.85
+
+# View in browser
+trail view
+
+# Export for documentation
+trail export --format markdown
 ```
+
+## Why "Trail"?
+
+> **Trajectory** = the complete path an agent takes through a task
+> **Trail** = what's left behind for others to follow
+
+You don't see the whole trajectory in real-time, but you can always follow the trail.
+
+The CLI is called `trail` because that's what you're doing—leaving a trail of breadcrumbs through your work. Future agents and humans can follow this trail to understand not just *what* was built, but *why* it was built that way.
 
 ## Agent Workspace
 

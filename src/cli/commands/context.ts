@@ -1,5 +1,5 @@
 /**
- * traj context command - Generate context summary for AI tools
+ * trail context command - Generate context summary for AI tools
  */
 
 import type { Command } from "commander";
@@ -128,6 +128,6 @@ export function registerContextCommand(program: Command): void {
       }
 
       console.log("\n" + "─".repeat(50));
-      console.log("Use: traj context --format markdown > CLAUDE.md");
+      console.log("Use: trail context --format markdown > CLAUDE.md");
     });
 }

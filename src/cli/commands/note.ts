@@ -1,5 +1,5 @@
 /**
- * traj note command
+ * trail note command
  */
 
 import type { Command } from "commander";

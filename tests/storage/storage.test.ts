@@ -17,7 +17,7 @@ describe("FileStorage", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), "traj-test-"));
+    tempDir = await mkdtemp(join(tmpdir(), "trail-test-"));
   });
 
   afterEach(async () => {

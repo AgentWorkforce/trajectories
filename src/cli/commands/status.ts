@@ -1,5 +1,5 @@
 /**
- * traj status command
+ * trail status command
  */
 
 import type { Command } from "commander";
@@ -17,7 +17,7 @@ export function registerStatusCommand(program: Command): void {
 
       if (!active) {
         console.log("No active trajectory");
-        console.log("Start one with: traj start \"Task description\"");
+        console.log("Start one with: trail start \"Task description\"");
         return;
       }
 

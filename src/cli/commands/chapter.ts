@@ -1,5 +1,5 @@
 /**
- * traj chapter command
+ * trail chapter command
  */
 
 import type { Command } from "commander";

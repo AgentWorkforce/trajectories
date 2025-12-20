@@ -1,5 +1,5 @@
 /**
- * traj search command
+ * trail search command
  */
 
 import type { Command } from "commander";

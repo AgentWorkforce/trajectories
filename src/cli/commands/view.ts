@@ -1,5 +1,5 @@
 /**
- * traj view command - Open trajectory in browser
+ * trail view command - Open trajectory in browser
  */
 
 import type { Command } from "commander";
@@ -32,7 +32,7 @@ export function registerViewCommand(program: Command): void {
 
         if (all.length === 0) {
           console.log("No trajectories to view");
-          console.log('Start one with: traj start "Task description"');
+          console.log('Start one with: trail start "Task description"');
           return;
         }
 
@@ -69,7 +69,7 @@ export function registerViewCommand(program: Command): void {
         trajectory = await storage.getActive();
         if (!trajectory) {
           console.log("No active trajectory");
-          console.log("Use: traj view <id> or traj view --all");
+          console.log("Use: trail view <id> or trail view --all");
           return;
         }
       }

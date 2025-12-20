@@ -341,7 +341,7 @@ export function generateIndexHtml(trajectories: Trajectory[]): string {
   ${renderGroup("Completed", completed)}
   ${renderGroup("Abandoned", abandoned)}
 
-  ${trajectories.length === 0 ? '<p class="empty">No trajectories yet. Start one with <code>traj start "Task name"</code></p>' : ""}
+  ${trajectories.length === 0 ? '<p class="empty">No trajectories yet. Start one with <code>trail start "Task name"</code></p>' : ""}
 </body>
 </html>`;
 }
