@@ -63,18 +63,20 @@ trail start "Implement auth module"
 # View current status
 trail status
 
-# Record a decision
+# Record a decision (reasoning optional for minor decisions)
 trail decision "Chose JWT over sessions" \
   --reasoning "Stateless scaling requirements"
 
 # Complete with retrospective
 trail complete --summary "Added JWT auth" --confidence 0.85
 
-# View in browser
-trail view
+# List all trajectories (with optional search)
+trail list
+trail list --search "auth"
 
-# Export for documentation
-trail export --format markdown
+# Export for documentation (markdown, json, timeline, or html)
+trail export traj_abc123 --format markdown
+trail export --format html --open  # Opens in browser
 ```
 
 ## Why "Trail"?
@@ -113,14 +115,14 @@ This can be invoked programmatically by AI coding tools, or agents can learn to 
 Humans use trail commands to **understand** and **review** agent work:
 
 ```bash
-# View the active trajectory in browser
-trail view
+# List and search past work
+trail list --search "authentication"
 
-# Search past work
-trail search "authentication"
-
-# See what decisions were made
+# See trajectory details and decisions
 trail show traj_abc123 --decisions
+
+# View in browser
+trail export traj_abc123 --format html --open
 
 # Export for code review
 trail export traj_abc123 --format markdown

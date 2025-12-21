@@ -10,7 +10,7 @@ export function registerDecisionCommand(program: Command): void {
   program
     .command("decision <choice>")
     .description("Record a decision")
-    .requiredOption("-r, --reasoning <text>", "Why this choice was made")
+    .option("-r, --reasoning <text>", "Why this choice was made (optional for minor decisions)")
     .option("-a, --alternatives <items>", "Comma-separated alternatives considered")
     .action(async (choice: string, options) => {
       const storage = new FileStorage();
@@ -27,17 +27,21 @@ export function registerDecisionCommand(program: Command): void {
         ? options.alternatives.split(",").map((s: string) => s.trim())
         : [];
 
+      const reasoning = options.reasoning || "";
+
       const updated = addDecision(active, {
         question: choice,
         chosen: choice,
         alternatives,
-        reasoning: options.reasoning,
+        reasoning,
       });
 
       await storage.save(updated);
 
       console.log(`✓ Decision recorded: ${choice}`);
-      console.log(`  Reasoning: ${options.reasoning}`);
+      if (reasoning) {
+        console.log(`  Reasoning: ${reasoning}`);
+      }
       if (alternatives.length > 0) {
         console.log(`  Alternatives: ${alternatives.join(", ")}`);
       }

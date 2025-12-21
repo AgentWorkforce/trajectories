@@ -112,13 +112,13 @@ describe("CLI Commands", () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");
       await runCommand(["start", "Test task"]);
-      await runCommand(["chapter", "Phase 1"]);
       await runCommand(["decision", "Choice A", "--reasoning", "Because"]);
 
       // Act
       const result = await runCommand(["status"]);
 
       // Assert
+      // Start command creates initial chapter, decision adds an event
       expect(result.output).toMatch(/Chapters:\s+1/);
       expect(result.output).toMatch(/Events:\s+1/);
     });
@@ -162,70 +162,17 @@ describe("CLI Commands", () => {
       expect(result.error).toContain("No active trajectory");
     });
 
-    it("should require reasoning", async () => {
+    it("should allow decisions without reasoning (optional)", async () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");
       await runCommand(["start", "Test task"]);
 
-      // Act
-      const result = await runCommand(["decision", "Choice"]);
-
-      // Assert
-      expect(result.success).toBe(false);
-      expect(result.error).toContain("reasoning");
-    });
-  });
-
-  describe("trail chapter", () => {
-    it("should start a new chapter", async () => {
-      // Arrange
-      const { runCommand } = await import("../../src/cli/runner.js");
-      await runCommand(["start", "Test task"]);
-
-      // Act
-      const result = await runCommand(["chapter", "Implementation phase"]);
+      // Act - reasoning is now optional for minor decisions
+      const result = await runCommand(["decision", "Minor choice"]);
 
       // Assert
       expect(result.success).toBe(true);
-      expect(result.output).toContain("Chapter started");
-    });
-
-    it("should accept optional agent name", async () => {
-      // Arrange
-      const { runCommand } = await import("../../src/cli/runner.js");
-      await runCommand(["start", "Test task"]);
-
-      // Act
-      const result = await runCommand([
-        "chapter",
-        "Review",
-        "--agent",
-        "Bob",
-      ]);
-
-      // Assert
-      expect(result.success).toBe(true);
-
-      const { FileStorage } = await import("../../src/storage/file.js");
-      const storage = new FileStorage(tempDir);
-      await storage.initialize();
-      const active = await storage.getActive();
-      expect(active?.chapters[0].agentName).toBe("Bob");
-    });
-  });
-
-  describe("trail note", () => {
-    it("should add a note event", async () => {
-      // Arrange
-      const { runCommand } = await import("../../src/cli/runner.js");
-      await runCommand(["start", "Test task"]);
-
-      // Act
-      const result = await runCommand(["note", "Found an interesting pattern"]);
-
-      // Assert
-      expect(result.success).toBe(true);
-      expect(result.output).toContain("Note added");
+      expect(result.output).toContain("Decision recorded");
     });
   });
 
@@ -354,6 +301,35 @@ describe("CLI Commands", () => {
       const lines = result.output.split("\n").filter((l) => l.includes("Task"));
       expect(lines.length).toBeLessThanOrEqual(3);
     });
+
+    it("should search trajectories with --search flag", async () => {
+      // Arrange
+      const { runCommand } = await import("../../src/cli/runner.js");
+      await runCommand(["start", "Implement authentication"]);
+      await runCommand([
+        "complete",
+        "--summary",
+        "Added JWT auth",
+        "--confidence",
+        "0.9",
+      ]);
+      await runCommand(["start", "Fix database bug"]);
+      await runCommand([
+        "complete",
+        "--summary",
+        "Fixed query",
+        "--confidence",
+        "0.9",
+      ]);
+
+      // Act
+      const result = await runCommand(["list", "--search", "auth"]);
+
+      // Assert
+      expect(result.success).toBe(true);
+      expect(result.output).toContain("authentication");
+      expect(result.output).not.toContain("database");
+    });
   });
 
   describe("trail show", () => {
@@ -406,37 +382,6 @@ describe("CLI Commands", () => {
       // Assert
       expect(result.success).toBe(false);
       expect(result.error).toContain("not found");
-    });
-  });
-
-  describe("trail search", () => {
-    it("should search trajectories by text", async () => {
-      // Arrange
-      const { runCommand } = await import("../../src/cli/runner.js");
-      await runCommand(["start", "Implement authentication"]);
-      await runCommand([
-        "complete",
-        "--summary",
-        "Added JWT auth",
-        "--confidence",
-        "0.9",
-      ]);
-      await runCommand(["start", "Fix database bug"]);
-      await runCommand([
-        "complete",
-        "--summary",
-        "Fixed query",
-        "--confidence",
-        "0.9",
-      ]);
-
-      // Act
-      const result = await runCommand(["search", "auth"]);
-
-      // Assert
-      expect(result.success).toBe(true);
-      expect(result.output).toContain("authentication");
-      expect(result.output).not.toContain("database");
     });
   });
 

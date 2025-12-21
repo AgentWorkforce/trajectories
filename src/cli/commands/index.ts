@@ -2,6 +2,16 @@
  * CLI Command Registration
  *
  * Registers all commands with the program.
+ *
+ * Core commands (8 total):
+ * - start: Begin tracking a new task
+ * - status: Show current trajectory state
+ * - decision: Record a decision point
+ * - complete: Finish with retrospective
+ * - abandon: Stop without completing
+ * - list: Browse trajectories (with --search)
+ * - show: View trajectory details
+ * - export: Output in various formats (with --open)
  */
 
 import type { Command } from "commander";
@@ -10,15 +20,9 @@ import { registerStatusCommand } from "./status.js";
 import { registerCompleteCommand } from "./complete.js";
 import { registerAbandonCommand } from "./abandon.js";
 import { registerDecisionCommand } from "./decision.js";
-import { registerChapterCommand } from "./chapter.js";
-import { registerNoteCommand } from "./note.js";
 import { registerListCommand } from "./list.js";
 import { registerShowCommand } from "./show.js";
-import { registerSearchCommand } from "./search.js";
 import { registerExportCommand } from "./export.js";
-import { registerViewCommand } from "./view.js";
-import { registerWorkspaceCommand } from "./workspace.js";
-import { registerContextCommand } from "./context.js";
 
 /**
  * Register all CLI commands
@@ -29,13 +33,7 @@ export function registerCommands(program: Command): void {
   registerCompleteCommand(program);
   registerAbandonCommand(program);
   registerDecisionCommand(program);
-  registerChapterCommand(program);
-  registerNoteCommand(program);
   registerListCommand(program);
   registerShowCommand(program);
-  registerSearchCommand(program);
   registerExportCommand(program);
-  registerViewCommand(program);
-  registerWorkspaceCommand(program);
-  registerContextCommand(program);
 }
