@@ -86,6 +86,58 @@ You don't see the whole trajectory in real-time, but you can always follow the t
 
 The CLI is called `trail` because that's what you're doing—leaving a trail of breadcrumbs through your work. Future agents and humans can follow this trail to understand not just *what* was built, but *why* it was built that way.
 
+## Who Uses Trail?
+
+**Both agents and humans—but differently.**
+
+### Agents: Write the Trail
+
+Agents use trail commands to **record** their work as they go:
+
+```bash
+# Agent starts work on a task
+trail start "Add rate limiting to API"
+
+# Agent records key decisions as it works
+trail decision "Token bucket algorithm" \
+  --reasoning "Better burst handling than fixed window"
+
+# Agent completes with reflection
+trail complete --summary "Added rate limiting" --confidence 0.9
+```
+
+This can be invoked programmatically by AI coding tools, or agents can learn to call `trail` as part of their workflow.
+
+### Humans: Read the Trail
+
+Humans use trail commands to **understand** and **review** agent work:
+
+```bash
+# View the active trajectory in browser
+trail view
+
+# Search past work
+trail search "authentication"
+
+# See what decisions were made
+trail show traj_abc123 --decisions
+
+# Export for code review
+trail export traj_abc123 --format markdown
+```
+
+### The Handoff
+
+The trail bridges the gap between agent work and human understanding:
+
+```
+Agent works → Records decisions → Completes trajectory
+                                        ↓
+Human reviews → Follows the trail → Understands the "why"
+```
+
+Without the trail, humans see only the code. With it, they see the reasoning.
+
 ## Agent Workspace
 
 Trajectories power a broader vision: **a knowledge workspace for agents**—like Notion, but for AI.

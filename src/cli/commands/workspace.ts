@@ -92,10 +92,19 @@ export function registerWorkspaceCommand(program: Command): void {
       for (const chapter of trajectory.chapters) {
         for (const event of chapter.events) {
           if (event.type === "decision") {
+            const metadata = event.metadata;
+            const reasoning =
+              typeof metadata?.reasoning === "string" ? metadata.reasoning : "";
+            const rawAlternatives = metadata?.alternatives;
+            const alternatives =
+              Array.isArray(rawAlternatives) && rawAlternatives.every((alt) => typeof alt === "string")
+                ? (rawAlternatives as string[])
+                : undefined;
+
             decisions.push({
               content: event.content,
-              reasoning: (event.metadata?.reasoning as string) || "",
-              alternatives: event.metadata?.alternatives as string[] | undefined,
+              reasoning,
+              alternatives,
             });
           }
         }

@@ -136,8 +136,11 @@ export class FileStorage implements StorageAdapter {
           return this.readTrajectoryFile(filePath);
         }
       }
-    } catch {
-      // Directory doesn't exist
+    } catch (error) {
+      // ENOENT means directory doesn't exist yet - this is expected
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        console.error("Error searching completed trajectories:", error);
+      }
     }
 
     return null;
@@ -173,7 +176,13 @@ export class FileStorage implements StorageAdapter {
       }
 
       return mostRecent;
-    } catch {
+    } catch (error) {
+      // ENOENT means directory doesn't exist yet - this is expected
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return null;
+      }
+      // Log unexpected errors for debugging
+      console.error("Error reading active trajectories:", error);
       return null;
     }
   }
@@ -350,7 +359,11 @@ export class FileStorage implements StorageAdapter {
     try {
       const content = await readFile(this.indexPath, "utf-8");
       return JSON.parse(content);
-    } catch {
+    } catch (error) {
+      // ENOENT means index doesn't exist yet - this is expected on first run
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        console.error("Error loading trajectory index, using empty index:", error);
+      }
       return {
         version: 1,
         lastUpdated: new Date().toISOString(),
