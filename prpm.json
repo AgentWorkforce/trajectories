@@ -1,0 +1,34 @@
+{
+  "name": "agent-trajectories",
+  "version": "1.0.0",
+  "description": "Capture the complete train of thought of agent work as first-class artifacts",
+  "author": "khaliqgant",
+  "organization": "agent-workforce",
+  "license": "MIT",
+  "repository": "https://github.com/khaliqgant/agent-trajectories",
+  "packages": [
+    {
+      "name": "trail-snippet",
+      "version": "1.0.0",
+      "description": "AGENTS.md / CLAUDE.md snippet for agents on how to use trail to record their work",
+      "format": "generic",
+      "subtype": "snippet",
+      "snippet": {
+        "target": "AGENTS.md",
+        "position": "append",
+        "header": "Trail"
+      },
+      "tags": [
+        "trajectory",
+        "agent-work",
+        "documentation",
+        "decisions",
+        "retrospective",
+        "tracing"
+      ],
+      "files": [
+        "docs/trail-snippet.md"
+      ]
+    }
+  ]
+}
