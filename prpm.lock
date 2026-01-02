@@ -1,0 +1,91 @@
+{
+  "version": "1.0.0",
+  "lockfileVersion": 1,
+  "packages": {
+    "@prpm/prpm-json-best-practices-skill#claude": {
+      "version": "1.2.0",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40prpm%2Fprpm-json-best-practices-skill/1.2.0.tar.gz",
+      "integrity": "sha256-13f5c9204ef0db4cd37ef2339fa9cc5743de993c73244230760e73612476d826",
+      "format": "claude",
+      "subtype": "skill",
+      "sourceFormat": "claude",
+      "sourceSubtype": "skill",
+      "installedPath": ".claude/skills/prpm-json-best-practices-skill"
+    },
+    "@prpm/creating-claude-rules-skill#claude": {
+      "version": "1.0.0",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40prpm%2Fcreating-claude-rules-skill/1.0.0.tar.gz",
+      "integrity": "sha256-5d348d29c6e9abe5b1f0328a3868094b47dddc60192fc6b8f0a364797ce62878",
+      "format": "claude",
+      "subtype": "skill",
+      "sourceFormat": "claude",
+      "sourceSubtype": "skill",
+      "installedPath": ".claude/skills/creating-claude-rules-skill/SKILL.md"
+    },
+    "@agent-relay/agent-relay-snippet#claude": {
+      "version": "1.0.2",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40agent-relay%2Fagent-relay-snippet/1.0.2.tar.gz",
+      "integrity": "sha256-d62856dc5535e7dfa9e730d0b665720ec162e578b115d1e57847bd84fb06c1f8",
+      "format": "claude",
+      "subtype": "snippet",
+      "sourceFormat": "generic",
+      "sourceSubtype": "snippet",
+      "installedPath": ".claude/agents/agent-relay-snippet.md"
+    },
+    "@agent-relay/agent-relay-snippet#claude:CLAUDE.md": {
+      "version": "1.0.2",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40agent-relay%2Fagent-relay-snippet/1.0.2.tar.gz",
+      "integrity": "sha256-d62856dc5535e7dfa9e730d0b665720ec162e578b115d1e57847bd84fb06c1f8",
+      "format": "claude",
+      "subtype": "snippet",
+      "sourceFormat": "generic",
+      "sourceSubtype": "snippet",
+      "installedPath": "CLAUDE.md",
+      "snippetMetadata": {
+        "targetPath": "CLAUDE.md",
+        "config": {
+          "target": "CLAUDE.md",
+          "position": "append"
+        }
+      }
+    },
+    "@prpm/prpm-json-best-practices-skill#claude.md": {
+      "version": "1.2.0",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40prpm%2Fprpm-json-best-practices-skill/1.2.0.tar.gz",
+      "integrity": "sha256-13f5c9204ef0db4cd37ef2339fa9cc5743de993c73244230760e73612476d826",
+      "format": "claude.md",
+      "subtype": "skill",
+      "sourceFormat": "claude",
+      "sourceSubtype": "skill",
+      "installedPath": ".openskills/prpm-json-best-practices-skill/prpm-json-best-practices-skill",
+      "progressiveDisclosure": {
+        "mode": "progressive",
+        "resourceDir": ".openskills/prpm-json-best-practices-skill",
+        "manifestPath": "CLAUDE.md",
+        "resourceName": "prpm-json-best-practices-skill",
+        "resourceType": "skill",
+        "skillsDir": ".openskills/prpm-json-best-practices-skill",
+        "skillName": "prpm-json-best-practices-skill",
+        "eager": false
+      }
+    },
+    "@agent-relay/agent-relay-snippet#claude.md:AGENTS.md": {
+      "version": "1.0.2",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40agent-relay%2Fagent-relay-snippet/1.0.2.tar.gz",
+      "integrity": "sha256-d62856dc5535e7dfa9e730d0b665720ec162e578b115d1e57847bd84fb06c1f8",
+      "format": "claude.md",
+      "subtype": "snippet",
+      "sourceFormat": "generic",
+      "sourceSubtype": "snippet",
+      "installedPath": "AGENTS.md",
+      "snippetMetadata": {
+        "targetPath": "AGENTS.md",
+        "config": {
+          "target": "AGENTS.md",
+          "position": "append"
+        }
+      }
+    }
+  },
+  "generated": "2026-01-02T09:59:32.031Z"
+}
