@@ -11,4 +11,7 @@ export default defineConfig({
   sourcemap: true,
   target: "node20",
   shims: true,
+  banner: {
+    js: "#!/usr/bin/env node",
+  },
 });

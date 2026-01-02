@@ -5,6 +5,8 @@
  * IDs are URL-safe and collision-resistant.
  */
 
+import { webcrypto } from "node:crypto";
+
 const ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 const ID_LENGTH = 12;
 
@@ -16,7 +18,7 @@ const ID_LENGTH = 12;
 export function generateRandomId(length: number = ID_LENGTH): string {
   let id = "";
   const randomValues = new Uint8Array(length);
-  crypto.getRandomValues(randomValues);
+  webcrypto.getRandomValues(randomValues);
 
   for (let i = 0; i < length; i++) {
     id += ALPHABET[randomValues[i] % ALPHABET.length];
