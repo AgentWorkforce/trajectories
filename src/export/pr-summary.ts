@@ -19,7 +19,7 @@ export interface PRSummaryOptions {
  */
 export function exportToPRSummary(
   trajectory: Trajectory,
-  options?: PRSummaryOptions
+  options?: PRSummaryOptions,
 ): string {
   const lines: string[] = [];
 
@@ -36,14 +36,14 @@ export function exportToPRSummary(
   const decisionCount = trajectory.chapters.reduce(
     (count, chapter) =>
       count + chapter.events.filter((e) => e.type === "decision").length,
-    0
+    0,
   );
 
-  lines.push("**Key decisions:** " + decisionCount);
+  lines.push(`**Key decisions:** ${decisionCount}`);
 
   if (trajectory.retrospective?.confidence !== undefined) {
     lines.push(
-      `**Confidence:** ${Math.round(trajectory.retrospective.confidence * 100)}%`
+      `**Confidence:** ${Math.round(trajectory.retrospective.confidence * 100)}%`,
     );
   }
 

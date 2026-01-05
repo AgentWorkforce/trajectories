@@ -7,8 +7,8 @@
 
 import type {
   Trajectory,
-  TrajectorySummary,
   TrajectoryQuery,
+  TrajectorySummary,
 } from "../core/types.js";
 
 /**
@@ -66,7 +66,7 @@ export interface StorageAdapter {
    */
   search(
     text: string,
-    options?: { limit?: number }
+    options?: { limit?: number },
   ): Promise<TrajectorySummary[]>;
 
   /**

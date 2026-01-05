@@ -27,10 +27,10 @@ export async function runCommand(args: string[]): Promise<CommandResult> {
   const originalLog = console.log;
   const originalError = console.error;
   console.log = (...args) => {
-    output += args.join(" ") + "\n";
+    output += `${args.join(" ")}\n`;
   };
   console.error = (...args) => {
-    error += args.join(" ") + "\n";
+    error += `${args.join(" ")}\n`;
   };
 
   try {
@@ -40,8 +40,12 @@ export async function runCommand(args: string[]): Promise<CommandResult> {
       .version("0.1.0")
       .exitOverride() // Don't exit process on error
       .configureOutput({
-        writeOut: (str) => { output += str; },
-        writeErr: (str) => { error += str; },
+        writeOut: (str) => {
+          output += str;
+        },
+        writeErr: (str) => {
+          error += str;
+        },
       });
 
     registerCommands(program);

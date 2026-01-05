@@ -1,9 +1,9 @@
-import { describe, it, expect } from "vitest";
-import {
-  generateTrajectoryHtml,
-  generateIndexHtml,
-} from "../../src/web/generator.js";
+import { describe, expect, it } from "vitest";
 import type { Trajectory } from "../../src/core/types.js";
+import {
+  generateIndexHtml,
+  generateTrajectoryHtml,
+} from "../../src/web/generator.js";
 
 describe("Web Generator", () => {
   const mockTrajectory: Trajectory = {
@@ -20,7 +20,9 @@ describe("Web Generator", () => {
     status: "completed",
     startedAt: "2024-01-15T10:00:00Z",
     completedAt: "2024-01-15T12:30:00Z",
-    agents: [{ name: "Claude", role: "implementer", joinedAt: "2024-01-15T10:00:00Z" }],
+    agents: [
+      { name: "Claude", role: "lead", joinedAt: "2024-01-15T10:00:00Z" },
+    ],
     chapters: [
       {
         id: "ch_1",
@@ -29,19 +31,19 @@ describe("Web Generator", () => {
         startedAt: "2024-01-15T10:00:00Z",
         events: [
           {
-            id: "evt_1",
+            ts: new Date("2024-01-15T10:15:00Z").getTime(),
             type: "decision",
-            timestamp: "2024-01-15T10:15:00Z",
             content: "Use JWT over sessions",
-            metadata: {
+            raw: {
+              question: "Auth strategy",
+              chosen: "JWT",
               reasoning: "Stateless scaling requirement",
               alternatives: ["Sessions", "OAuth"],
             },
           },
           {
-            id: "evt_2",
+            ts: new Date("2024-01-15T10:20:00Z").getTime(),
             type: "note",
-            timestamp: "2024-01-15T10:20:00Z",
             content: "Found existing auth middleware",
           },
         ],
@@ -56,10 +58,11 @@ describe("Web Generator", () => {
     ],
     retrospective: {
       summary: "Successfully implemented JWT auth",
+      approach: "Used existing middleware patterns",
       confidence: 0.85,
-      wentWell: ["Clean implementation", "Good test coverage"],
+      learnings: ["Clean implementation", "Good test coverage"],
       challenges: ["Token refresh logic was tricky"],
-      wouldDoDifferently: ["Start with integration tests"],
+      suggestions: ["Start with integration tests"],
     },
     commits: ["abc123", "def456"],
     filesChanged: ["src/auth/jwt.ts", "src/middleware/auth.ts"],
@@ -98,7 +101,8 @@ describe("Web Generator", () => {
     it("should include decisions", () => {
       const html = generateTrajectoryHtml(mockTrajectory);
 
-      expect(html).toContain("Use JWT over sessions");
+      expect(html).toContain("Auth strategy");
+      expect(html).toContain("JWT");
       expect(html).toContain("Stateless scaling requirement");
       expect(html).toContain("Sessions");
     });
@@ -172,8 +176,16 @@ describe("Web Generator", () => {
     });
 
     it("should group by status", () => {
-      const active: Trajectory = { ...mockTrajectory, id: "traj_active", status: "active" };
-      const completed: Trajectory = { ...mockTrajectory, id: "traj_done", status: "completed" };
+      const active: Trajectory = {
+        ...mockTrajectory,
+        id: "traj_active",
+        status: "active",
+      };
+      const completed: Trajectory = {
+        ...mockTrajectory,
+        id: "traj_done",
+        status: "completed",
+      };
 
       const html = generateIndexHtml([active, completed]);
 

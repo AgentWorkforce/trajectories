@@ -1,6 +1,6 @@
 {
   "name": "agent-trajectories",
-  "version": "0.1.1",
+  "version": "0.2.1",
   "description": "Capture the complete train of thought of agent work as first-class artifacts",
   "type": "module",
   "main": "dist/index.js",
@@ -29,9 +29,7 @@
   ],
   "author": "",
   "license": "MIT",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "engines": {
     "node": ">=20.0.0"
   },

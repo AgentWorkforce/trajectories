@@ -12,7 +12,7 @@ export function registerCompleteCommand(program: Command): void {
     .description("Complete the active trajectory with retrospective")
     .option("--summary <text>", "Summary of what was accomplished")
     .option("--approach <text>", "How the work was approached")
-    .option("--confidence <number>", "Confidence level 0-1", parseFloat)
+    .option("--confidence <number>", "Confidence level 0-1", Number.parseFloat)
     .action(async (options) => {
       const storage = new FileStorage();
       await storage.initialize();
@@ -20,7 +20,7 @@ export function registerCompleteCommand(program: Command): void {
       const active = await storage.getActive();
       if (!active) {
         console.error("Error: No active trajectory");
-        console.error("Start one with: trail start \"Task description\"");
+        console.error('Start one with: trail start "Task description"');
         throw new Error("No active trajectory");
       }
 

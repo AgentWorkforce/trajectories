@@ -2,21 +2,25 @@
  * trail export command
  */
 
-import type { Command } from "commander";
-import { writeFile, mkdir } from "node:fs/promises";
-import { join } from "node:path";
 import { exec } from "node:child_process";
-import { FileStorage } from "../../storage/file.js";
-import { exportToMarkdown } from "../../export/markdown.js";
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import type { Command } from "commander";
 import { exportToJSON } from "../../export/json.js";
+import { exportToMarkdown } from "../../export/markdown.js";
 import { exportToTimeline } from "../../export/timeline.js";
+import { FileStorage } from "../../storage/file.js";
 import { generateTrajectoryHtml } from "../../web/generator.js";
 
 export function registerExportCommand(program: Command): void {
   program
     .command("export [id]")
     .description("Export a trajectory")
-    .option("-f, --format <format>", "Export format (md, json, timeline, html)", "md")
+    .option(
+      "-f, --format <format>",
+      "Export format (md, json, timeline, html)",
+      "md",
+    )
     .option("-o, --output <path>", "Output file path")
     .option("--open", "Open in browser (html format only)")
     .action(async (id: string | undefined, options) => {
@@ -35,7 +39,9 @@ export function registerExportCommand(program: Command): void {
         trajectory = await storage.getActive();
         if (!trajectory) {
           console.error("Error: No active trajectory and no ID provided");
-          console.error("Usage: trail export <id> or trail export (with active trajectory)");
+          console.error(
+            "Usage: trail export <id> or trail export (with active trajectory)",
+          );
           throw new Error("No trajectory specified");
         }
       }
@@ -52,8 +58,6 @@ export function registerExportCommand(program: Command): void {
         case "html":
           output = generateTrajectoryHtml(trajectory);
           break;
-        case "md":
-        case "markdown":
         default:
           output = exportToMarkdown(trajectory);
           break;

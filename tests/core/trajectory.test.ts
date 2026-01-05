@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 /**
  * Test stubs for core Trajectory functionality
@@ -69,7 +69,7 @@ describe("Trajectory", () => {
 
       // Act & Assert
       expect(() => createTrajectory({ title: "" })).toThrow(
-        "Trajectory title is required"
+        "Trajectory title is required",
       );
     });
 
@@ -80,7 +80,7 @@ describe("Trajectory", () => {
 
       // Act & Assert
       expect(() => createTrajectory({ title: longTitle })).toThrow(
-        "Trajectory title must be 500 characters or less"
+        "Trajectory title must be 500 characters or less",
       );
     });
   });
@@ -145,7 +145,7 @@ describe("Trajectory", () => {
 
       // Act & Assert
       expect(() =>
-        addChapter(trajectory, { title: "New chapter", agentName: "Alice" })
+        addChapter(trajectory, { title: "New chapter", agentName: "Alice" }),
       ).toThrow("Cannot add chapter to completed trajectory");
     });
   });
@@ -301,7 +301,7 @@ describe("Trajectory", () => {
           summary: "",
           approach: "Test",
           confidence: 0.5,
-        })
+        }),
       ).toThrow("Retrospective summary is required");
     });
 
@@ -318,7 +318,7 @@ describe("Trajectory", () => {
           summary: "Done",
           approach: "Test",
           confidence: 1.5,
-        })
+        }),
       ).toThrow("Confidence must be between 0 and 1");
     });
 
@@ -340,7 +340,7 @@ describe("Trajectory", () => {
           summary: "Done again",
           approach: "Test",
           confidence: 0.9,
-        })
+        }),
       ).toThrow("Trajectory is already completed");
     });
   });

@@ -2,7 +2,12 @@
  * Static HTML generator for trajectory viewing
  */
 
-import type { Trajectory, Chapter, TrajectoryEvent, Decision } from "../core/types.js";
+import type {
+  Chapter,
+  Decision,
+  Trajectory,
+  TrajectoryEvent,
+} from "../core/types.js";
 import { styles } from "./styles.js";
 
 function escapeHtml(text: string): string {
@@ -64,7 +69,7 @@ function renderDecision(decision: Decision): string {
 
   return `
     <div class="decision">
-      <div class="decision-title">${escapeHtml(decision.title)}</div>
+      <div class="decision-title">${escapeHtml(decision.question)}: ${escapeHtml(decision.chosen)}</div>
       <div class="decision-reasoning">${escapeHtml(decision.reasoning)}</div>
       ${alternatives}
     </div>
@@ -72,26 +77,36 @@ function renderDecision(decision: Decision): string {
 }
 
 function renderEvent(event: TrajectoryEvent): string {
-  const time = formatDate(event.timestamp);
+  const time = formatDate(new Date(event.ts).toISOString());
   let content = "";
   let typeClass = "";
+  const rawData = event.raw as Record<string, unknown> | undefined;
 
   switch (event.type) {
     case "decision":
       typeClass = "decision";
       content = `
         <strong>Decision:</strong> ${escapeHtml(event.content)}
-        ${event.metadata?.reasoning ? `<div class="decision-reasoning">${escapeHtml(event.metadata.reasoning)}</div>` : ""}
+        ${rawData?.reasoning ? `<div class="decision-reasoning">${escapeHtml(String(rawData.reasoning))}</div>` : ""}
       `;
       break;
-    case "observation":
-      content = `<strong>Observed:</strong> ${escapeHtml(event.content)}`;
+    case "thinking":
+      content = `<strong>Thinking:</strong> ${escapeHtml(event.content)}`;
       break;
-    case "action":
-      content = `<strong>Action:</strong> ${escapeHtml(event.content)}`;
+    case "prompt":
+      content = `<strong>Prompt:</strong> ${escapeHtml(event.content)}`;
       break;
     case "tool_call":
       content = `<strong>Tool:</strong> <code>${escapeHtml(event.content)}</code>`;
+      break;
+    case "tool_result":
+      content = `<strong>Result:</strong> ${escapeHtml(event.content)}`;
+      break;
+    case "message_sent":
+      content = `<strong>Sent:</strong> ${escapeHtml(event.content)}`;
+      break;
+    case "message_received":
+      content = `<strong>Received:</strong> ${escapeHtml(event.content)}`;
       break;
     case "error":
       content = `<strong style="color: var(--error)">Error:</strong> ${escapeHtml(event.content)}`;
@@ -120,7 +135,6 @@ function renderChapter(chapter: Chapter, index: number): string {
         Chapter ${index + 1}: ${escapeHtml(chapter.title)}
       </div>
       <div class="chapter-agent">Agent: ${escapeHtml(chapter.agentName)}</div>
-      ${chapter.summary ? `<p>${escapeHtml(chapter.summary)}</p>` : ""}
       ${
         chapter.events.length > 0
           ? `
@@ -143,16 +157,20 @@ function renderRetrospective(trajectory: Trajectory): string {
   const retro = trajectory.retrospective;
   const confidencePercent = Math.round(retro.confidence * 100);
 
-  const wentWell = retro.wentWell?.length
-    ? `<div><strong>What went well:</strong><ul class="list">${retro.wentWell.map((w) => `<li>${escapeHtml(w)}</li>`).join("")}</ul></div>`
+  const approach = retro.approach
+    ? `<div><strong>Approach:</strong><p>${escapeHtml(retro.approach)}</p></div>`
+    : "";
+
+  const learnings = retro.learnings?.length
+    ? `<div><strong>Learnings:</strong><ul class="list">${retro.learnings.map((l) => `<li>${escapeHtml(l)}</li>`).join("")}</ul></div>`
     : "";
 
   const challenges = retro.challenges?.length
     ? `<div><strong>Challenges:</strong><ul class="list">${retro.challenges.map((c) => `<li>${escapeHtml(c)}</li>`).join("")}</ul></div>`
     : "";
 
-  const wouldDoDifferently = retro.wouldDoDifferently?.length
-    ? `<div><strong>Would do differently:</strong><ul class="list">${retro.wouldDoDifferently.map((w) => `<li>${escapeHtml(w)}</li>`).join("")}</ul></div>`
+  const suggestions = retro.suggestions?.length
+    ? `<div><strong>Suggestions:</strong><ul class="list">${retro.suggestions.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}</ul></div>`
     : "";
 
   return `
@@ -168,9 +186,10 @@ function renderRetrospective(trajectory: Trajectory): string {
         <span>${confidencePercent}%</span>
       </div>
 
-      ${wentWell}
+      ${approach}
+      ${learnings}
       ${challenges}
-      ${wouldDoDifferently}
+      ${suggestions}
     </div>
   `;
 }
@@ -180,14 +199,13 @@ export function generateTrajectoryHtml(trajectory: Trajectory): string {
   const duration = formatDuration(trajectory.startedAt, trajectory.completedAt);
 
   // Extract all decisions from chapters
-  const decisions = trajectory.chapters.flatMap((ch) =>
+  const decisions: Decision[] = trajectory.chapters.flatMap((ch) =>
     ch.events
-      .filter((e) => e.type === "decision")
-      .map((e) => ({
-        title: e.content,
-        reasoning: e.metadata?.reasoning || "",
-        alternatives: e.metadata?.alternatives as string[] | undefined,
-      }))
+      .filter((e) => e.type === "decision" && e.raw)
+      .map((e) => e.raw as Decision)
+      .filter(
+        (d): d is Decision => d !== undefined && typeof d.question === "string",
+      ),
   );
 
   const decisionsHtml = decisions.length
