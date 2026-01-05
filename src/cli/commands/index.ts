@@ -15,14 +15,14 @@
  */
 
 import type { Command } from "commander";
-import { registerStartCommand } from "./start.js";
-import { registerStatusCommand } from "./status.js";
-import { registerCompleteCommand } from "./complete.js";
 import { registerAbandonCommand } from "./abandon.js";
+import { registerCompleteCommand } from "./complete.js";
 import { registerDecisionCommand } from "./decision.js";
+import { registerExportCommand } from "./export.js";
 import { registerListCommand } from "./list.js";
 import { registerShowCommand } from "./show.js";
-import { registerExportCommand } from "./export.js";
+import { registerStartCommand } from "./start.js";
+import { registerStatusCommand } from "./status.js";
 
 /**
  * Register all CLI commands

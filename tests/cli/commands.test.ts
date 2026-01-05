@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * Test stubs for CLI commands
@@ -228,7 +228,11 @@ describe("CLI Commands", () => {
       await runCommand(["start", "Test task"]);
 
       // Act
-      const result = await runCommand(["abandon", "--reason", "Requirements changed"]);
+      const result = await runCommand([
+        "abandon",
+        "--reason",
+        "Requirements changed",
+      ]);
 
       // Assert
       expect(result.success).toBe(true);
@@ -391,7 +395,12 @@ describe("CLI Commands", () => {
       const { runCommand } = await import("../../src/cli/runner.js");
 
       // Act
-      const result = await runCommand(["start", "Test task", "--agent", "Backend"]);
+      const result = await runCommand([
+        "start",
+        "Test task",
+        "--agent",
+        "Backend",
+      ]);
 
       // Assert
       expect(result.success).toBe(true);
@@ -410,7 +419,12 @@ describe("CLI Commands", () => {
       const { runCommand } = await import("../../src/cli/runner.js");
 
       // Act
-      const result = await runCommand(["start", "Test task", "--project", "relay"]);
+      const result = await runCommand([
+        "start",
+        "Test task",
+        "--project",
+        "relay",
+      ]);
 
       // Assert
       expect(result.success).toBe(true);
@@ -455,7 +469,7 @@ describe("CLI Commands", () => {
       if (originalAgent !== undefined) {
         process.env.TRAJECTORIES_AGENT = originalAgent;
       } else {
-        delete process.env.TRAJECTORIES_AGENT;
+        process.env.TRAJECTORIES_AGENT = undefined;
       }
     });
 
@@ -476,7 +490,7 @@ describe("CLI Commands", () => {
       if (originalProject !== undefined) {
         process.env.TRAJECTORIES_PROJECT = originalProject;
       } else {
-        delete process.env.TRAJECTORIES_PROJECT;
+        process.env.TRAJECTORIES_PROJECT = undefined;
       }
     });
 
@@ -487,7 +501,12 @@ describe("CLI Commands", () => {
       process.env.TRAJECTORIES_AGENT = "EnvAgent";
 
       // Act
-      const result = await runCommand(["start", "Test task", "--agent", "CLIAgent"]);
+      const result = await runCommand([
+        "start",
+        "Test task",
+        "--agent",
+        "CLIAgent",
+      ]);
 
       // Assert
       expect(result.success).toBe(true);
@@ -498,7 +517,7 @@ describe("CLI Commands", () => {
       if (originalAgent !== undefined) {
         process.env.TRAJECTORIES_AGENT = originalAgent;
       } else {
-        delete process.env.TRAJECTORIES_AGENT;
+        process.env.TRAJECTORIES_AGENT = undefined;
       }
     });
   });
@@ -508,12 +527,7 @@ describe("CLI Commands", () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");
       await runCommand(["start", "Test task"]);
-      await runCommand([
-        "decision",
-        "Chose A",
-        "--reasoning",
-        "Because",
-      ]);
+      await runCommand(["decision", "Chose A", "--reasoning", "Because"]);
       await runCommand([
         "complete",
         "--summary",

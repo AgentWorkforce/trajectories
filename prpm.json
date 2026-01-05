@@ -26,9 +26,7 @@
         "retrospective",
         "tracing"
       ],
-      "files": [
-        "docs/trail-snippet.md"
-      ]
+      "files": ["docs/trail-snippet.md"]
     }
   ]
 }

@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 /**
  * Test stubs for Storage functionality
@@ -38,7 +38,7 @@ describe("FileStorage", () => {
       expect(existsSync(join(tempDir, ".trajectories"))).toBe(true);
       expect(existsSync(join(tempDir, ".trajectories", "active"))).toBe(true);
       expect(existsSync(join(tempDir, ".trajectories", "completed"))).toBe(
-        true
+        true,
       );
     });
 
@@ -71,7 +71,7 @@ describe("FileStorage", () => {
         tempDir,
         ".trajectories",
         "active",
-        `${trajectory.id}.json`
+        `${trajectory.id}.json`,
       );
       expect(existsSync(filePath)).toBe(true);
       const saved = JSON.parse(readFileSync(filePath, "utf-8"));
@@ -103,13 +103,13 @@ describe("FileStorage", () => {
         tempDir,
         ".trajectories",
         "active",
-        `${trajectory.id}.json`
+        `${trajectory.id}.json`,
       );
       const completedDir = join(tempDir, ".trajectories", "completed");
       expect(existsSync(activeFile)).toBe(false);
       // Should be in a date-based subdirectory
       const files = await import("node:fs/promises").then((fs) =>
-        fs.readdir(completedDir, { recursive: true })
+        fs.readdir(completedDir, { recursive: true }),
       );
       expect(files.some((f) => f.includes(trajectory.id))).toBe(true);
     });
@@ -136,7 +136,7 @@ describe("FileStorage", () => {
       const files = await import("node:fs/promises").then((fs) =>
         fs.readdir(join(tempDir, ".trajectories", "completed"), {
           recursive: true,
-        })
+        }),
       );
       expect(files.some((f) => f.endsWith(".md"))).toBe(true);
     });
@@ -441,7 +441,7 @@ describe("Environment Variable Support", () => {
       // Assert - file should be at tempDir/active, not tempDir/.trajectories/active
       const { existsSync } = await import("node:fs");
       expect(existsSync(join(tempDir, "active", `${trajectory.id}.json`))).toBe(
-        true
+        true,
       );
       expect(existsSync(join(tempDir, ".trajectories"))).toBe(false);
     });
@@ -485,7 +485,7 @@ describe("Environment Variable Support", () => {
       const path1 = join(tempDir, "path1");
       const path2 = join(tempDir, "path2");
       process.env.TRAJECTORIES_SEARCH_PATHS = `${path1}:${path2}`;
-      delete process.env.TRAJECTORIES_DATA_DIR;
+      process.env.TRAJECTORIES_DATA_DIR = undefined;
 
       // Re-import to pick up new env var
       const { getSearchPaths } = await import("../../src/storage/file.js");
@@ -499,7 +499,7 @@ describe("Environment Variable Support", () => {
 
     it("should fall back to TRAJECTORIES_DATA_DIR when SEARCH_PATHS not set", async () => {
       // Arrange
-      delete process.env.TRAJECTORIES_SEARCH_PATHS;
+      process.env.TRAJECTORIES_SEARCH_PATHS = undefined;
       process.env.TRAJECTORIES_DATA_DIR = tempDir;
       const { getSearchPaths } = await import("../../src/storage/file.js");
 
@@ -512,8 +512,8 @@ describe("Environment Variable Support", () => {
 
     it("should fall back to .trajectories when no env vars set", async () => {
       // Arrange
-      delete process.env.TRAJECTORIES_SEARCH_PATHS;
-      delete process.env.TRAJECTORIES_DATA_DIR;
+      process.env.TRAJECTORIES_SEARCH_PATHS = undefined;
+      process.env.TRAJECTORIES_DATA_DIR = undefined;
       const { getSearchPaths } = await import("../../src/storage/file.js");
 
       // Act
@@ -527,7 +527,7 @@ describe("Environment Variable Support", () => {
       // Arrange
       const path1 = join(tempDir, "path1");
       process.env.TRAJECTORIES_SEARCH_PATHS = `${path1}::  :`;
-      delete process.env.TRAJECTORIES_DATA_DIR;
+      process.env.TRAJECTORIES_DATA_DIR = undefined;
       const { getSearchPaths } = await import("../../src/storage/file.js");
 
       // Act

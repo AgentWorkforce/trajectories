@@ -2,17 +2,20 @@
  * trail list command
  */
 
-import type { Command } from "commander";
 import { existsSync } from "node:fs";
-import { FileStorage, getSearchPaths } from "../../storage/file.js";
+import type { Command } from "commander";
 import type { TrajectoryStatus, TrajectorySummary } from "../../core/types.js";
+import { FileStorage, getSearchPaths } from "../../storage/file.js";
 
 export function registerListCommand(program: Command): void {
   program
     .command("list")
     .description("List and search trajectories")
-    .option("-s, --status <status>", "Filter by status (active, completed, abandoned)")
-    .option("-l, --limit <number>", "Limit results", parseInt)
+    .option(
+      "-s, --status <status>",
+      "Filter by status (active, completed, abandoned)",
+    )
+    .option("-l, --limit <number>", "Limit results", Number.parseInt)
     .option("--search <query>", "Search trajectories by title or content")
     .action(async (options) => {
       // Get all search paths and aggregate results
@@ -52,7 +55,7 @@ export function registerListCommand(program: Command): void {
           if (originalDataDir !== undefined) {
             process.env.TRAJECTORIES_DATA_DIR = originalDataDir;
           } else {
-            delete process.env.TRAJECTORIES_DATA_DIR;
+            process.env.TRAJECTORIES_DATA_DIR = undefined;
           }
         }
       }
@@ -60,7 +63,7 @@ export function registerListCommand(program: Command): void {
       // Sort by startedAt descending (most recent first)
       allTrajectories.sort(
         (a, b) =>
-          new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
+          new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
       );
 
       // Apply search filter if provided
@@ -90,7 +93,9 @@ export function registerListCommand(program: Command): void {
       }
 
       const searchNote = options.search ? ` matching "${options.search}"` : "";
-      console.log(`Found ${allTrajectories.length} trajectories${searchNote}:\n`);
+      console.log(
+        `Found ${allTrajectories.length} trajectories${searchNote}:\n`,
+      );
 
       for (const traj of allTrajectories) {
         const statusIcon = getStatusIcon(traj.status);

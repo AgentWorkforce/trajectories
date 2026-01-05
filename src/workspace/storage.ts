@@ -2,18 +2,18 @@
  * Workspace storage - persists decisions, patterns, knowledge
  */
 
-import { mkdir, readFile, writeFile, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { generateRandomId } from "../core/id.js";
 import type {
   Workspace,
   WorkspaceDecision,
-  WorkspacePattern,
   WorkspaceKnowledge,
+  WorkspacePattern,
   WorkspaceQuery,
   WorkspaceQueryResult,
 } from "./types.js";
-import { generateRandomId } from "../core/id.js";
 
 export class WorkspaceStorage {
   private basePath: string;
@@ -37,13 +37,13 @@ export class WorkspaceStorage {
   // Decisions
 
   async addDecision(
-    decision: Omit<WorkspaceDecision, "id">
+    decision: Omit<WorkspaceDecision, "id">,
   ): Promise<WorkspaceDecision> {
     const id = `dec_${generateRandomId()}`;
     const full: WorkspaceDecision = { ...decision, id };
     await writeFile(
       join(this.decisionsPath, `${id}.json`),
-      JSON.stringify(full, null, 2)
+      JSON.stringify(full, null, 2),
     );
     return full;
   }
@@ -67,20 +67,20 @@ export class WorkspaceStorage {
     }
     return decisions.sort(
       (a, b) =>
-        new Date(b.sourceDate).getTime() - new Date(a.sourceDate).getTime()
+        new Date(b.sourceDate).getTime() - new Date(a.sourceDate).getTime(),
     );
   }
 
   async updateDecision(
     id: string,
-    updates: Partial<WorkspaceDecision>
+    updates: Partial<WorkspaceDecision>,
   ): Promise<WorkspaceDecision | null> {
     const existing = await this.getDecision(id);
     if (!existing) return null;
     const updated = { ...existing, ...updates, id };
     await writeFile(
       join(this.decisionsPath, `${id}.json`),
-      JSON.stringify(updated, null, 2)
+      JSON.stringify(updated, null, 2),
     );
     return updated;
   }
@@ -88,7 +88,7 @@ export class WorkspaceStorage {
   // Patterns
 
   async addPattern(
-    pattern: Omit<WorkspacePattern, "id" | "createdAt" | "updatedAt">
+    pattern: Omit<WorkspacePattern, "id" | "createdAt" | "updatedAt">,
   ): Promise<WorkspacePattern> {
     const id = `pat_${generateRandomId()}`;
     const now = new Date().toISOString();
@@ -100,7 +100,7 @@ export class WorkspaceStorage {
     };
     await writeFile(
       join(this.patternsPath, `${id}.json`),
-      JSON.stringify(full, null, 2)
+      JSON.stringify(full, null, 2),
     );
     return full;
   }
@@ -128,7 +128,7 @@ export class WorkspaceStorage {
   // Knowledge
 
   async addKnowledge(
-    knowledge: Omit<WorkspaceKnowledge, "id" | "createdAt" | "updatedAt">
+    knowledge: Omit<WorkspaceKnowledge, "id" | "createdAt" | "updatedAt">,
   ): Promise<WorkspaceKnowledge> {
     const id = `know_${generateRandomId()}`;
     const now = new Date().toISOString();
@@ -140,7 +140,7 @@ export class WorkspaceStorage {
     };
     await writeFile(
       join(this.knowledgePath, `${id}.json`),
-      JSON.stringify(full, null, 2)
+      JSON.stringify(full, null, 2),
     );
     return full;
   }

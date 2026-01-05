@@ -18,7 +18,7 @@ program
   .version("0.1.0")
   .option(
     "--data-dir <path>",
-    "Override trajectory storage directory (or set TRAJECTORIES_DATA_DIR)"
+    "Override trajectory storage directory (or set TRAJECTORIES_DATA_DIR)",
   )
   .hook("preAction", (thisCommand) => {
     // If --data-dir flag is set, override the env var before commands run

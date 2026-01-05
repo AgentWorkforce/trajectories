@@ -10,8 +10,14 @@ export function registerDecisionCommand(program: Command): void {
   program
     .command("decision <choice>")
     .description("Record a decision")
-    .option("-r, --reasoning <text>", "Why this choice was made (optional for minor decisions)")
-    .option("-a, --alternatives <items>", "Comma-separated alternatives considered")
+    .option(
+      "-r, --reasoning <text>",
+      "Why this choice was made (optional for minor decisions)",
+    )
+    .option(
+      "-a, --alternatives <items>",
+      "Comma-separated alternatives considered",
+    )
     .action(async (choice: string, options) => {
       const storage = new FileStorage();
       await storage.initialize();
@@ -19,7 +25,7 @@ export function registerDecisionCommand(program: Command): void {
       const active = await storage.getActive();
       if (!active) {
         console.error("Error: No active trajectory");
-        console.error("Start one with: trail start \"Task description\"");
+        console.error('Start one with: trail start "Task description"');
         throw new Error("No active trajectory");
       }
 

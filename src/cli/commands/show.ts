@@ -2,10 +2,10 @@
  * trail show command
  */
 
-import type { Command } from "commander";
 import { existsSync } from "node:fs";
-import { FileStorage, getSearchPaths } from "../../storage/file.js";
+import type { Command } from "commander";
 import type { Decision, Trajectory } from "../../core/types.js";
+import { FileStorage, getSearchPaths } from "../../storage/file.js";
 
 /**
  * Search for a trajectory across all search paths
@@ -36,7 +36,7 @@ async function findTrajectory(id: string): Promise<Trajectory | null> {
       if (originalDataDir !== undefined) {
         process.env.TRAJECTORIES_DATA_DIR = originalDataDir;
       } else {
-        delete process.env.TRAJECTORIES_DATA_DIR;
+        process.env.TRAJECTORIES_DATA_DIR = undefined;
       }
     }
   }
@@ -81,7 +81,7 @@ export function registerShowCommand(program: Command): void {
 
       // Show full details
       console.log(`Trajectory: ${trajectory.id}`);
-      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       console.log(`Title:   ${trajectory.task.title}`);
       console.log(`Status:  ${trajectory.status}`);
       console.log(`Started: ${trajectory.startedAt}`);
@@ -90,7 +90,9 @@ export function registerShowCommand(program: Command): void {
       }
 
       if (trajectory.task.source) {
-        console.log(`Source:  ${trajectory.task.source.system}:${trajectory.task.source.id}`);
+        console.log(
+          `Source:  ${trajectory.task.source.system}:${trajectory.task.source.id}`,
+        );
       }
 
       console.log(`\nChapters: ${trajectory.chapters.length}`);
@@ -100,9 +102,11 @@ export function registerShowCommand(program: Command): void {
       }
 
       if (trajectory.retrospective) {
-        console.log(`\nRetrospective:`);
+        console.log("\nRetrospective:");
         console.log(`  Summary: ${trajectory.retrospective.summary}`);
-        console.log(`  Confidence: ${Math.round(trajectory.retrospective.confidence * 100)}%`);
+        console.log(
+          `  Confidence: ${Math.round(trajectory.retrospective.confidence * 100)}%`,
+        );
       }
     });
 }

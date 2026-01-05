@@ -1,9 +1,9 @@
-import { describe, it, expect } from "vitest";
-import {
-  generateTrajectoryHtml,
-  generateIndexHtml,
-} from "../../src/web/generator.js";
+import { describe, expect, it } from "vitest";
 import type { Trajectory } from "../../src/core/types.js";
+import {
+  generateIndexHtml,
+  generateTrajectoryHtml,
+} from "../../src/web/generator.js";
 
 describe("Web Generator", () => {
   const mockTrajectory: Trajectory = {
@@ -20,7 +20,9 @@ describe("Web Generator", () => {
     status: "completed",
     startedAt: "2024-01-15T10:00:00Z",
     completedAt: "2024-01-15T12:30:00Z",
-    agents: [{ name: "Claude", role: "lead", joinedAt: "2024-01-15T10:00:00Z" }],
+    agents: [
+      { name: "Claude", role: "lead", joinedAt: "2024-01-15T10:00:00Z" },
+    ],
     chapters: [
       {
         id: "ch_1",
@@ -174,8 +176,16 @@ describe("Web Generator", () => {
     });
 
     it("should group by status", () => {
-      const active: Trajectory = { ...mockTrajectory, id: "traj_active", status: "active" };
-      const completed: Trajectory = { ...mockTrajectory, id: "traj_done", status: "completed" };
+      const active: Trajectory = {
+        ...mockTrajectory,
+        id: "traj_active",
+        status: "active",
+      };
+      const completed: Trajectory = {
+        ...mockTrajectory,
+        id: "traj_done",
+        status: "completed",
+      };
 
       const html = generateIndexHtml([active, completed]);
 

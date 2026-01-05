@@ -15,12 +15,16 @@ export function exportToTimeline(trajectory: Trajectory): string {
   const lines: string[] = [];
 
   // Start marker
-  lines.push(`● ${formatTime(trajectory.startedAt)}  Started: ${trajectory.task.title}`);
+  lines.push(
+    `● ${formatTime(trajectory.startedAt)}  Started: ${trajectory.task.title}`,
+  );
   lines.push("│");
 
   // Chapters and events
   for (const chapter of trajectory.chapters) {
-    lines.push(`├─ ${formatTime(chapter.startedAt)}  Chapter: ${chapter.title}`);
+    lines.push(
+      `├─ ${formatTime(chapter.startedAt)}  Chapter: ${chapter.title}`,
+    );
     lines.push(`│         Agent: ${chapter.agentName}`);
     lines.push("│");
 
@@ -45,14 +49,15 @@ export function exportToTimeline(trajectory: Trajectory): string {
 
   // End marker
   if (trajectory.completedAt) {
-    const status = trajectory.status === "completed" ? "Completed" : "Abandoned";
+    const status =
+      trajectory.status === "completed" ? "Completed" : "Abandoned";
     lines.push(`○ ${formatTime(trajectory.completedAt)}  ${status}`);
 
     if (trajectory.retrospective) {
       lines.push("");
-      lines.push("  Summary: " + trajectory.retrospective.summary);
+      lines.push(`  Summary: ${trajectory.retrospective.summary}`);
       lines.push(
-        `  Confidence: ${Math.round(trajectory.retrospective.confidence * 100)}%`
+        `  Confidence: ${Math.round(trajectory.retrospective.confidence * 100)}%`,
       );
     }
   }

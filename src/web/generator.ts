@@ -2,7 +2,12 @@
  * Static HTML generator for trajectory viewing
  */
 
-import type { Trajectory, Chapter, TrajectoryEvent, Decision } from "../core/types.js";
+import type {
+  Chapter,
+  Decision,
+  Trajectory,
+  TrajectoryEvent,
+} from "../core/types.js";
 import { styles } from "./styles.js";
 
 function escapeHtml(text: string): string {
@@ -198,7 +203,9 @@ export function generateTrajectoryHtml(trajectory: Trajectory): string {
     ch.events
       .filter((e) => e.type === "decision" && e.raw)
       .map((e) => e.raw as Decision)
-      .filter((d): d is Decision => d !== undefined && typeof d.question === "string")
+      .filter(
+        (d): d is Decision => d !== undefined && typeof d.question === "string",
+      ),
   );
 
   const decisionsHtml = decisions.length

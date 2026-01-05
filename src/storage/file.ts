@@ -5,17 +5,17 @@
  * Active trajectories go in active/, completed in completed/YYYY-MM/.
  */
 
-import { mkdir, readdir, readFile, writeFile, unlink } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { mkdir, readFile, readdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { StorageAdapter } from "./interface.js";
+import { validateTrajectory } from "../core/schema.js";
 import type {
   Trajectory,
-  TrajectorySummary,
   TrajectoryQuery,
+  TrajectorySummary,
 } from "../core/types.js";
-import { validateTrajectory } from "../core/schema.js";
 import { exportToMarkdown } from "../export/markdown.js";
+import type { StorageAdapter } from "./interface.js";
 
 /**
  * Expand ~ to home directory in a path
@@ -127,7 +127,7 @@ export class FileStorage implements StorageAdapter {
       const date = new Date(trajectory.completedAt ?? trajectory.startedAt);
       const monthDir = join(
         this.completedDir,
-        `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
+        `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
       );
       await mkdir(monthDir, { recursive: true });
       filePath = join(monthDir, `${trajectory.id}.json`);
@@ -207,7 +207,7 @@ export class FileStorage implements StorageAdapter {
 
       for (const file of jsonFiles) {
         const trajectory = await this.readTrajectoryFile(
-          join(this.activeDir, file)
+          join(this.activeDir, file),
         );
         if (trajectory) {
           const startTime = new Date(trajectory.startedAt).getTime();
@@ -246,13 +246,13 @@ export class FileStorage implements StorageAdapter {
     if (query.since) {
       const sinceTime = new Date(query.since).getTime();
       entries = entries.filter(
-        ([, entry]) => new Date(entry.startedAt).getTime() >= sinceTime
+        ([, entry]) => new Date(entry.startedAt).getTime() >= sinceTime,
       );
     }
     if (query.until) {
       const untilTime = new Date(query.until).getTime();
       entries = entries.filter(
-        ([, entry]) => new Date(entry.startedAt).getTime() <= untilTime
+        ([, entry]) => new Date(entry.startedAt).getTime() <= untilTime,
       );
     }
 
@@ -260,8 +260,8 @@ export class FileStorage implements StorageAdapter {
     const sortBy = query.sortBy ?? "startedAt";
     const sortOrder = query.sortOrder ?? "desc";
     entries.sort((a, b) => {
-      const aVal = a[1][sortBy as keyof typeof a[1]] ?? "";
-      const bVal = b[1][sortBy as keyof typeof b[1]] ?? "";
+      const aVal = a[1][sortBy as keyof (typeof a)[1]] ?? "";
+      const bVal = b[1][sortBy as keyof (typeof b)[1]] ?? "";
       const cmp = String(aVal).localeCompare(String(bVal));
       return sortOrder === "asc" ? cmp : -cmp;
     });
@@ -289,10 +289,10 @@ export class FileStorage implements StorageAdapter {
               (count, chapter) =>
                 count +
                 chapter.events.filter((e) => e.type === "decision").length,
-              0
+              0,
             ) ?? 0,
         };
-      })
+      }),
     );
   }
 
@@ -328,7 +328,7 @@ export class FileStorage implements StorageAdapter {
    */
   async search(
     text: string,
-    options?: { limit?: number }
+    options?: { limit?: number },
   ): Promise<TrajectorySummary[]> {
     const allTrajectories = await this.list({});
     const searchLower = text.toLowerCase();
@@ -362,8 +362,8 @@ export class FileStorage implements StorageAdapter {
         chapter.events.some(
           (event) =>
             event.type === "decision" &&
-            event.content.toLowerCase().includes(searchLower)
-        )
+            event.content.toLowerCase().includes(searchLower),
+        ),
       );
       if (hasMatchingDecision) {
         matches.push(summary);
@@ -405,7 +405,10 @@ export class FileStorage implements StorageAdapter {
     } catch (error) {
       // ENOENT means index doesn't exist yet - this is expected on first run
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-        console.error("Error loading trajectory index, using empty index:", error);
+        console.error(
+          "Error loading trajectory index, using empty index:",
+          error,
+        );
       }
       return {
         version: 1,
@@ -422,7 +425,7 @@ export class FileStorage implements StorageAdapter {
 
   private async updateIndex(
     trajectory: Trajectory,
-    filePath: string
+    filePath: string,
   ): Promise<void> {
     const index = await this.loadIndex();
     index.trajectories[trajectory.id] = {
