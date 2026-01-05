@@ -29,9 +29,7 @@
   ],
   "author": "",
   "license": "MIT",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "engines": {
     "node": ">=20.0.0"
   },

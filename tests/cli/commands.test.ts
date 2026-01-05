@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * Test stubs for CLI commands
@@ -228,7 +228,11 @@ describe("CLI Commands", () => {
       await runCommand(["start", "Test task"]);
 
       // Act
-      const result = await runCommand(["abandon", "--reason", "Requirements changed"]);
+      const result = await runCommand([
+        "abandon",
+        "--reason",
+        "Requirements changed",
+      ]);
 
       // Assert
       expect(result.success).toBe(true);
@@ -385,17 +389,145 @@ describe("CLI Commands", () => {
     });
   });
 
+  describe("trail start (new features)", () => {
+    it("should support --agent flag", async () => {
+      // Arrange
+      const { runCommand } = await import("../../src/cli/runner.js");
+
+      // Act
+      const result = await runCommand([
+        "start",
+        "Test task",
+        "--agent",
+        "Backend",
+      ]);
+
+      // Assert
+      expect(result.success).toBe(true);
+      expect(result.output).toContain("Agent: Backend");
+
+      // Verify the trajectory has an agent in the chapter
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const storage = new FileStorage(tempDir);
+      await storage.initialize();
+      const active = await storage.getActive();
+      expect(active?.chapters[0]?.agentName).toBe("Backend");
+    });
+
+    it("should support --project flag", async () => {
+      // Arrange
+      const { runCommand } = await import("../../src/cli/runner.js");
+
+      // Act
+      const result = await runCommand([
+        "start",
+        "Test task",
+        "--project",
+        "relay",
+      ]);
+
+      // Assert
+      expect(result.success).toBe(true);
+      expect(result.output).toContain("Project: relay");
+
+      // Verify the trajectory has the projectId
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const storage = new FileStorage(tempDir);
+      await storage.initialize();
+      const active = await storage.getActive();
+      expect(active?.projectId).toBe("relay");
+    });
+
+    it("should support --quiet flag for scripting", async () => {
+      // Arrange
+      const { runCommand } = await import("../../src/cli/runner.js");
+
+      // Act
+      const result = await runCommand(["start", "Test task", "--quiet"]);
+
+      // Assert
+      expect(result.success).toBe(true);
+      // Should only output the trajectory ID
+      expect(result.output).toMatch(/^traj_[a-z0-9]+$/);
+      expect(result.output).not.toContain("Trajectory started");
+    });
+
+    it("should read TRAJECTORIES_AGENT env var", async () => {
+      // Arrange
+      const { runCommand } = await import("../../src/cli/runner.js");
+      const originalAgent = process.env.TRAJECTORIES_AGENT;
+      process.env.TRAJECTORIES_AGENT = "Frontend";
+
+      // Act
+      const result = await runCommand(["start", "Test task"]);
+
+      // Assert
+      expect(result.success).toBe(true);
+      expect(result.output).toContain("Agent: Frontend");
+
+      // Cleanup
+      if (originalAgent !== undefined) {
+        process.env.TRAJECTORIES_AGENT = originalAgent;
+      } else {
+        process.env.TRAJECTORIES_AGENT = undefined;
+      }
+    });
+
+    it("should read TRAJECTORIES_PROJECT env var", async () => {
+      // Arrange
+      const { runCommand } = await import("../../src/cli/runner.js");
+      const originalProject = process.env.TRAJECTORIES_PROJECT;
+      process.env.TRAJECTORIES_PROJECT = "my-project";
+
+      // Act
+      const result = await runCommand(["start", "Test task"]);
+
+      // Assert
+      expect(result.success).toBe(true);
+      expect(result.output).toContain("Project: my-project");
+
+      // Cleanup
+      if (originalProject !== undefined) {
+        process.env.TRAJECTORIES_PROJECT = originalProject;
+      } else {
+        process.env.TRAJECTORIES_PROJECT = undefined;
+      }
+    });
+
+    it("CLI flags should override env vars", async () => {
+      // Arrange
+      const { runCommand } = await import("../../src/cli/runner.js");
+      const originalAgent = process.env.TRAJECTORIES_AGENT;
+      process.env.TRAJECTORIES_AGENT = "EnvAgent";
+
+      // Act
+      const result = await runCommand([
+        "start",
+        "Test task",
+        "--agent",
+        "CLIAgent",
+      ]);
+
+      // Assert
+      expect(result.success).toBe(true);
+      expect(result.output).toContain("Agent: CLIAgent");
+      expect(result.output).not.toContain("EnvAgent");
+
+      // Cleanup
+      if (originalAgent !== undefined) {
+        process.env.TRAJECTORIES_AGENT = originalAgent;
+      } else {
+        process.env.TRAJECTORIES_AGENT = undefined;
+      }
+    });
+  });
+
   describe("trail export", () => {
     it("should export trajectory as markdown", async () => {
       // Arrange
       const { runCommand } = await import("../../src/cli/runner.js");
       await runCommand(["start", "Test task"]);
-      await runCommand([
-        "decision",
-        "Chose A",
-        "--reasoning",
-        "Because",
-      ]);
+      await runCommand(["decision", "Chose A", "--reasoning", "Because"]);
       await runCommand([
         "complete",
         "--summary",

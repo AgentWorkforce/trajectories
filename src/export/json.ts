@@ -17,7 +17,7 @@ export interface JSONExportOptions {
  */
 export function exportToJSON(
   trajectory: Trajectory,
-  options?: JSONExportOptions
+  options?: JSONExportOptions,
 ): string {
   if (options?.compact) {
     return JSON.stringify(trajectory);

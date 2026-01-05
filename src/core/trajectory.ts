@@ -5,20 +5,20 @@
  * These functions return new trajectory objects (immutable updates).
  */
 
+import { generateChapterId, generateTrajectoryId } from "./id.js";
+import {
+  CompleteTrajectoryInputSchema,
+  CreateTrajectoryInputSchema,
+} from "./schema.js";
 import type {
-  Trajectory,
-  Chapter,
-  CreateTrajectoryInput,
   AddChapterInput,
   AddEventInput,
+  Chapter,
   CompleteTrajectoryInput,
+  CreateTrajectoryInput,
   Decision,
+  Trajectory,
 } from "./types.js";
-import { generateTrajectoryId, generateChapterId } from "./id.js";
-import {
-  CreateTrajectoryInputSchema,
-  CompleteTrajectoryInputSchema,
-} from "./schema.js";
 
 /**
  * Custom error class for trajectory operations
@@ -27,7 +27,7 @@ export class TrajectoryError extends Error {
   constructor(
     message: string,
     public code: string,
-    public suggestion?: string
+    public suggestion?: string,
   ) {
     super(message);
     this.name = "TrajectoryError";
@@ -48,7 +48,7 @@ export function createTrajectory(input: CreateTrajectoryInput): Trajectory {
     throw new TrajectoryError(
       firstError.message,
       "VALIDATION_ERROR",
-      "Check your input and try again"
+      "Check your input and try again",
     );
   }
 
@@ -82,13 +82,13 @@ export function createTrajectory(input: CreateTrajectoryInput): Trajectory {
  */
 export function addChapter(
   trajectory: Trajectory,
-  input: AddChapterInput
+  input: AddChapterInput,
 ): Trajectory {
   if (trajectory.status === "completed") {
     throw new TrajectoryError(
       "Cannot add chapter to completed trajectory",
       "TRAJECTORY_ALREADY_COMPLETED",
-      "Start a new trajectory instead"
+      "Start a new trajectory instead",
     );
   }
 
@@ -125,7 +125,7 @@ export function addChapter(
  */
 export function addEvent(
   trajectory: Trajectory,
-  input: AddEventInput
+  input: AddEventInput,
 ): Trajectory {
   // Auto-create a chapter if none exists
   let updatedTrajectory = trajectory;
@@ -166,7 +166,7 @@ export function addEvent(
  */
 export function addDecision(
   trajectory: Trajectory,
-  decision: Decision
+  decision: Decision,
 ): Trajectory {
   return addEvent(trajectory, {
     type: "decision",
@@ -185,13 +185,13 @@ export function addDecision(
  */
 export function completeTrajectory(
   trajectory: Trajectory,
-  input: CompleteTrajectoryInput
+  input: CompleteTrajectoryInput,
 ): Trajectory {
   if (trajectory.status === "completed") {
     throw new TrajectoryError(
       "Trajectory is already completed",
       "TRAJECTORY_ALREADY_COMPLETED",
-      "Start a new trajectory instead"
+      "Start a new trajectory instead",
     );
   }
 
@@ -202,7 +202,7 @@ export function completeTrajectory(
     throw new TrajectoryError(
       firstError.message,
       "VALIDATION_ERROR",
-      "Check your input and try again"
+      "Check your input and try again",
     );
   }
 
@@ -241,7 +241,7 @@ export function completeTrajectory(
  */
 export function abandonTrajectory(
   trajectory: Trajectory,
-  reason?: string
+  reason?: string,
 ): Trajectory {
   const now = new Date().toISOString();
 

@@ -4,7 +4,7 @@
  * Generates human-readable Notion-style documentation.
  */
 
-import type { Trajectory, Decision } from "../core/types.js";
+import type { Decision, Trajectory } from "../core/types.js";
 
 /**
  * Export a trajectory to markdown format
@@ -19,7 +19,7 @@ export function exportToMarkdown(trajectory: Trajectory): string {
   lines.push("");
 
   // Metadata block
-  lines.push("> **Status:** " + formatStatus(trajectory.status));
+  lines.push(`> **Status:** ${formatStatus(trajectory.status)}`);
   if (trajectory.task.source) {
     const linkText = trajectory.task.source.url
       ? `[${trajectory.task.source.id}](${trajectory.task.source.url})`
@@ -28,7 +28,7 @@ export function exportToMarkdown(trajectory: Trajectory): string {
   }
   if (trajectory.retrospective?.confidence !== undefined) {
     lines.push(
-      `> **Confidence:** ${Math.round(trajectory.retrospective.confidence * 100)}%`
+      `> **Confidence:** ${Math.round(trajectory.retrospective.confidence * 100)}%`,
     );
   }
   lines.push(`> **Started:** ${formatDate(trajectory.startedAt)}`);
@@ -47,7 +47,7 @@ export function exportToMarkdown(trajectory: Trajectory): string {
     lines.push("");
 
     if (trajectory.retrospective.approach) {
-      lines.push("**Approach:** " + trajectory.retrospective.approach);
+      lines.push(`**Approach:** ${trajectory.retrospective.approach}`);
       lines.push("");
     }
   }
@@ -88,7 +88,7 @@ export function exportToMarkdown(trajectory: Trajectory): string {
           (e) =>
             e.significance === "high" ||
             e.significance === "critical" ||
-            e.type === "decision"
+            e.type === "decision",
         );
         if (significantEvents.length > 0) {
           for (const event of significantEvents) {

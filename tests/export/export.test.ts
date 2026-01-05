@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 /**
  * Test stubs for Export functionality
@@ -101,7 +101,10 @@ describe("Markdown Export", () => {
       const { createTrajectory, addChapter, addDecision, completeTrajectory } =
         await import("../../src/core/trajectory.js");
       let trajectory = createTrajectory({ title: "Test" });
-      trajectory = addChapter(trajectory, { title: "Work", agentName: "Alice" });
+      trajectory = addChapter(trajectory, {
+        title: "Work",
+        agentName: "Alice",
+      });
       trajectory = addDecision(trajectory, {
         question: "Auth strategy",
         chosen: "JWT with refresh tokens",
@@ -122,7 +125,9 @@ describe("Markdown Export", () => {
       expect(markdown).toContain("### Auth strategy");
       expect(markdown).toContain("**Chose:** JWT with refresh tokens");
       expect(markdown).toContain("**Rejected:** Sessions, OAuth only");
-      expect(markdown).toContain("**Reasoning:** Stateless for horizontal scaling");
+      expect(markdown).toContain(
+        "**Reasoning:** Stateless for horizontal scaling",
+      );
     });
 
     it("should include chapters section", async () => {
@@ -244,7 +249,10 @@ describe("Timeline Export", () => {
       const { createTrajectory, addChapter, addEvent, completeTrajectory } =
         await import("../../src/core/trajectory.js");
       let trajectory = createTrajectory({ title: "Test task" });
-      trajectory = addChapter(trajectory, { title: "Work", agentName: "Alice" });
+      trajectory = addChapter(trajectory, {
+        title: "Work",
+        agentName: "Alice",
+      });
       trajectory = addEvent(trajectory, {
         type: "tool_call",
         content: "Read file",
@@ -302,7 +310,10 @@ describe("Timeline Export", () => {
         "../../src/core/trajectory.js"
       );
       let trajectory = createTrajectory({ title: "Test" });
-      trajectory = addChapter(trajectory, { title: "Work", agentName: "Alice" });
+      trajectory = addChapter(trajectory, {
+        title: "Work",
+        agentName: "Alice",
+      });
       trajectory = addDecision(trajectory, {
         question: "Auth strategy",
         chosen: "JWT",
@@ -324,11 +335,16 @@ describe("PR Summary Export", () => {
   describe("exportToPRSummary", () => {
     it("should generate concise PR-friendly summary", async () => {
       // Arrange
-      const { exportToPRSummary } = await import("../../src/export/pr-summary.js");
+      const { exportToPRSummary } = await import(
+        "../../src/export/pr-summary.js"
+      );
       const { createTrajectory, addChapter, addDecision, completeTrajectory } =
         await import("../../src/core/trajectory.js");
       let trajectory = createTrajectory({ title: "Add user authentication" });
-      trajectory = addChapter(trajectory, { title: "Work", agentName: "Alice" });
+      trajectory = addChapter(trajectory, {
+        title: "Work",
+        agentName: "Alice",
+      });
       trajectory = addDecision(trajectory, {
         question: "Auth strategy",
         chosen: "JWT",
@@ -353,7 +369,9 @@ describe("PR Summary Export", () => {
 
     it("should include link to full trajectory", async () => {
       // Arrange
-      const { exportToPRSummary } = await import("../../src/export/pr-summary.js");
+      const { exportToPRSummary } = await import(
+        "../../src/export/pr-summary.js"
+      );
       const { createTrajectory, completeTrajectory } = await import(
         "../../src/core/trajectory.js"
       );

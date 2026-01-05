@@ -2,9 +2,47 @@
  * trail show command
  */
 
+import { existsSync } from "node:fs";
 import type { Command } from "commander";
-import { FileStorage } from "../../storage/file.js";
-import type { Decision } from "../../core/types.js";
+import type { Decision, Trajectory } from "../../core/types.js";
+import { FileStorage, getSearchPaths } from "../../storage/file.js";
+
+/**
+ * Search for a trajectory across all search paths
+ */
+async function findTrajectory(id: string): Promise<Trajectory | null> {
+  const searchPaths = getSearchPaths();
+
+  for (const searchPath of searchPaths) {
+    // Skip paths that don't exist
+    if (!existsSync(searchPath)) {
+      continue;
+    }
+
+    // Create storage pointing to this path directly
+    const originalDataDir = process.env.TRAJECTORIES_DATA_DIR;
+    process.env.TRAJECTORIES_DATA_DIR = searchPath;
+
+    try {
+      const storage = new FileStorage();
+      await storage.initialize();
+
+      const trajectory = await storage.get(id);
+      if (trajectory) {
+        return trajectory;
+      }
+    } finally {
+      // Restore original env var
+      if (originalDataDir !== undefined) {
+        process.env.TRAJECTORIES_DATA_DIR = originalDataDir;
+      } else {
+        process.env.TRAJECTORIES_DATA_DIR = undefined;
+      }
+    }
+  }
+
+  return null;
+}
 
 export function registerShowCommand(program: Command): void {
   program
@@ -12,10 +50,7 @@ export function registerShowCommand(program: Command): void {
     .description("Show trajectory details")
     .option("-d, --decisions", "Show decisions only")
     .action(async (id: string, options) => {
-      const storage = new FileStorage();
-      await storage.initialize();
-
-      const trajectory = await storage.get(id);
+      const trajectory = await findTrajectory(id);
 
       if (!trajectory) {
         console.error(`Error: Trajectory not found: ${id}`);
@@ -46,7 +81,7 @@ export function registerShowCommand(program: Command): void {
 
       // Show full details
       console.log(`Trajectory: ${trajectory.id}`);
-      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       console.log(`Title:   ${trajectory.task.title}`);
       console.log(`Status:  ${trajectory.status}`);
       console.log(`Started: ${trajectory.startedAt}`);
@@ -55,7 +90,9 @@ export function registerShowCommand(program: Command): void {
       }
 
       if (trajectory.task.source) {
-        console.log(`Source:  ${trajectory.task.source.system}:${trajectory.task.source.id}`);
+        console.log(
+          `Source:  ${trajectory.task.source.system}:${trajectory.task.source.id}`,
+        );
       }
 
       console.log(`\nChapters: ${trajectory.chapters.length}`);
@@ -65,9 +102,11 @@ export function registerShowCommand(program: Command): void {
       }
 
       if (trajectory.retrospective) {
-        console.log(`\nRetrospective:`);
+        console.log("\nRetrospective:");
         console.log(`  Summary: ${trajectory.retrospective.summary}`);
-        console.log(`  Confidence: ${Math.round(trajectory.retrospective.confidence * 100)}%`);
+        console.log(
+          `  Confidence: ${Math.round(trajectory.retrospective.confidence * 100)}%`,
+        );
       }
     });
 }

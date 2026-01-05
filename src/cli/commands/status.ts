@@ -17,29 +17,32 @@ export function registerStatusCommand(program: Command): void {
 
       if (!active) {
         console.log("No active trajectory");
-        console.log("Start one with: trail start \"Task description\"");
+        console.log('Start one with: trail start "Task description"');
         return;
       }
 
       const duration = formatDuration(
-        new Date().getTime() - new Date(active.startedAt).getTime()
+        new Date().getTime() - new Date(active.startedAt).getTime(),
       );
 
       const eventCount = active.chapters.reduce(
         (sum, ch) => sum + ch.events.length,
-        0
+        0,
       );
 
       const decisionCount = active.chapters.reduce(
-        (sum, ch) => sum + ch.events.filter((e) => e.type === "decision").length,
-        0
+        (sum, ch) =>
+          sum + ch.events.filter((e) => e.type === "decision").length,
+        0,
       );
 
       console.log(`Active Trajectory: ${active.id}`);
-      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       console.log(`Task:      ${active.task.title}`);
       if (active.task.source) {
-        console.log(`Source:    ${active.task.source.system}:${active.task.source.id}`);
+        console.log(
+          `Source:    ${active.task.source.system}:${active.task.source.id}`,
+        );
       }
       console.log(`Status:    ${active.status}`);
       console.log(`Started:   ${duration} ago`);
