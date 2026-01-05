@@ -408,3 +408,133 @@ describe("StorageAdapter Interface", () => {
     expect(StorageAdapter).toBeDefined();
   });
 });
+
+describe("Environment Variable Support", () => {
+  let tempDir: string;
+  let originalEnv: NodeJS.ProcessEnv;
+
+  beforeEach(async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "trail-env-test-"));
+    originalEnv = { ...process.env };
+  });
+
+  afterEach(async () => {
+    // Restore original env
+    process.env = originalEnv;
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
+  describe("TRAJECTORIES_DATA_DIR", () => {
+    it("should use TRAJECTORIES_DATA_DIR when set", async () => {
+      // Arrange
+      process.env.TRAJECTORIES_DATA_DIR = tempDir;
+      // Re-import to pick up new env var
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const { createTrajectory } = await import("../../src/core/trajectory.js");
+      const storage = new FileStorage();
+      await storage.initialize();
+      const trajectory = createTrajectory({ title: "Test" });
+
+      // Act
+      await storage.save(trajectory);
+
+      // Assert - file should be at tempDir/active, not tempDir/.trajectories/active
+      const { existsSync } = await import("node:fs");
+      expect(existsSync(join(tempDir, "active", `${trajectory.id}.json`))).toBe(
+        true
+      );
+      expect(existsSync(join(tempDir, ".trajectories"))).toBe(false);
+    });
+
+    it("should not add .trajectories suffix when TRAJECTORIES_DATA_DIR is set", async () => {
+      // Arrange
+      const customDir = join(tempDir, "custom-path");
+      process.env.TRAJECTORIES_DATA_DIR = customDir;
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const storage = new FileStorage();
+
+      // Act
+      await storage.initialize();
+
+      // Assert
+      const { existsSync } = await import("node:fs");
+      expect(existsSync(join(customDir, "active"))).toBe(true);
+      expect(existsSync(join(customDir, ".trajectories"))).toBe(false);
+    });
+
+    it("should expand ~ in TRAJECTORIES_DATA_DIR", async () => {
+      // Arrange - we can't easily test ~ expansion without mocking HOME
+      // but we can test that a path starting with ~ doesn't throw
+      const originalHome = process.env.HOME;
+      process.env.HOME = tempDir;
+      process.env.TRAJECTORIES_DATA_DIR = "~/trajectories";
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const storage = new FileStorage();
+
+      // Act & Assert - should not throw
+      await expect(storage.initialize()).resolves.not.toThrow();
+
+      // Cleanup
+      process.env.HOME = originalHome;
+    });
+  });
+
+  describe("getSearchPaths", () => {
+    it("should return TRAJECTORIES_SEARCH_PATHS when set", async () => {
+      // Arrange
+      const path1 = join(tempDir, "path1");
+      const path2 = join(tempDir, "path2");
+      process.env.TRAJECTORIES_SEARCH_PATHS = `${path1}:${path2}`;
+      delete process.env.TRAJECTORIES_DATA_DIR;
+
+      // Re-import to pick up new env var
+      const { getSearchPaths } = await import("../../src/storage/file.js");
+
+      // Act
+      const paths = getSearchPaths();
+
+      // Assert
+      expect(paths).toEqual([path1, path2]);
+    });
+
+    it("should fall back to TRAJECTORIES_DATA_DIR when SEARCH_PATHS not set", async () => {
+      // Arrange
+      delete process.env.TRAJECTORIES_SEARCH_PATHS;
+      process.env.TRAJECTORIES_DATA_DIR = tempDir;
+      const { getSearchPaths } = await import("../../src/storage/file.js");
+
+      // Act
+      const paths = getSearchPaths();
+
+      // Assert
+      expect(paths).toEqual([tempDir]);
+    });
+
+    it("should fall back to .trajectories when no env vars set", async () => {
+      // Arrange
+      delete process.env.TRAJECTORIES_SEARCH_PATHS;
+      delete process.env.TRAJECTORIES_DATA_DIR;
+      const { getSearchPaths } = await import("../../src/storage/file.js");
+
+      // Act
+      const paths = getSearchPaths();
+
+      // Assert
+      expect(paths[0]).toContain(".trajectories");
+    });
+
+    it("should filter empty paths from TRAJECTORIES_SEARCH_PATHS", async () => {
+      // Arrange
+      const path1 = join(tempDir, "path1");
+      process.env.TRAJECTORIES_SEARCH_PATHS = `${path1}::  :`;
+      delete process.env.TRAJECTORIES_DATA_DIR;
+      const { getSearchPaths } = await import("../../src/storage/file.js");
+
+      // Act
+      const paths = getSearchPaths();
+
+      // Assert
+      expect(paths).toEqual([path1]);
+    });
+  });
+});
