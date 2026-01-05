@@ -13,6 +13,7 @@ import {
 import type {
   AddChapterInput,
   AddEventInput,
+  AgentParticipation,
   Chapter,
   CompleteTrajectoryInput,
   CreateTrajectoryInput,
@@ -110,8 +111,26 @@ export function addChapter(
     events: [],
   };
 
+  // Add agent to trajectory.agents if not already present
+  let updatedAgents: AgentParticipation[] = trajectory.agents;
+  const agentExists = trajectory.agents.some(
+    (a) => a.name === input.agentName,
+  );
+  if (!agentExists) {
+    const isFirstAgent = trajectory.agents.length === 0;
+    updatedAgents = [
+      ...trajectory.agents,
+      {
+        name: input.agentName,
+        role: isFirstAgent ? "lead" : "contributor",
+        joinedAt: now,
+      },
+    ];
+  }
+
   return {
     ...trajectory,
+    agents: updatedAgents,
     chapters: [...updatedChapters, newChapter],
   };
 }

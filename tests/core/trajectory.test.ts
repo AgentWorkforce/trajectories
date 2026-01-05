@@ -148,6 +148,73 @@ describe("Trajectory", () => {
         addChapter(trajectory, { title: "New chapter", agentName: "Alice" }),
       ).toThrow("Cannot add chapter to completed trajectory");
     });
+
+    it("should add agent to trajectory.agents when adding first chapter", async () => {
+      // Arrange
+      const { createTrajectory, addChapter } = await import(
+        "../../src/core/trajectory.js"
+      );
+      const trajectory = createTrajectory({ title: "Test task" });
+
+      // Act
+      const updated = addChapter(trajectory, {
+        title: "Initial exploration",
+        agentName: "Alice",
+      });
+
+      // Assert
+      expect(updated.agents).toHaveLength(1);
+      expect(updated.agents[0].name).toBe("Alice");
+      expect(updated.agents[0].role).toBe("lead");
+      expect(updated.agents[0].joinedAt).toBeDefined();
+    });
+
+    it("should add subsequent agents as contributors", async () => {
+      // Arrange
+      const { createTrajectory, addChapter } = await import(
+        "../../src/core/trajectory.js"
+      );
+      let trajectory = createTrajectory({ title: "Test task" });
+      trajectory = addChapter(trajectory, {
+        title: "Chapter 1",
+        agentName: "Alice",
+      });
+
+      // Act
+      const updated = addChapter(trajectory, {
+        title: "Chapter 2",
+        agentName: "Bob",
+      });
+
+      // Assert
+      expect(updated.agents).toHaveLength(2);
+      expect(updated.agents[0].name).toBe("Alice");
+      expect(updated.agents[0].role).toBe("lead");
+      expect(updated.agents[1].name).toBe("Bob");
+      expect(updated.agents[1].role).toBe("contributor");
+    });
+
+    it("should not duplicate agents when same agent adds multiple chapters", async () => {
+      // Arrange
+      const { createTrajectory, addChapter } = await import(
+        "../../src/core/trajectory.js"
+      );
+      let trajectory = createTrajectory({ title: "Test task" });
+      trajectory = addChapter(trajectory, {
+        title: "Chapter 1",
+        agentName: "Alice",
+      });
+
+      // Act
+      const updated = addChapter(trajectory, {
+        title: "Chapter 2",
+        agentName: "Alice",
+      });
+
+      // Assert
+      expect(updated.agents).toHaveLength(1);
+      expect(updated.agents[0].name).toBe("Alice");
+    });
   });
 
   describe("addEvent", () => {
