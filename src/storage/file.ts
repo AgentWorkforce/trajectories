@@ -18,6 +18,40 @@ import { validateTrajectory } from "../core/schema.js";
 import { exportToMarkdown } from "../export/markdown.js";
 
 /**
+ * Expand ~ to home directory in a path
+ */
+function expandPath(path: string): string {
+  if (path.startsWith("~")) {
+    return join(process.env.HOME ?? "", path.slice(1));
+  }
+  return path;
+}
+
+/**
+ * Get trajectory search paths from environment variable
+ * TRAJECTORIES_SEARCH_PATHS is colon-separated (like PATH)
+ * Falls back to current directory's .trajectories if not set
+ */
+export function getSearchPaths(): string[] {
+  const searchPathsEnv = process.env.TRAJECTORIES_SEARCH_PATHS;
+  if (searchPathsEnv) {
+    return searchPathsEnv
+      .split(":")
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map(expandPath);
+  }
+
+  // Default: check for TRAJECTORIES_DATA_DIR, then fall back to ./.trajectories
+  const dataDir = process.env.TRAJECTORIES_DATA_DIR;
+  if (dataDir) {
+    return [expandPath(dataDir)];
+  }
+
+  return [join(process.cwd(), ".trajectories")];
+}
+
+/**
  * Index file structure for quick lookups
  */
 interface TrajectoryIndex {
@@ -47,7 +81,16 @@ export class FileStorage implements StorageAdapter {
 
   constructor(baseDir?: string) {
     this.baseDir = baseDir ?? process.cwd();
-    this.trajectoriesDir = join(this.baseDir, ".trajectories");
+
+    // Check for TRAJECTORIES_DATA_DIR env var first
+    // When set, use the path directly (no .trajectories suffix)
+    const dataDir = process.env.TRAJECTORIES_DATA_DIR;
+    if (dataDir) {
+      this.trajectoriesDir = expandPath(dataDir);
+    } else {
+      this.trajectoriesDir = join(this.baseDir, ".trajectories");
+    }
+
     this.activeDir = join(this.trajectoriesDir, "active");
     this.completedDir = join(this.trajectoriesDir, "completed");
     this.indexPath = join(this.trajectoriesDir, "index.json");

@@ -15,7 +15,18 @@ import { registerCommands } from "./commands/index.js";
 program
   .name("trail")
   .description("Leave a trail of your work for others to follow")
-  .version("0.1.0");
+  .version("0.1.0")
+  .option(
+    "--data-dir <path>",
+    "Override trajectory storage directory (or set TRAJECTORIES_DATA_DIR)"
+  )
+  .hook("preAction", (thisCommand) => {
+    // If --data-dir flag is set, override the env var before commands run
+    const opts = thisCommand.opts();
+    if (opts.dataDir) {
+      process.env.TRAJECTORIES_DATA_DIR = opts.dataDir;
+    }
+  });
 
 // Register all commands
 registerCommands(program);

@@ -3,8 +3,9 @@
  */
 
 import type { Command } from "commander";
-import { FileStorage } from "../../storage/file.js";
-import type { TrajectoryStatus } from "../../core/types.js";
+import { existsSync } from "node:fs";
+import { FileStorage, getSearchPaths } from "../../storage/file.js";
+import type { TrajectoryStatus, TrajectorySummary } from "../../core/types.js";
 
 export function registerListCommand(program: Command): void {
   program
@@ -14,32 +15,72 @@ export function registerListCommand(program: Command): void {
     .option("-l, --limit <number>", "Limit results", parseInt)
     .option("--search <query>", "Search trajectories by title or content")
     .action(async (options) => {
-      const storage = new FileStorage();
-      await storage.initialize();
+      // Get all search paths and aggregate results
+      const searchPaths = getSearchPaths();
+      let allTrajectories: TrajectorySummary[] = [];
+      const seenIds = new Set<string>();
 
-      let trajectories = await storage.list({
-        status: options.status as TrajectoryStatus | undefined,
-        limit: options.search ? undefined : options.limit, // Apply limit after search
-      });
+      for (const searchPath of searchPaths) {
+        // Skip paths that don't exist
+        if (!existsSync(searchPath)) {
+          continue;
+        }
+
+        // Create storage pointing to this path directly
+        // We set TRAJECTORIES_DATA_DIR temporarily to use this path
+        const originalDataDir = process.env.TRAJECTORIES_DATA_DIR;
+        process.env.TRAJECTORIES_DATA_DIR = searchPath;
+
+        try {
+          const storage = new FileStorage();
+          await storage.initialize();
+
+          const trajectories = await storage.list({
+            status: options.status as TrajectoryStatus | undefined,
+            limit: options.search ? undefined : undefined, // Don't limit per-path
+          });
+
+          // Add to results, avoiding duplicates
+          for (const traj of trajectories) {
+            if (!seenIds.has(traj.id)) {
+              seenIds.add(traj.id);
+              allTrajectories.push(traj);
+            }
+          }
+        } finally {
+          // Restore original env var
+          if (originalDataDir !== undefined) {
+            process.env.TRAJECTORIES_DATA_DIR = originalDataDir;
+          } else {
+            delete process.env.TRAJECTORIES_DATA_DIR;
+          }
+        }
+      }
+
+      // Sort by startedAt descending (most recent first)
+      allTrajectories.sort(
+        (a, b) =>
+          new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
+      );
 
       // Apply search filter if provided
       if (options.search) {
         const query = options.search.toLowerCase();
-        trajectories = trajectories.filter((traj) => {
+        allTrajectories = allTrajectories.filter((traj) => {
           // Search in title
           if (traj.title.toLowerCase().includes(query)) return true;
           // Search in ID
           if (traj.id.toLowerCase().includes(query)) return true;
           return false;
         });
-
-        // Apply limit after search
-        if (options.limit) {
-          trajectories = trajectories.slice(0, options.limit);
-        }
       }
 
-      if (trajectories.length === 0) {
+      // Apply limit after aggregation and search
+      if (options.limit) {
+        allTrajectories = allTrajectories.slice(0, options.limit);
+      }
+
+      if (allTrajectories.length === 0) {
         if (options.search) {
           console.log(`No trajectories found matching "${options.search}"`);
         } else {
@@ -49,9 +90,9 @@ export function registerListCommand(program: Command): void {
       }
 
       const searchNote = options.search ? ` matching "${options.search}"` : "";
-      console.log(`Found ${trajectories.length} trajectories${searchNote}:\n`);
+      console.log(`Found ${allTrajectories.length} trajectories${searchNote}:\n`);
 
-      for (const traj of trajectories) {
+      for (const traj of allTrajectories) {
         const statusIcon = getStatusIcon(traj.status);
         const confidence = traj.confidence
           ? ` (${Math.round(traj.confidence * 100)}%)`
