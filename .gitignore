@@ -7,6 +7,8 @@ dist/
 # Test coverage
 coverage/
 
+.npm-cache
+
 # Editor
 .vscode/
 .idea/

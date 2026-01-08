@@ -1,0 +1,70 @@
+name: Publish to npm
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Update npm and configure
+        run: |
+          npm install -g npm@latest
+          echo "npm version: $(npm --version)"
+          echo "node version: $(node --version)"
+          echo "OIDC URL set: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run tests
+        run: npm run test:run
+
+      - name: Check if version changed
+        id: version
+        run: |
+          PACKAGE_NAME=$(jq -r .name package.json)
+          LOCAL_VERSION=$(jq -r .version package.json)
+          NPM_VERSION=$(npm view "$PACKAGE_NAME" version 2>/dev/null || echo "0.0.0")
+          
+          echo "local=$LOCAL_VERSION" >> $GITHUB_OUTPUT
+          echo "npm=$NPM_VERSION" >> $GITHUB_OUTPUT
+          
+          if [ "$LOCAL_VERSION" != "$NPM_VERSION" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Version changed: $NPM_VERSION -> $LOCAL_VERSION"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Version unchanged: $LOCAL_VERSION"
+          fi
+
+      - name: Publish to npm
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          # Ensure no auth config exists (let npm use OIDC)
+          rm -f ~/.npmrc
+          npm publish --access public --provenance
+
+      - name: Create GitHub Release
+        if: steps.version.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.local }}
+          name: v${{ steps.version.outputs.local }}
+          generate_release_notes: true
