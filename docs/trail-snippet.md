@@ -2,6 +2,18 @@
 
 Record your work as a trajectory for future agents and humans to follow.
 
+## Usage
+
+If `trail` is installed globally, run commands directly:
+```bash
+trail start "Task description"
+```
+
+If not globally installed, use npx to run from local installation:
+```bash
+npx trail start "Task description"
+```
+
 ## When Starting Work
 
 Start a trajectory when beginning a task:

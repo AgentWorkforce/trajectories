@@ -113,9 +113,7 @@ export function addChapter(
 
   // Add agent to trajectory.agents if not already present
   let updatedAgents: AgentParticipation[] = trajectory.agents;
-  const agentExists = trajectory.agents.some(
-    (a) => a.name === input.agentName,
-  );
+  const agentExists = trajectory.agents.some((a) => a.name === input.agentName);
   if (!agentExists) {
     const isFirstAgent = trajectory.agents.length === 0;
     updatedAgents = [
