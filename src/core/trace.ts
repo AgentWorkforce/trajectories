@@ -238,6 +238,11 @@ export function generateTrace(
   // Get changed files with line ranges
   const changedFiles = getChangedFiles(startRef, endRef);
 
+  // Return null if no files changed
+  if (changedFiles.length === 0) {
+    return null;
+  }
+
   // Detect the model used
   const model = detectModel();
 
