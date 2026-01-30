@@ -102,12 +102,18 @@ export const AlternativeSchema = z.object({
 
 /**
  * Decision schema
+ * Note: alternatives supports both string[] (legacy) and Alternative[] (new)
  */
 export const DecisionSchema = z.object({
   question: z.string().min(1, "Decision question is required"),
   chosen: z.string().min(1, "Chosen option is required"),
-  alternatives: z.array(AlternativeSchema),
+  alternatives: z.array(z.union([z.string(), AlternativeSchema])),
   reasoning: z.string().min(1, "Decision reasoning is required"),
+  confidence: z
+    .number()
+    .min(0, "Confidence must be between 0 and 1")
+    .max(1, "Confidence must be between 0 and 1")
+    .optional(),
 });
 
 /**
