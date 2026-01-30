@@ -111,9 +111,9 @@ describe("Agent Trace", () => {
     });
 
     it("should return unknown when no model env is set", () => {
-      delete process.env.TRAIL_TRACE_MODEL;
-      delete process.env.ANTHROPIC_MODEL;
-      delete process.env.OPENAI_MODEL;
+      process.env.TRAIL_TRACE_MODEL = undefined;
+      process.env.ANTHROPIC_MODEL = undefined;
+      process.env.OPENAI_MODEL = undefined;
       expect(detectModel()).toBe("unknown");
     });
   });
