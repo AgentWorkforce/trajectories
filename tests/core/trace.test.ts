@@ -9,8 +9,10 @@ import {
   createTraceRef,
   detectModel,
   generateTrace,
+  getChangedFiles,
   getGitHead,
   isGitRepo,
+  isValidGitRef,
 } from "../../src/core/trace.js";
 import type { Trajectory } from "../../src/core/types.js";
 
@@ -86,6 +88,59 @@ describe("Agent Trace", () => {
       expect(ref.startRef).toBe("abc123");
       expect(ref.endRef).toBeUndefined();
       expect(ref.traceId).toBeUndefined();
+    });
+  });
+
+  describe("isValidGitRef", () => {
+    it("should accept HEAD", () => {
+      expect(isValidGitRef("HEAD")).toBe(true);
+    });
+
+    it("should accept working", () => {
+      expect(isValidGitRef("working")).toBe(true);
+    });
+
+    it("should accept valid commit hashes", () => {
+      expect(isValidGitRef("abc1234")).toBe(true);
+      expect(isValidGitRef("abc1234567890abcdef1234567890abcdef123456")).toBe(
+        true,
+      );
+    });
+
+    it("should accept valid branch names", () => {
+      expect(isValidGitRef("main")).toBe(true);
+      expect(isValidGitRef("feature/my-branch")).toBe(true);
+      expect(isValidGitRef("release-1.0")).toBe(true);
+    });
+
+    it("should reject command injection attempts", () => {
+      expect(isValidGitRef("$(whoami)")).toBe(false);
+      expect(isValidGitRef("`whoami`")).toBe(false);
+      expect(isValidGitRef("HEAD; rm -rf /")).toBe(false);
+      expect(isValidGitRef("HEAD && cat /etc/passwd")).toBe(false);
+      expect(isValidGitRef("HEAD | cat")).toBe(false);
+      expect(isValidGitRef("HEAD\nrm -rf /")).toBe(false);
+      expect(isValidGitRef("'injection'")).toBe(false);
+      expect(isValidGitRef('"injection"')).toBe(false);
+    });
+
+    it("should reject refs that are too long", () => {
+      const longRef = "a".repeat(256);
+      expect(isValidGitRef(longRef)).toBe(false);
+    });
+  });
+
+  describe("getChangedFiles security", () => {
+    it("should return empty array for invalid startRef", () => {
+      mockExecSync.mockReturnValue("true\n"); // isGitRepo
+      const result = getChangedFiles("$(whoami)", "HEAD");
+      expect(result).toEqual([]);
+    });
+
+    it("should return empty array for invalid endRef", () => {
+      mockExecSync.mockReturnValue("true\n"); // isGitRepo
+      const result = getChangedFiles("abc123", "; rm -rf /");
+      expect(result).toEqual([]);
     });
   });
 

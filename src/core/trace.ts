@@ -17,6 +17,37 @@ import type {
 } from "./types.js";
 
 /**
+ * Validate a git reference to prevent command injection
+ * @param ref - Git reference to validate
+ * @returns True if the ref is safe to use in git commands
+ */
+export function isValidGitRef(ref: string): boolean {
+  // Allow HEAD, branch names, and commit hashes
+  // Git refs can contain alphanumeric, -, _, /, and .
+  // Commit hashes are 7-40 hex characters
+  const validRefPattern = /^[a-zA-Z0-9_\-./]+$/;
+  const commitHashPattern = /^[a-fA-F0-9]{7,40}$/;
+
+  if (ref === "HEAD" || ref === "working") {
+    return true;
+  }
+
+  if (commitHashPattern.test(ref)) {
+    return true;
+  }
+
+  // For branch names, ensure no shell metacharacters
+  if (validRefPattern.test(ref) && ref.length <= 255) {
+    // Additional check: no consecutive dots (prevents .. traversal tricks)
+    if (!ref.includes("..") || ref.split("..").every((p) => p.length > 0)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Check if the current directory is inside a git repository
  * @returns True if in a git repo, false otherwise
  */
@@ -123,6 +154,11 @@ export function getChangedFiles(
   endRef = "HEAD",
 ): Array<{ path: string; ranges: TraceRange[] }> {
   if (!isGitRepo()) {
+    return [];
+  }
+
+  // Validate git refs to prevent command injection
+  if (!isValidGitRef(startRef) || !isValidGitRef(endRef)) {
     return [];
   }
 
