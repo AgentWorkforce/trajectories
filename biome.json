@@ -28,7 +28,9 @@
       "*.md",
       ".beads",
       ".openskills",
-      ".claude"
+      ".claude",
+      ".agent-relay",
+      ".trajectories"
     ]
   }
 }

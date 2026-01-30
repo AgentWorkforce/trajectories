@@ -63,7 +63,7 @@ function renderDecision(decision: Decision): string {
   const alternatives = decision.alternatives?.length
     ? `<div class="alternatives">
         <span class="alternatives-label">Considered:</span>
-        ${decision.alternatives.map((a) => escapeHtml(a.option)).join(", ")}
+        ${decision.alternatives.map((a) => escapeHtml(typeof a === "string" ? a : a.option)).join(", ")}
        </div>`
     : "";
 
