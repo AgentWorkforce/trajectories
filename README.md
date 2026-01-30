@@ -79,17 +79,6 @@ trail export traj_abc123 --format markdown
 trail export --format html --open  # Opens in browser
 ```
 
-## Teach Your Agents To Use Leave A Trail
-Use prpm to install the AGENTS.md snippet or CLAUDE.md snippet
-```
-prpm install @agent-workforce/trail-snippet
-```
-
-Or if using CLAUDE.md
-```
-prpm install @agent-workforce/trail-snippet --location CLAUDE.md
-```
-
 ## Why "Trail"?
 
 > **Trajectory** = the complete path an agent takes through a task
