@@ -33,6 +33,30 @@ Works with any task system: Beads, Linear, Jira, GitHub Issues, or standalone. T
 ### Integration Ready
 - Complements [claude-mem](https://github.com/thedotmack/claude-mem) for observation-level memory
 - Integrates with [agent-relay](https://github.com/khaliqgant/agent-relay) for multi-agent messaging
+- **Agent Trace integration** - Automatic code attribution following [agent-trace.dev](https://agent-trace.dev) spec
+
+### Code Attribution (Agent Trace)
+
+Trajectories automatically generate [Agent Trace](https://agent-trace.dev) records that attribute code changes to AI agents:
+
+```bash
+trail start "Implement auth module"
+# ... agent writes code, makes commits ...
+trail complete --summary "Added JWT auth" --confidence 0.85
+
+# View trace attribution
+trail show traj_abc123 --trace
+```
+
+**What you get:**
+- `.trace.json` files saved alongside each trajectory
+- Line-level attribution of which code was AI-generated
+- Model identification (Claude, GPT, etc.)
+- Git revision tracking for change history
+
+**Zero configuration required** - traces are generated automatically when completing trajectories in a git repository.
+
+See the full [Agent Trace Integration Spec](./docs/specs/agent-trace-integration.md) for details.
 
 ## Use Cases
 

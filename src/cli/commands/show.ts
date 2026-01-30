@@ -3,8 +3,15 @@
  */
 
 import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import type { Command } from "commander";
-import type { Decision, Trajectory } from "../../core/types.js";
+import type {
+  Decision,
+  TraceConversation,
+  TraceRecord,
+  Trajectory,
+} from "../../core/types.js";
 import { FileStorage, getSearchPaths } from "../../storage/file.js";
 
 /**
@@ -44,17 +51,102 @@ async function findTrajectory(id: string): Promise<Trajectory | null> {
   return null;
 }
 
+/**
+ * Find and load the trace file for a trajectory
+ */
+async function findTraceFile(id: string): Promise<TraceRecord | null> {
+  const searchPaths = getSearchPaths();
+
+  for (const searchPath of searchPaths) {
+    if (!existsSync(searchPath)) {
+      continue;
+    }
+
+    const completedDir = join(searchPath, "completed");
+    if (!existsSync(completedDir)) {
+      continue;
+    }
+
+    // Search through month directories
+    try {
+      const { readdirSync } = await import("node:fs");
+      const months = readdirSync(completedDir);
+      for (const month of months) {
+        const tracePath = join(completedDir, month, `${id}.trace.json`);
+        if (existsSync(tracePath)) {
+          const content = await readFile(tracePath, "utf-8");
+          return JSON.parse(content) as TraceRecord;
+        }
+      }
+    } catch {
+      // Continue searching
+    }
+  }
+
+  return null;
+}
+
 export function registerShowCommand(program: Command): void {
   program
     .command("show <id>")
     .description("Show trajectory details")
     .option("-d, --decisions", "Show decisions only")
+    .option("-t, --trace", "Show trace information")
     .action(async (id: string, options) => {
       const trajectory = await findTrajectory(id);
 
       if (!trajectory) {
         console.error(`Error: Trajectory not found: ${id}`);
         throw new Error("Trajectory not found");
+      }
+
+      if (options.trace) {
+        // Show trace information
+        console.log(`Trace for ${trajectory.task.title}:\n`);
+
+        // Show embedded trace reference
+        if (trajectory._trace) {
+          console.log("Trace Reference:");
+          console.log(`  Start Ref: ${trajectory._trace.startRef}`);
+          if (trajectory._trace.endRef) {
+            console.log(`  End Ref:   ${trajectory._trace.endRef}`);
+          }
+          if (trajectory._trace.traceId) {
+            console.log(`  Trace ID:  ${trajectory._trace.traceId}`);
+          }
+          console.log("");
+        }
+
+        // Load and display trace file
+        const trace = await findTraceFile(id);
+        if (trace) {
+          console.log("Trace Details:");
+          console.log(`  ID:        ${trace.id}`);
+          console.log(`  Timestamp: ${trace.timestamp}`);
+          console.log(`  Files:     ${trace.files.length}`);
+          console.log("");
+
+          if (trace.files.length > 0) {
+            console.log("Modified Files:");
+            for (const file of trace.files) {
+              const rangeCount = file.conversations.reduce(
+                (sum: number, conv: TraceConversation) =>
+                  sum + conv.ranges.length,
+                0,
+              );
+              const model =
+                file.conversations[0]?.contributor.model ?? "unknown";
+              console.log(`  • ${file.path}`);
+              console.log(`    Ranges: ${rangeCount}, Model: ${model}`);
+            }
+          }
+        } else if (!trajectory._trace) {
+          console.log("No trace information available");
+          console.log(
+            "Trace is captured when starting a trajectory in a git repo",
+          );
+        }
+        return;
       }
 
       if (options.decisions) {
@@ -72,7 +164,10 @@ export function registerShowCommand(program: Command): void {
           console.log(`  Chose: ${decision.chosen}`);
           console.log(`  Reasoning: ${decision.reasoning}`);
           if (decision.alternatives.length > 0) {
-            console.log(`  Alternatives: ${decision.alternatives.join(", ")}`);
+            const altStrings = decision.alternatives.map((a) =>
+              typeof a === "string" ? a : a.option,
+            );
+            console.log(`  Alternatives: ${altStrings.join(", ")}`);
           }
           console.log("");
         }

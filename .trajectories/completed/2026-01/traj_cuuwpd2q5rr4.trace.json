@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "id": "trace_imxymv6f8x4b",
+  "timestamp": "2026-01-30T11:12:26.413Z",
+  "trajectory": "traj_cuuwpd2q5rr4",
+  "files": [
+    {
+      "path": "README.md",
+      "conversations": [
+        {
+          "contributor": {
+            "type": "agent",
+            "model": "unknown"
+          },
+          "ranges": [
+            {
+              "start_line": 33,
+              "end_line": 62,
+              "revision": "9ef63dc773f6f597bd4d92340e0543e41b16528e"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

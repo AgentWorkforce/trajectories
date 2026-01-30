@@ -64,7 +64,10 @@ export function exportToMarkdown(trajectory: Trajectory): string {
       lines.push(`### ${decision.question}`);
       lines.push(`- **Chose:** ${decision.chosen}`);
       if (decision.alternatives.length > 0) {
-        lines.push(`- **Rejected:** ${decision.alternatives.join(", ")}`);
+        const altStrings = decision.alternatives.map((a) =>
+          typeof a === "string" ? a : a.option,
+        );
+        lines.push(`- **Rejected:** ${altStrings.join(", ")}`);
       }
       lines.push(`- **Reasoning:** ${decision.reasoning}`);
       lines.push("");

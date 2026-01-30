@@ -335,7 +335,7 @@ describe("Trajectory", () => {
           {
             question: "Auth strategy",
             chosen: "JWT",
-            alternatives: ["Sessions"],
+            alternatives: [{ option: "Sessions", reason: "Server-side state" }],
             reasoning: "Stateless",
           },
         ],

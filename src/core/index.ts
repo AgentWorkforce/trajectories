@@ -21,6 +21,14 @@ export type {
   AddEventInput,
   CompleteTrajectoryInput,
   TrajectoryQuery,
+  // Trace types
+  TraceRecord,
+  TraceFile,
+  TraceRange,
+  TraceConversation,
+  TraceContributor,
+  ContributorType,
+  TrajectoryTraceRef,
 } from "./types.js";
 
 // Schemas and validation
@@ -52,3 +60,14 @@ export {
   completeTrajectory,
   abandonTrajectory,
 } from "./trajectory.js";
+
+// Trace operations
+export {
+  isGitRepo,
+  getGitHead,
+  captureGitState,
+  generateTrace,
+  createTraceRef,
+  detectModel,
+  generateTraceId,
+} from "./trace.js";

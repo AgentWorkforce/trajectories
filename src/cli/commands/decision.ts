@@ -30,7 +30,9 @@ export function registerDecisionCommand(program: Command): void {
       }
 
       const alternatives = options.alternatives
-        ? options.alternatives.split(",").map((s: string) => s.trim())
+        ? options.alternatives
+            .split(",")
+            .map((s: string) => ({ option: s.trim(), reason: "" }))
         : [];
 
       const reasoning = options.reasoning || "";
@@ -49,7 +51,10 @@ export function registerDecisionCommand(program: Command): void {
         console.log(`  Reasoning: ${reasoning}`);
       }
       if (alternatives.length > 0) {
-        console.log(`  Alternatives: ${alternatives.join(", ")}`);
+        const altStrings = alternatives.map(
+          (a: { option: string }) => a.option,
+        );
+        console.log(`  Alternatives: ${altStrings.join(", ")}`);
       }
     });
 }

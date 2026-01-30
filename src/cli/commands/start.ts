@@ -3,6 +3,7 @@
  */
 
 import type { Command } from "commander";
+import { captureGitState, createTraceRef } from "../../core/trace.js";
 import { addChapter, createTrajectory } from "../../core/trajectory.js";
 import type { TaskSource } from "../../core/types.js";
 import { FileStorage } from "../../storage/file.js";
@@ -54,12 +55,23 @@ export function registerStartCommand(program: Command): void {
       const projectId =
         options.project ?? process.env.TRAJECTORIES_PROJECT ?? undefined;
 
+      // Capture git state for trace tracking
+      const startRef = captureGitState();
+
       // Create the trajectory
       let trajectory = createTrajectory({
         title,
         source,
         projectId,
       });
+
+      // Add trace reference if in a git repo
+      if (startRef) {
+        trajectory = {
+          ...trajectory,
+          _trace: createTraceRef(startRef),
+        };
+      }
 
       // If agent specified, add initial chapter with agent name
       if (agentName) {

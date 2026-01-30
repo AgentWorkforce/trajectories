@@ -57,6 +57,7 @@ export type TrajectoryEventType =
   | "message_sent"
   | "message_received"
   | "decision"
+  | "finding"
   | "note"
   | "error";
 
@@ -79,8 +80,20 @@ export interface TrajectoryEvent {
   raw?: unknown;
   /** Importance level */
   significance?: EventSignificance;
+  /** Confidence level for this event (0-1) */
+  confidence?: number;
   /** User-defined tags */
   tags?: string[];
+}
+
+/**
+ * An alternative option that was considered
+ */
+export interface Alternative {
+  /** The alternative option */
+  option: string;
+  /** Why this alternative was not chosen */
+  reason?: string;
 }
 
 /**
@@ -92,9 +105,41 @@ export interface Decision {
   /** What was chosen */
   chosen: string;
   /** What alternatives were considered */
-  alternatives: string[];
+  alternatives: Alternative[];
   /** Why this choice was made */
   reasoning: string;
+  /** Confidence in this decision (0-1) */
+  confidence?: number;
+}
+
+/**
+ * Finding category types
+ */
+export type FindingCategory =
+  | "bug"
+  | "pattern"
+  | "optimization"
+  | "security"
+  | "documentation"
+  | "dependency"
+  | "other";
+
+/**
+ * A structured finding record - captures discoveries made during exploration
+ */
+export interface Finding {
+  /** What was found */
+  what: string;
+  /** Where it was found (file path, component, etc.) */
+  where: string;
+  /** Why this finding is significant */
+  significance: string;
+  /** Category of the finding */
+  category: FindingCategory;
+  /** Suggested action or follow-up */
+  suggestedAction?: string;
+  /** Confidence in this finding (0-1) */
+  confidence?: number;
 }
 
 /**
@@ -181,6 +226,8 @@ export interface Trajectory {
   projectId: string;
   /** User-defined tags */
   tags: string[];
+  /** Trace information for code attribution */
+  _trace?: TrajectoryTraceRef;
 }
 
 /**
@@ -269,4 +316,87 @@ export interface TrajectoryQuery {
   sortBy?: "startedAt" | "completedAt" | "title";
   /** Sort direction */
   sortOrder?: "asc" | "desc";
+}
+
+// ============================================================================
+// Agent Trace Types
+// ============================================================================
+
+/**
+ * A range of lines within a file that an agent contributed to
+ */
+export interface TraceRange {
+  /** Starting line number (1-indexed) */
+  start_line: number;
+  /** Ending line number (1-indexed, inclusive) */
+  end_line: number;
+  /** Git revision/commit hash when this range was created */
+  revision?: string;
+  /** Hash of the content for change detection */
+  content_hash?: string;
+}
+
+/**
+ * Contributor type for trace conversations
+ */
+export type ContributorType = "human" | "agent";
+
+/**
+ * Information about the contributor to a conversation
+ */
+export interface TraceContributor {
+  /** Type of contributor */
+  type: ContributorType;
+  /** Model identifier (e.g., 'claude-3-opus', 'gpt-4') */
+  model?: string;
+}
+
+/**
+ * A conversation that contributed to specific ranges in a file
+ */
+export interface TraceConversation {
+  /** Information about the contributor */
+  contributor: TraceContributor;
+  /** URL to the conversation (if available) */
+  url?: string;
+  /** Line ranges this conversation contributed to */
+  ranges: TraceRange[];
+}
+
+/**
+ * A file with traced contributions
+ */
+export interface TraceFile {
+  /** Path to the file (relative to project root) */
+  path: string;
+  /** Conversations that contributed to this file */
+  conversations: TraceConversation[];
+}
+
+/**
+ * The main trace record - captures agent contributions to code
+ */
+export interface TraceRecord {
+  /** Schema version for forward compatibility */
+  version: 1;
+  /** Unique trace ID (format: trace_xxxxxxxxxxxx) */
+  id: string;
+  /** When the trace was created (ISO timestamp) */
+  timestamp: string;
+  /** Optional reference to associated trajectory */
+  trajectory?: string;
+  /** Files with traced contributions */
+  files: TraceFile[];
+}
+
+/**
+ * Reference to trace information within a trajectory
+ */
+export interface TrajectoryTraceRef {
+  /** Git ref (commit hash) when trace started */
+  startRef: string;
+  /** Git ref (commit hash) when trace ended */
+  endRef?: string;
+  /** ID of the associated trace record */
+  traceId?: string;
 }

@@ -60,6 +60,7 @@ export const TrajectoryEventTypeSchema = z.enum([
   "message_sent",
   "message_received",
   "decision",
+  "finding",
   "note",
   "error",
 ]);
@@ -84,16 +85,35 @@ export const TrajectoryEventSchema = z.object({
   raw: z.unknown().optional(),
   significance: EventSignificanceSchema.optional(),
   tags: z.array(z.string()).optional(),
+  confidence: z
+    .number()
+    .min(0, "Confidence must be between 0 and 1")
+    .max(1, "Confidence must be between 0 and 1")
+    .optional(),
+});
+
+/**
+ * Alternative schema for decision alternatives
+ */
+export const AlternativeSchema = z.object({
+  option: z.string().min(1, "Alternative option is required"),
+  reason: z.string().optional(),
 });
 
 /**
  * Decision schema
+ * Note: alternatives supports both string[] (legacy) and Alternative[] (new)
  */
 export const DecisionSchema = z.object({
   question: z.string().min(1, "Decision question is required"),
   chosen: z.string().min(1, "Chosen option is required"),
-  alternatives: z.array(z.string()),
+  alternatives: z.array(z.union([z.string(), AlternativeSchema])),
   reasoning: z.string().min(1, "Decision reasoning is required"),
+  confidence: z
+    .number()
+    .min(0, "Confidence must be between 0 and 1")
+    .max(1, "Confidence must be between 0 and 1")
+    .optional(),
 });
 
 /**
@@ -135,6 +155,70 @@ export const RetrospectiveSchema = z.object({
   timeSpent: z.string().optional(),
 });
 
+// ============================================================================
+// Agent Trace Schemas
+// ============================================================================
+
+/**
+ * Trace range schema - represents a range of lines in a file
+ */
+export const TraceRangeSchema = z.object({
+  start_line: z.number().int().positive("Start line must be positive"),
+  end_line: z.number().int().positive("End line must be positive"),
+  revision: z.string().optional(),
+  content_hash: z.string().optional(),
+});
+
+/**
+ * Contributor type schema
+ */
+export const ContributorTypeSchema = z.enum(["human", "agent"]);
+
+/**
+ * Trace contributor schema
+ */
+export const TraceContributorSchema = z.object({
+  type: ContributorTypeSchema,
+  model: z.string().optional(),
+});
+
+/**
+ * Trace conversation schema
+ */
+export const TraceConversationSchema = z.object({
+  contributor: TraceContributorSchema,
+  url: z.string().url().optional(),
+  ranges: z.array(TraceRangeSchema),
+});
+
+/**
+ * Trace file schema
+ */
+export const TraceFileSchema = z.object({
+  path: z.string().min(1, "File path is required"),
+  conversations: z.array(TraceConversationSchema),
+});
+
+/**
+ * Trace record schema - the main trace type
+ */
+export const TraceRecordSchema = z.object({
+  version: z.literal(1),
+  id: z.string().regex(/^trace_[a-z0-9]+$/, "Invalid trace ID format"),
+  timestamp: z.string().datetime(),
+  trajectory: z.string().optional(),
+  files: z.array(TraceFileSchema),
+});
+
+/**
+ * Trajectory trace reference schema
+ */
+export const TrajectoryTraceRefSchema = z.object({
+  startRef: z.string().min(1, "Start ref is required"),
+  endRef: z.string().optional(),
+  traceId: z.string().optional(),
+});
+
 /**
  * Full trajectory schema
  */
@@ -152,6 +236,7 @@ export const TrajectorySchema = z.object({
   filesChanged: z.array(z.string()),
   projectId: z.string(),
   tags: z.array(z.string()),
+  _trace: TrajectoryTraceRefSchema.optional(),
 });
 
 /**
@@ -270,3 +355,13 @@ export type TrajectoryEventSchema = z.infer<typeof TrajectoryEventSchema>;
 export type ChapterSchema = z.infer<typeof ChapterSchema>;
 export type RetrospectiveSchema = z.infer<typeof RetrospectiveSchema>;
 export type TrajectorySchemaType = z.infer<typeof TrajectorySchema>;
+export type TraceRangeSchemaType = z.infer<typeof TraceRangeSchema>;
+export type TraceContributorSchemaType = z.infer<typeof TraceContributorSchema>;
+export type TraceConversationSchemaType = z.infer<
+  typeof TraceConversationSchema
+>;
+export type TraceFileSchemaType = z.infer<typeof TraceFileSchema>;
+export type TraceRecordSchemaType = z.infer<typeof TraceRecordSchema>;
+export type TrajectoryTraceRefSchemaType = z.infer<
+  typeof TrajectoryTraceRefSchema
+>;
