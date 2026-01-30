@@ -1,0 +1,41 @@
+{
+  "id": "traj_cuuwpd2q5rr4",
+  "version": 1,
+  "task": {
+    "title": "Implement Agent Trace integration (PR #8)"
+  },
+  "status": "completed",
+  "startedAt": "2026-01-30T11:11:11.822Z",
+  "agents": [
+    {
+      "name": "Multi-agent swarm",
+      "role": "lead",
+      "joinedAt": "2026-01-30T11:11:11.850Z"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "chap_hi1s7ri5sozc",
+      "title": "Initial work",
+      "agentName": "Multi-agent swarm",
+      "startedAt": "2026-01-30T11:11:11.850Z",
+      "events": [],
+      "endedAt": "2026-01-30T11:12:26.359Z"
+    }
+  ],
+  "commits": [],
+  "filesChanged": [],
+  "projectId": "/Users/khaliqgant/Projects/agent-workforce/trajectories",
+  "tags": [],
+  "_trace": {
+    "startRef": "57465dbebfe80a229023baaa50484b8c70a14457",
+    "endRef": "9ef63dc773f6f597bd4d92340e0543e41b16528e",
+    "traceId": "trace_imxymv6f8x4b"
+  },
+  "completedAt": "2026-01-30T11:12:26.359Z",
+  "retrospective": {
+    "summary": "Implemented Agent Trace integration for PR #8. Added TraceRecord types, git state capture, trace generation logic, and CLI integration for start/complete/show commands. Updated README with Agent Trace section.",
+    "approach": "Standard approach",
+    "confidence": 0.9
+  }
+}

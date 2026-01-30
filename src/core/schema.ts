@@ -351,7 +351,11 @@ export type RetrospectiveSchema = z.infer<typeof RetrospectiveSchema>;
 export type TrajectorySchemaType = z.infer<typeof TrajectorySchema>;
 export type TraceRangeSchemaType = z.infer<typeof TraceRangeSchema>;
 export type TraceContributorSchemaType = z.infer<typeof TraceContributorSchema>;
-export type TraceConversationSchemaType = z.infer<typeof TraceConversationSchema>;
+export type TraceConversationSchemaType = z.infer<
+  typeof TraceConversationSchema
+>;
 export type TraceFileSchemaType = z.infer<typeof TraceFileSchema>;
 export type TraceRecordSchemaType = z.infer<typeof TraceRecordSchema>;
-export type TrajectoryTraceRefSchemaType = z.infer<typeof TrajectoryTraceRefSchema>;
+export type TrajectoryTraceRefSchemaType = z.infer<
+  typeof TrajectoryTraceRefSchema
+>;
