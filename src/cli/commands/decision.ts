@@ -51,7 +51,8 @@ export function registerDecisionCommand(program: Command): void {
         console.log(`  Reasoning: ${reasoning}`);
       }
       if (alternatives.length > 0) {
-        console.log(`  Alternatives: ${alternatives.join(", ")}`);
+        const altStrings = alternatives.map((a) => a.option);
+        console.log(`  Alternatives: ${altStrings.join(", ")}`);
       }
     });
 }

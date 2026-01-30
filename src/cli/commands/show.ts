@@ -164,7 +164,10 @@ export function registerShowCommand(program: Command): void {
           console.log(`  Chose: ${decision.chosen}`);
           console.log(`  Reasoning: ${decision.reasoning}`);
           if (decision.alternatives.length > 0) {
-            console.log(`  Alternatives: ${decision.alternatives.join(", ")}`);
+            const altStrings = decision.alternatives.map((a) =>
+              typeof a === "string" ? a : a.option,
+            );
+            console.log(`  Alternatives: ${altStrings.join(", ")}`);
           }
           console.log("");
         }

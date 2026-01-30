@@ -93,7 +93,7 @@ export interface Alternative {
   /** The alternative option */
   option: string;
   /** Why this alternative was not chosen */
-  reason: string;
+  reason?: string;
 }
 
 /**
