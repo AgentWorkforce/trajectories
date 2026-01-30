@@ -29,6 +29,10 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AgentWorkforce/trajectories"
+  },
   "files": ["dist"],
   "engines": {
     "node": ">=20.0.0"
