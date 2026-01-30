@@ -2,9 +2,42 @@
  * trail complete command
  */
 
+import { existsSync } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import type { Command } from "commander";
+import { generateTrace, getGitHead } from "../../core/trace.js";
 import { completeTrajectory } from "../../core/trajectory.js";
+import type { TraceRecord, Trajectory } from "../../core/types.js";
 import { FileStorage } from "../../storage/file.js";
+
+/**
+ * Save trace file alongside the trajectory
+ */
+async function saveTraceFile(
+  trajectory: Trajectory,
+  trace: TraceRecord,
+): Promise<void> {
+  // Determine trajectory file location based on status
+  const dataDir = process.env.TRAJECTORIES_DATA_DIR;
+  const baseDir = dataDir ? dataDir : join(process.cwd(), ".trajectories");
+  const completedDir = join(baseDir, "completed");
+
+  const date = new Date(trajectory.completedAt ?? trajectory.startedAt);
+  const monthDir = join(
+    completedDir,
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
+  );
+
+  // Ensure directory exists
+  if (!existsSync(monthDir)) {
+    await mkdir(monthDir, { recursive: true });
+  }
+
+  // Save trace file with .trace.json extension
+  const tracePath = join(monthDir, `${trajectory.id}.trace.json`);
+  await writeFile(tracePath, JSON.stringify(trace, null, 2), "utf-8");
+}
 
 export function registerCompleteCommand(program: Command): void {
   program
@@ -36,16 +69,43 @@ export function registerCompleteCommand(program: Command): void {
         throw new Error("Invalid confidence");
       }
 
-      const completed = completeTrajectory(active, {
+      let completed = completeTrajectory(active, {
         summary: options.summary,
         approach: options.approach || "Standard approach",
         confidence,
       });
 
+      // Generate trace if we have a start reference
+      let trace: TraceRecord | null = null;
+      if (active._trace?.startRef) {
+        trace = generateTrace(completed, active._trace.startRef);
+        if (trace) {
+          // Update trajectory with final trace reference
+          const endRef = getGitHead();
+          completed = {
+            ...completed,
+            _trace: {
+              ...completed._trace,
+              startRef: active._trace.startRef,
+              endRef: endRef ?? undefined,
+              traceId: trace.id,
+            },
+          };
+        }
+      }
+
       await storage.save(completed);
+
+      // Save trace file alongside trajectory if generated
+      if (trace) {
+        await saveTraceFile(completed, trace);
+      }
 
       console.log(`✓ Trajectory completed: ${completed.id}`);
       console.log(`  Summary: ${options.summary}`);
       console.log(`  Confidence: ${Math.round(confidence * 100)}%`);
+      if (trace) {
+        console.log(`  Trace: ${trace.id} (${trace.files.length} files)`);
+      }
     });
 }
