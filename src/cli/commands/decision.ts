@@ -30,7 +30,9 @@ export function registerDecisionCommand(program: Command): void {
       }
 
       const alternatives = options.alternatives
-        ? options.alternatives.split(",").map((s: string) => s.trim())
+        ? options.alternatives
+            .split(",")
+            .map((s: string) => ({ option: s.trim(), reason: "" }))
         : [];
 
       const reasoning = options.reasoning || "";
