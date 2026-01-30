@@ -60,6 +60,7 @@ export const TrajectoryEventTypeSchema = z.enum([
   "message_sent",
   "message_received",
   "decision",
+  "finding",
   "note",
   "error",
 ]);
@@ -84,6 +85,19 @@ export const TrajectoryEventSchema = z.object({
   raw: z.unknown().optional(),
   significance: EventSignificanceSchema.optional(),
   tags: z.array(z.string()).optional(),
+  confidence: z
+    .number()
+    .min(0, "Confidence must be between 0 and 1")
+    .max(1, "Confidence must be between 0 and 1")
+    .optional(),
+});
+
+/**
+ * Alternative schema for decision alternatives
+ */
+export const AlternativeSchema = z.object({
+  option: z.string().min(1, "Alternative option is required"),
+  reason: z.string().optional(),
 });
 
 /**
@@ -92,7 +106,7 @@ export const TrajectoryEventSchema = z.object({
 export const DecisionSchema = z.object({
   question: z.string().min(1, "Decision question is required"),
   chosen: z.string().min(1, "Chosen option is required"),
-  alternatives: z.array(z.string()),
+  alternatives: z.array(AlternativeSchema),
   reasoning: z.string().min(1, "Decision reasoning is required"),
 });
 

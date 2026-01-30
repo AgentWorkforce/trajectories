@@ -57,6 +57,7 @@ export type TrajectoryEventType =
   | "message_sent"
   | "message_received"
   | "decision"
+  | "finding"
   | "note"
   | "error";
 
@@ -79,8 +80,20 @@ export interface TrajectoryEvent {
   raw?: unknown;
   /** Importance level */
   significance?: EventSignificance;
+  /** Confidence level for this event (0-1) */
+  confidence?: number;
   /** User-defined tags */
   tags?: string[];
+}
+
+/**
+ * An alternative option that was considered
+ */
+export interface Alternative {
+  /** The alternative option */
+  option: string;
+  /** Why this alternative was not chosen */
+  reason: string;
 }
 
 /**
@@ -92,9 +105,41 @@ export interface Decision {
   /** What was chosen */
   chosen: string;
   /** What alternatives were considered */
-  alternatives: string[];
+  alternatives: Alternative[];
   /** Why this choice was made */
   reasoning: string;
+  /** Confidence in this decision (0-1) */
+  confidence?: number;
+}
+
+/**
+ * Finding category types
+ */
+export type FindingCategory =
+  | "bug"
+  | "pattern"
+  | "optimization"
+  | "security"
+  | "documentation"
+  | "dependency"
+  | "other";
+
+/**
+ * A structured finding record - captures discoveries made during exploration
+ */
+export interface Finding {
+  /** What was found */
+  what: string;
+  /** Where it was found (file path, component, etc.) */
+  where: string;
+  /** Why this finding is significant */
+  significance: string;
+  /** Category of the finding */
+  category: FindingCategory;
+  /** Suggested action or follow-up */
+  suggestedAction?: string;
+  /** Confidence in this finding (0-1) */
+  confidence?: number;
 }
 
 /**
