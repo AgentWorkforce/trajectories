@@ -80,6 +80,8 @@ Over time, trajectories become a searchable knowledge base:
 
 ## Quick Start
 
+### CLI
+
 ```bash
 # Start tracking a task
 trail start "Implement auth module"
@@ -102,6 +104,67 @@ trail list --search "auth"
 trail export traj_abc123 --format markdown
 trail export --format html --open  # Opens in browser
 ```
+
+### SDK
+
+For programmatic usage, install the package and use the SDK:
+
+```bash
+npm install agent-trajectories
+```
+
+**Using the Client (with storage):**
+
+```typescript
+import { TrajectoryClient } from 'agent-trajectories';
+
+const client = new TrajectoryClient({ defaultAgent: 'my-agent' });
+await client.init();
+
+// Start a new trajectory
+const session = await client.start('Implement auth module');
+
+// Record work in chapters
+await session.chapter('Research');
+await session.note('Found existing auth patterns');
+await session.finding('Current system uses sessions');
+
+// Record decisions
+await session.decide(
+  'JWT vs Sessions?',
+  'JWT',
+  'Better for horizontal scaling'
+);
+
+// Complete with retrospective
+await session.done('Implemented JWT-based authentication', 0.9);
+
+await client.close();
+```
+
+**Using the Builder (in-memory, no storage):**
+
+```typescript
+import { trajectory } from 'agent-trajectories';
+
+const result = trajectory('Fix login bug')
+  .withSource({ system: 'github', id: 'GH#456' })
+  .chapter('Investigation', 'claude')
+    .finding('Null pointer in session handler')
+    .decide('Fix approach', 'Add null check', 'Minimal change')
+  .chapter('Implementation', 'claude')
+    .note('Added validation')
+  .done('Fixed null pointer exception', 0.95);
+
+// Export the trajectory
+console.log(result);  // Full trajectory object
+```
+
+**SDK Features:**
+- **Auto-save**: Changes persist automatically with the client
+- **Fluent API**: Chain operations naturally
+- **Resume support**: Pick up where you left off with `client.resume()`
+- **Multiple exports**: Markdown, JSON, timeline, PR summary
 
 ## Why "Trail"?
 
@@ -289,6 +352,107 @@ Agent-generated code faces a trust problem. Developers hesitate to ship code the
 - **Challenge documentation** reveals what was hard (and might break)
 
 The result: teams can ship agent code with the same confidence as human-written code—because they understand it just as well.
+
+## Installation
+
+```bash
+npm install agent-trajectories
+```
+
+The package provides:
+- **CLI** (`trail` command) - For command-line usage
+- **SDK** - For programmatic integration
+
+```typescript
+// Main import (includes SDK)
+import { TrajectoryClient, trajectory } from 'agent-trajectories';
+
+// Or import from SDK subpath
+import { TrajectoryClient, TrajectoryBuilder } from 'agent-trajectories/sdk';
+```
+
+## SDK Reference
+
+### TrajectoryClient
+
+The client manages trajectories with persistent storage.
+
+```typescript
+const client = new TrajectoryClient({
+  defaultAgent: 'my-agent',    // Default agent name
+  dataDir: '.trajectories',     // Storage directory
+  autoSave: true,               // Auto-save after operations
+});
+
+await client.init();            // Required before use
+
+// Lifecycle
+const session = await client.start('Task title');
+const session = await client.resume();     // Resume active trajectory
+const traj = await client.get('traj_xxx'); // Get by ID
+
+// Query
+const list = await client.list({ status: 'completed' });
+const results = await client.search('auth');
+
+// Export
+const md = await client.exportMarkdown('traj_xxx');
+const json = await client.exportJSON('traj_xxx');
+
+await client.close();
+```
+
+### TrajectorySession
+
+Sessions provide chainable operations on active trajectories.
+
+```typescript
+const session = await client.start('Task');
+
+// Chapters organize work phases
+await session.chapter('Research');
+await session.chapter('Implementation');
+
+// Events record what happened
+await session.note('Observation or note');
+await session.finding('Important discovery');
+await session.error('Something went wrong');
+
+// Decisions capture choices
+await session.decide('Question?', 'Choice', 'Reasoning');
+
+// Complete or abandon
+await session.done('Summary of work', 0.9);
+await session.abandon('Reason for abandoning');
+```
+
+### TrajectoryBuilder
+
+The builder creates trajectories in memory without storage.
+
+```typescript
+import { trajectory, TrajectoryBuilder } from 'agent-trajectories';
+
+// Shorthand function
+const t = trajectory('Task title')
+  .chapter('Work', 'agent-name')
+  .note('Did something')
+  .done('Completed', 0.9);
+
+// Or use the class directly
+const t = TrajectoryBuilder.create('Task')
+  .withDescription('Detailed description')
+  .withSource({ system: 'linear', id: 'ENG-123' })
+  .withTags('feature', 'auth')
+  .chapter('Phase 1', 'claude')
+  .complete({
+    summary: 'What was done',
+    approach: 'How it was done',
+    confidence: 0.85,
+    challenges: ['What was hard'],
+    learnings: ['What was learned'],
+  });
+```
 
 ## Status
 
