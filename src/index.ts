@@ -6,6 +6,15 @@
  * @packageDocumentation
  */
 
+// SDK (high-level API)
+export {
+  TrajectoryClient,
+  TrajectorySession,
+  TrajectoryBuilder,
+  trajectory,
+} from "./sdk/index.js";
+export type { TrajectoryClientOptions } from "./sdk/index.js";
+
 // Core
 export {
   createTrajectory,
