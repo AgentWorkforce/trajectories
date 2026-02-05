@@ -81,8 +81,17 @@ Over time, trajectories become a searchable knowledge base:
 ## Quick Start
 
 ```bash
+# Install globally (trail command available directly)
+npm install -g agent-trajectories
+
+# Or install locally (requires npx prefix)
+npm install agent-trajectories
+```
+
+```bash
 # Start tracking a task
 trail start "Implement auth module"
+# (use `npx trail start ...` if installed locally)
 
 # View current status
 trail status
