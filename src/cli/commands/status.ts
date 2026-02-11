@@ -3,6 +3,10 @@
  */
 
 import type { Command } from "commander";
+import {
+  getCommitsBetween,
+  getFilesChangedBetween,
+} from "../../core/trailers.js";
 import { FileStorage } from "../../storage/file.js";
 
 export function registerStatusCommand(program: Command): void {
@@ -49,6 +53,18 @@ export function registerStatusCommand(program: Command): void {
       console.log(`Chapters:  ${active.chapters.length}`);
       console.log(`Events:    ${eventCount}`);
       console.log(`Decisions: ${decisionCount}`);
+
+      // Show live commit/file counts from git
+      if (active._trace?.startRef) {
+        const commits = getCommitsBetween(active._trace.startRef);
+        const filesChanged = getFilesChangedBetween(active._trace.startRef);
+        if (commits.length > 0) {
+          console.log(`Commits:   ${commits.length}`);
+        }
+        if (filesChanged.length > 0) {
+          console.log(`Files:     ${filesChanged.length}`);
+        }
+      }
 
       if (active.chapters.length > 0) {
         const currentChapter = active.chapters[active.chapters.length - 1];

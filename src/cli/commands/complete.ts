@@ -7,6 +7,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Command } from "commander";
 import { generateTrace, getGitHead } from "../../core/trace.js";
+import {
+  getCommitsBetween,
+  getFilesChangedBetween,
+} from "../../core/trailers.js";
 import { completeTrajectory } from "../../core/trajectory.js";
 import type { TraceRecord, Trajectory } from "../../core/types.js";
 import { FileStorage } from "../../storage/file.js";
@@ -94,6 +98,20 @@ export function registerCompleteCommand(program: Command): void {
         }
       }
 
+      // Populate commits and filesChanged from git history
+      if (active._trace?.startRef) {
+        const commits = getCommitsBetween(active._trace.startRef);
+        const filesChanged = getFilesChangedBetween(active._trace.startRef);
+
+        if (commits.length > 0 || filesChanged.length > 0) {
+          completed = {
+            ...completed,
+            commits: commits.map((c) => c.hash),
+            filesChanged,
+          };
+        }
+      }
+
       await storage.save(completed);
 
       // Save trace file alongside trajectory if generated
@@ -104,6 +122,12 @@ export function registerCompleteCommand(program: Command): void {
       console.log(`✓ Trajectory completed: ${completed.id}`);
       console.log(`  Summary: ${options.summary}`);
       console.log(`  Confidence: ${Math.round(confidence * 100)}%`);
+      if (completed.commits.length > 0) {
+        console.log(`  Commits: ${completed.commits.length}`);
+      }
+      if (completed.filesChanged.length > 0) {
+        console.log(`  Files changed: ${completed.filesChanged.length}`);
+      }
       if (trace) {
         console.log(`  Trace: ${trace.id} (${trace.files.length} files)`);
       }
