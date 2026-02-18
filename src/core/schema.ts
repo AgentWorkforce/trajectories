@@ -61,6 +61,7 @@ export const TrajectoryEventTypeSchema = z.enum([
   "message_received",
   "decision",
   "finding",
+  "reflection",
   "note",
   "error",
 ]);

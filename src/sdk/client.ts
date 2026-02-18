@@ -142,6 +142,23 @@ export class TrajectorySession {
   }
 
   /**
+   * Record a reflection — a higher-level synthesis of recent observations.
+   * Used by workflow orchestrators and lead agents to periodically
+   * synthesize worker progress and course-correct.
+   */
+  async reflect(
+    content: string,
+    confidence?: number,
+  ): Promise<TrajectorySession> {
+    return this.event("reflection", content, {
+      significance: "high",
+      ...(confidence !== undefined
+        ? { tags: [`confidence:${confidence}`] }
+        : {}),
+    });
+  }
+
+  /**
    * Record an error
    */
   async error(content: string): Promise<TrajectorySession> {

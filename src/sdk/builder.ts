@@ -181,6 +181,20 @@ export class TrajectoryBuilder {
   }
 
   /**
+   * Add a reflection event — a higher-level synthesis of recent observations.
+   * Reflections are always high significance since they represent
+   * periodic course-correction insights.
+   */
+  reflect(content: string, confidence?: number): TrajectoryBuilder {
+    return this.event("reflection", content, {
+      significance: "high",
+      ...(confidence !== undefined
+        ? { tags: [`confidence:${confidence}`] }
+        : {}),
+    });
+  }
+
+  /**
    * Add an error event
    */
   error(content: string): TrajectoryBuilder {
