@@ -58,6 +58,7 @@ export type TrajectoryEventType =
   | "message_received"
   | "decision"
   | "finding"
+  | "reflection"
   | "note"
   | "error";
 

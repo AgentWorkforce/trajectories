@@ -3,10 +3,11 @@
  *
  * Registers all commands with the program.
  *
- * Core commands (10 total):
+ * Core commands (11 total):
  * - start: Begin tracking a new task
  * - status: Show current trajectory state
  * - decision: Record a decision point
+ * - reflect: Record a reflection (periodic synthesis)
  * - complete: Finish with retrospective
  * - abandon: Stop without completing
  * - list: Browse trajectories (with --search)
@@ -23,6 +24,7 @@ import { registerDecisionCommand } from "./decision.js";
 import { registerEnableCommand } from "./enable.js";
 import { registerExportCommand } from "./export.js";
 import { registerListCommand } from "./list.js";
+import { registerReflectCommand } from "./reflect.js";
 import { registerShowCommand } from "./show.js";
 import { registerStartCommand } from "./start.js";
 import { registerStatusCommand } from "./status.js";
@@ -36,6 +38,7 @@ export function registerCommands(program: Command): void {
   registerCompleteCommand(program);
   registerAbandonCommand(program);
   registerDecisionCommand(program);
+  registerReflectCommand(program);
   registerListCommand(program);
   registerShowCommand(program);
   registerExportCommand(program);
