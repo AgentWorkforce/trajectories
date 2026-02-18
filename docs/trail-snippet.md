@@ -46,6 +46,33 @@ trail decision "Used existing auth middleware"
 - Make architectural trade-offs
 - Decide on an approach after investigation
 
+## Recording Reflections
+
+Periodically step back and synthesize progress:
+
+```bash
+trail reflect "Workers aligned on auth approach, API layer progressing well" \
+  --confidence 0.8
+```
+
+With focal points and adjustments:
+```bash
+trail reflect "Frontend and backend duplicating validation logic" \
+  --focal-points "duplication,ownership" \
+  --adjustments "Reassigning validation to backend team" \
+  --confidence 0.7
+```
+
+**Record reflections when you:**
+- Have received several updates and need to synthesize the big picture
+- Notice workers or tasks diverging from the plan
+- Want to course-correct before continuing
+- Are coordinating multiple agents and need to assess overall progress
+
+Reflections differ from decisions: decisions record a specific choice,
+reflections record a higher-level synthesis of what's happening and whether
+the current approach is working.
+
 ## Completing Work
 
 When done, complete with a retrospective:
