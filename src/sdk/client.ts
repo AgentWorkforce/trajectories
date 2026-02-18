@@ -5,31 +5,31 @@
  * Provides a clean, developer-friendly API with automatic storage management.
  */
 
-import { FileStorage } from "../storage/file.js";
-import type { StorageAdapter } from "../storage/interface.js";
 import {
-  createTrajectory,
-  addChapter,
-  addEvent,
-  addDecision,
-  completeTrajectory,
-  abandonTrajectory,
   TrajectoryError,
+  abandonTrajectory,
+  addChapter,
+  addDecision,
+  addEvent,
+  completeTrajectory,
+  createTrajectory,
 } from "../core/trajectory.js";
 import type {
-  Trajectory,
-  CreateTrajectoryInput,
   CompleteTrajectoryInput,
+  CreateTrajectoryInput,
   Decision,
+  EventSignificance,
+  Trajectory,
+  TrajectoryEventType,
   TrajectoryQuery,
   TrajectorySummary,
-  TrajectoryEventType,
-  EventSignificance,
 } from "../core/types.js";
-import { exportToMarkdown } from "../export/markdown.js";
 import { exportToJSON } from "../export/json.js";
-import { exportToTimeline } from "../export/timeline.js";
+import { exportToMarkdown } from "../export/markdown.js";
 import { exportToPRSummary } from "../export/pr-summary.js";
+import { exportToTimeline } from "../export/timeline.js";
+import { FileStorage } from "../storage/file.js";
+import type { StorageAdapter } from "../storage/interface.js";
 
 /**
  * Options for configuring the TrajectoryClient
@@ -58,7 +58,7 @@ export class TrajectorySession {
   constructor(
     trajectory: Trajectory,
     client: TrajectoryClient,
-    autoSave: boolean
+    autoSave: boolean,
   ) {
     this.trajectory = trajectory;
     this.client = client;
@@ -106,7 +106,7 @@ export class TrajectorySession {
       raw?: unknown;
       significance?: EventSignificance;
       tags?: string[];
-    }
+    },
   ): Promise<TrajectorySession> {
     this.trajectory = addEvent(this.trajectory, {
       type,
@@ -124,7 +124,7 @@ export class TrajectorySession {
    */
   async note(
     content: string,
-    significance?: EventSignificance
+    significance?: EventSignificance,
   ): Promise<TrajectorySession> {
     return this.event("note", content, { significance });
   }
@@ -134,9 +134,11 @@ export class TrajectorySession {
    */
   async finding(
     content: string,
-    significance?: EventSignificance
+    significance?: EventSignificance,
   ): Promise<TrajectorySession> {
-    return this.event("finding", content, { significance: significance ?? "medium" });
+    return this.event("finding", content, {
+      significance: significance ?? "medium",
+    });
   }
 
   /**
@@ -169,7 +171,7 @@ export class TrajectorySession {
     question: string,
     chosen: string,
     reasoning: string,
-    alternatives?: Array<{ option: string; reason?: string }>
+    alternatives?: Array<{ option: string; reason?: string }>,
   ): Promise<TrajectorySession> {
     return this.decision({
       question,
@@ -214,7 +216,7 @@ export class TrajectorySession {
   async done(
     summary: string,
     confidence: number,
-    options?: Partial<Omit<CompleteTrajectoryInput, "summary" | "confidence">>
+    options?: Partial<Omit<CompleteTrajectoryInput, "summary" | "confidence">>,
   ): Promise<Trajectory> {
     return this.complete({
       summary,
@@ -329,7 +331,7 @@ export class TrajectoryClient {
       throw new TrajectoryError(
         "Client not initialized. Call init() first.",
         "NOT_INITIALIZED",
-        "Add 'await client.init()' before using the client"
+        "Add 'await client.init()' before using the client",
       );
     }
   }
@@ -342,7 +344,7 @@ export class TrajectoryClient {
    */
   async start(
     title: string,
-    options?: Omit<CreateTrajectoryInput, "title">
+    options?: Omit<CreateTrajectoryInput, "title">,
   ): Promise<TrajectorySession> {
     this.ensureInitialized();
 
@@ -352,7 +354,7 @@ export class TrajectoryClient {
       throw new TrajectoryError(
         `Active trajectory already exists: ${active.id}`,
         "ACTIVE_TRAJECTORY_EXISTS",
-        "Complete or abandon the active trajectory first"
+        "Complete or abandon the active trajectory first",
       );
     }
 
@@ -425,7 +427,10 @@ export class TrajectoryClient {
    */
   async search(text: string, limit?: number): Promise<TrajectorySummary[]> {
     this.ensureInitialized();
-    return this.storage.search(text, limit !== undefined ? { limit } : undefined);
+    return this.storage.search(
+      text,
+      limit !== undefined ? { limit } : undefined,
+    );
   }
 
   /**

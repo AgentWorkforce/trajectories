@@ -1,7 +1,7 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { rm, mkdtemp } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 /**
  * SDK Tests
@@ -149,7 +149,7 @@ describe("TrajectoryBuilder", () => {
       expect(trajectory.status).toBe("completed");
       expect(trajectory.completedAt).toBeDefined();
       expect(trajectory.retrospective?.summary).toBe(
-        "Task completed successfully"
+        "Task completed successfully",
       );
       expect(trajectory.retrospective?.confidence).toBe(0.95);
     });
@@ -287,7 +287,7 @@ describe("TrajectoryClient", () => {
       await client.start("First task");
 
       await expect(client.start("Second task")).rejects.toThrow(
-        "Active trajectory already exists"
+        "Active trajectory already exists",
       );
 
       await client.close();

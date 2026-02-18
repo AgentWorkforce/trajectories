@@ -6,26 +6,26 @@
  */
 
 import {
-  createTrajectory,
-  addChapter,
-  addEvent,
-  addDecision,
-  completeTrajectory,
   abandonTrajectory,
+  addChapter,
+  addDecision,
+  addEvent,
+  completeTrajectory,
+  createTrajectory,
 } from "../core/trajectory.js";
 import type {
-  Trajectory,
+  CompleteTrajectoryInput,
   CreateTrajectoryInput,
   Decision,
-  CompleteTrajectoryInput,
-  TrajectoryEventType,
   EventSignificance,
   TaskSource,
+  Trajectory,
+  TrajectoryEventType,
 } from "../core/types.js";
-import { exportToMarkdown } from "../export/markdown.js";
 import { exportToJSON } from "../export/json.js";
-import { exportToTimeline } from "../export/timeline.js";
+import { exportToMarkdown } from "../export/markdown.js";
 import { exportToPRSummary } from "../export/pr-summary.js";
+import { exportToTimeline } from "../export/timeline.js";
 
 /**
  * Fluent builder for creating trajectories in memory
@@ -151,7 +151,7 @@ export class TrajectoryBuilder {
       raw?: unknown;
       significance?: EventSignificance;
       tags?: string[];
-    }
+    },
   ): TrajectoryBuilder {
     this.trajectory = addEvent(this.trajectory, {
       type,
@@ -173,7 +173,7 @@ export class TrajectoryBuilder {
    */
   finding(
     content: string,
-    significance?: EventSignificance
+    significance?: EventSignificance,
   ): TrajectoryBuilder {
     return this.event("finding", content, {
       significance: significance ?? "medium",
@@ -244,7 +244,7 @@ export class TrajectoryBuilder {
     question: string,
     chosen: string,
     reasoning: string,
-    alternatives?: Array<{ option: string; reason?: string }>
+    alternatives?: Array<{ option: string; reason?: string }>,
   ): TrajectoryBuilder {
     return this.decision({
       question,
@@ -289,11 +289,7 @@ export class TrajectoryBuilder {
   /**
    * Quick complete with minimal fields
    */
-  done(
-    summary: string,
-    confidence: number,
-    approach?: string
-  ): Trajectory {
+  done(summary: string, confidence: number, approach?: string): Trajectory {
     return this.complete({
       summary,
       confidence,
