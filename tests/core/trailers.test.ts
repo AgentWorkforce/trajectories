@@ -3,6 +3,7 @@
  */
 
 import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   TRAJECTORY_TRAILER_KEY,
@@ -24,7 +25,17 @@ vi.mock("node:child_process", async () => {
   };
 });
 
+// Mock node:fs for readFileSync
+vi.mock("node:fs", async () => {
+  const actual = await vi.importActual("node:fs");
+  return {
+    ...actual,
+    readFileSync: vi.fn(),
+  };
+});
+
 const mockExecSync = vi.mocked(execSync);
+const mockReadFileSync = vi.mocked(readFileSync);
 
 describe("Git Trailers", () => {
   beforeEach(() => {
@@ -285,11 +296,11 @@ Signed-off-by: Dev <dev@example.com>`;
         if (cmd.includes("rev-parse --git-dir")) {
           return ".git\n";
         }
-        if (cmd.includes("cat")) {
-          return "#!/bin/sh\n# Added by agent-trajectories\n";
-        }
         return "";
       });
+      mockReadFileSync.mockReturnValue(
+        "#!/bin/sh\n# Added by agent-trajectories\n",
+      );
 
       expect(detectExistingHook()).toBe("ours");
     });
@@ -302,11 +313,9 @@ Signed-off-by: Dev <dev@example.com>`;
         if (cmd.includes("rev-parse --git-dir")) {
           return ".git\n";
         }
-        if (cmd.includes("cat")) {
-          return "#!/bin/sh\n# Some other hook\n";
-        }
         return "";
       });
+      mockReadFileSync.mockReturnValue("#!/bin/sh\n# Some other hook\n");
 
       expect(detectExistingHook()).toBe("other");
     });
@@ -319,10 +328,10 @@ Signed-off-by: Dev <dev@example.com>`;
         if (cmd.includes("rev-parse --git-dir")) {
           return ".git\n";
         }
-        if (cmd.includes("cat")) {
-          throw new Error("No such file");
-        }
         return "";
+      });
+      mockReadFileSync.mockImplementation(() => {
+        throw new Error("ENOENT: no such file or directory");
       });
 
       expect(detectExistingHook()).toBe("none");

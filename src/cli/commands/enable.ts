@@ -5,16 +5,13 @@
  * appends Trajectory trailers to commit messages.
  */
 
+import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { execSync } from "node:child_process";
 import type { Command } from "commander";
-import {
-  detectExistingHook,
-  generateHookScript,
-} from "../../core/trailers.js";
 import { isGitRepo } from "../../core/trace.js";
+import { detectExistingHook, generateHookScript } from "../../core/trailers.js";
 
 /**
  * Resolve the git hooks directory path
@@ -54,9 +51,7 @@ export function registerEnableCommand(program: Command): void {
       const existing = detectExistingHook();
 
       if (existing === "other" && !options.force) {
-        console.error(
-          "Error: A prepare-commit-msg hook already exists",
-        );
+        console.error("Error: A prepare-commit-msg hook already exists");
         console.error(
           "Use --force to overwrite, or manually add the trailer logic",
         );

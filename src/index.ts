@@ -44,6 +44,17 @@ export {
   isValidChapterId,
 } from "./core/id.js";
 
+// Git trailers
+export {
+  formatTrailer,
+  parseTrajectoryFromMessage,
+  getTrajectoryFromCommit,
+  getCommitsBetween,
+  getFilesChangedBetween,
+  TRAJECTORY_TRAILER_KEY,
+} from "./core/trailers.js";
+export type { CommitInfo } from "./core/trailers.js";
+
 // Types
 export type {
   Trajectory,

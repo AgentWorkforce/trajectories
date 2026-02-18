@@ -9,6 +9,7 @@
  */
 
 import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { isGitRepo, isValidGitRef } from "./trace.js";
 
 /** Trailer key for trajectory ID */
@@ -152,18 +153,12 @@ export function getFilesChangedBetween(
   }
 
   try {
-    const output = execSync(
-      `git diff --name-only ${startRef}..${endRef}`,
-      {
-        encoding: "utf-8",
-        stdio: ["pipe", "pipe", "pipe"],
-      },
-    );
+    const output = execSync(`git diff --name-only ${startRef}..${endRef}`, {
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+    });
 
-    return output
-      .trim()
-      .split("\n")
-      .filter(Boolean);
+    return output.trim().split("\n").filter(Boolean);
   } catch {
     return [];
   }
@@ -182,7 +177,7 @@ COMMIT_MSG_FILE="$1"
 COMMIT_SOURCE="$2"
 
 # Skip for merge, squash, and amend commits
-if [ "$COMMIT_SOURCE" = "merge" ] || [ "$COMMIT_SOURCE" = "squash" ]; then
+if [ "$COMMIT_SOURCE" = "merge" ] || [ "$COMMIT_SOURCE" = "squash" ] || [ "$COMMIT_SOURCE" = "commit" ]; then
   exit 0
 fi
 
@@ -236,10 +231,7 @@ export function detectExistingHook(): "none" | "ours" | "other" {
     const hookPath = `${hooksDir}/hooks/prepare-commit-msg`;
 
     try {
-      const content = execSync(`cat ${hookPath}`, {
-        encoding: "utf-8",
-        stdio: ["pipe", "pipe", "pipe"],
-      });
+      const content = readFileSync(hookPath, "utf-8");
 
       if (content.includes("agent-trajectories")) {
         return "ours";
