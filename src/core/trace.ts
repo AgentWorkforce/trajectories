@@ -275,6 +275,64 @@ export function generateTrace(
 }
 
 /**
+ * Migrate a legacy trace record to the current spec format.
+ * Handles records written before agent-trace 0.1.0 compliance:
+ *   - version: 1 (number) → "1.0.0" (semver string)
+ *   - contributor.type: "agent" → "ai"
+ *   - contributor.model → contributor.model_id (omitted if "unknown")
+ *
+ * The trace ID (trace_xxx format) is intentionally left unchanged
+ * to preserve the reference stored in the parent trajectory's _trace.traceId.
+ *
+ * @returns { record, migrated } — migrated=true means the caller should persist the updated record
+ */
+export function migrateTraceRecord(raw: unknown): {
+  record: TraceRecord;
+  migrated: boolean;
+} {
+  const data = raw as Record<string, unknown>;
+  let migrated = false;
+
+  // Migrate version: number → semver string
+  if (typeof data.version === "number") {
+    data.version = "1.0.0";
+    migrated = true;
+  }
+
+  // Migrate contributor fields in each file's conversations
+  if (Array.isArray(data.files)) {
+    for (const file of data.files as Array<Record<string, unknown>>) {
+      if (Array.isArray(file.conversations)) {
+        for (const conv of file.conversations as Array<
+          Record<string, unknown>
+        >) {
+          const contributor = conv.contributor as Record<string, unknown>;
+          if (!contributor) continue;
+
+          // Migrate type: "agent" → "ai"
+          if (contributor.type === "agent") {
+            contributor.type = "ai";
+            migrated = true;
+          }
+
+          // Migrate model → model_id, drop if "unknown"
+          if ("model" in contributor) {
+            const modelValue = contributor.model;
+            delete contributor.model;
+            if (modelValue && modelValue !== "unknown") {
+              contributor.model_id = modelValue;
+            }
+            migrated = true;
+          }
+        }
+      }
+    }
+  }
+
+  return { record: data as unknown as TraceRecord, migrated };
+}
+
+/**
  * Create a trace reference for embedding in a trajectory
  * @param startRef - Git ref when trace started
  * @param traceId - Optional ID of the generated trace record

@@ -12,6 +12,7 @@ import type {
   TraceRecord,
   Trajectory,
 } from "../../core/types.js";
+import { migrateTraceRecord } from "../../core/trace.js";
 import { FileStorage, getSearchPaths } from "../../storage/file.js";
 
 /**
@@ -75,7 +76,12 @@ async function findTraceFile(id: string): Promise<TraceRecord | null> {
         const tracePath = join(completedDir, month, `${id}.trace.json`);
         if (existsSync(tracePath)) {
           const content = await readFile(tracePath, "utf-8");
-          return JSON.parse(content) as TraceRecord;
+          const { record, migrated } = migrateTraceRecord(JSON.parse(content));
+          if (migrated) {
+            const { writeFile } = await import("node:fs/promises");
+            await writeFile(tracePath, JSON.stringify(record, null, 2), "utf-8");
+          }
+          return record;
         }
       }
     } catch {
