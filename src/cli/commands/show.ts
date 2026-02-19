@@ -135,7 +135,7 @@ export function registerShowCommand(program: Command): void {
                 0,
               );
               const model =
-                file.conversations[0]?.contributor.model ?? "unknown";
+                file.conversations[0]?.contributor.model_id ?? "unknown";
               console.log(`  • ${file.path}`);
               console.log(`    Ranges: ${rangeCount}, Model: ${model}`);
             }
