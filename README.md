@@ -124,6 +124,11 @@ trail list --search "auth"
 # Export for documentation (markdown, json, timeline, or html)
 trail export traj_abc123 --format markdown
 trail export --format html --open  # Opens in browser
+
+# Compact trajectories (consolidate similar decisions)
+trail compact --since 7d              # Compact last 7 days
+trail compact --pr 123                # Compact trajectories for a PR
+trail compact --ids traj_a,traj_b     # Compact specific trajectories
 ```
 
 ### SDK
