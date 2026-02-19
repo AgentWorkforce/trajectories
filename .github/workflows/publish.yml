@@ -163,6 +163,16 @@ jobs:
           name: build-output
           path: .
 
+      - name: Setup Node.js for changelog
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Generate changelog
+        run: |
+          npx --yes conventional-changelog-cli -p angular -i CHANGELOG.md -s
+          echo "Changelog updated for v${{ needs.build.outputs.new_version }}"
+
       - name: Commit and tag
         run: |
           git config user.name "GitHub Actions"
@@ -170,7 +180,7 @@ jobs:
 
           NEW_VERSION="${{ needs.build.outputs.new_version }}"
 
-          git add package.json package-lock.json
+          git add package.json package-lock.json CHANGELOG.md
           if ! git diff --staged --quiet; then
             git commit -m "chore(release): v${NEW_VERSION}"
             git push origin HEAD:main
