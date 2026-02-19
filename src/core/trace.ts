@@ -318,7 +318,7 @@ export function migrateTraceRecord(raw: unknown): {
           // Migrate model → model_id, drop if "unknown"
           if ("model" in contributor) {
             const modelValue = contributor.model;
-            delete contributor.model;
+            contributor.model = undefined;
             if (modelValue && modelValue !== "unknown") {
               contributor.model_id = modelValue;
             }
