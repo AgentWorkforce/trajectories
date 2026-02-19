@@ -6,6 +6,7 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Command } from "commander";
+import { migrateTraceRecord } from "../../core/trace.js";
 import type {
   Decision,
   TraceConversation,
@@ -74,8 +75,28 @@ async function findTraceFile(id: string): Promise<TraceRecord | null> {
       for (const month of months) {
         const tracePath = join(completedDir, month, `${id}.trace.json`);
         if (existsSync(tracePath)) {
-          const content = await readFile(tracePath, "utf-8");
-          return JSON.parse(content) as TraceRecord;
+          let record: TraceRecord;
+          let migrated: boolean;
+          try {
+            const content = await readFile(tracePath, "utf-8");
+            ({ record, migrated } = migrateTraceRecord(JSON.parse(content)));
+          } catch {
+            continue;
+          }
+          if (migrated) {
+            try {
+              const { writeFile } = await import("node:fs/promises");
+              await writeFile(
+                tracePath,
+                JSON.stringify(record, null, 2),
+                "utf-8",
+              );
+            } catch {
+              // Write-back failed (e.g. read-only fs) — return the migrated
+              // record anyway so the caller always gets the parsed data
+            }
+          }
+          return record;
         }
       }
     } catch {
@@ -135,7 +156,7 @@ export function registerShowCommand(program: Command): void {
                 0,
               );
               const model =
-                file.conversations[0]?.contributor.model ?? "unknown";
+                file.conversations[0]?.contributor.model_id ?? "unknown";
               console.log(`  • ${file.path}`);
               console.log(`    Ranges: ${rangeCount}, Model: ${model}`);
             }

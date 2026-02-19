@@ -7,7 +7,6 @@
 
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { generateRandomId } from "./id.js";
 import type {
   TraceFile,
   TraceRange,
@@ -177,34 +176,37 @@ export function getChangedFiles(
 
 /**
  * Detect the model from environment variables
+ * Returns model ID using models.dev convention (org/model-name)
  * @returns Model identifier or 'unknown'
  */
 export function detectModel(): string {
-  // Check custom env var first
+  // Check custom env var first (pass through as-is if already org/model format)
   if (process.env.TRAIL_TRACE_MODEL) {
     return process.env.TRAIL_TRACE_MODEL;
   }
 
-  // Check Anthropic model env var
+  // Check Anthropic model env var - normalize to models.dev convention
   if (process.env.ANTHROPIC_MODEL) {
-    return process.env.ANTHROPIC_MODEL;
+    const model = process.env.ANTHROPIC_MODEL;
+    return model.includes("/") ? model : `anthropic/${model}`;
   }
 
-  // Check common AI provider model env vars
+  // Check common AI provider model env vars - normalize to models.dev convention
   if (process.env.OPENAI_MODEL) {
-    return process.env.OPENAI_MODEL;
+    const model = process.env.OPENAI_MODEL;
+    return model.includes("/") ? model : `openai/${model}`;
   }
 
   return "unknown";
 }
 
 /**
- * Generate a unique trace ID
- * Format: trace_xxxxxxxxxxxx
- * @returns Unique trace ID
+ * Generate a unique trace ID using UUID v4
+ * Follows agent-trace.dev spec which requires UUID format
+ * @returns UUID v4 string
  */
 export function generateTraceId(): string {
-  return `trace_${generateRandomId()}`;
+  return crypto.randomUUID();
 }
 
 /**
@@ -252,8 +254,8 @@ export function generateTrace(
     conversations: [
       {
         contributor: {
-          type: "agent",
-          model,
+          type: "ai",
+          ...(model !== "unknown" ? { model_id: model } : {}),
         },
         ranges: ranges.map((range) => ({
           ...range,
@@ -264,12 +266,70 @@ export function generateTrace(
   }));
 
   return {
-    version: 1,
+    version: "1.0.0",
     id: generateTraceId(),
     timestamp: new Date().toISOString(),
     trajectory: trajectory.id,
     files: traceFiles,
   };
+}
+
+/**
+ * Migrate a legacy trace record to the current spec format.
+ * Handles records written before agent-trace 0.1.0 compliance:
+ *   - version: 1 (number) → "1.0.0" (semver string)
+ *   - contributor.type: "agent" → "ai"
+ *   - contributor.model → contributor.model_id (omitted if "unknown")
+ *
+ * The trace ID (trace_xxx format) is intentionally left unchanged
+ * to preserve the reference stored in the parent trajectory's _trace.traceId.
+ *
+ * @returns { record, migrated } — migrated=true means the caller should persist the updated record
+ */
+export function migrateTraceRecord(raw: unknown): {
+  record: TraceRecord;
+  migrated: boolean;
+} {
+  const data = raw as Record<string, unknown>;
+  let migrated = false;
+
+  // Migrate version: number → semver string
+  if (typeof data.version === "number") {
+    data.version = "1.0.0";
+    migrated = true;
+  }
+
+  // Migrate contributor fields in each file's conversations
+  if (Array.isArray(data.files)) {
+    for (const file of data.files as Array<Record<string, unknown>>) {
+      if (Array.isArray(file.conversations)) {
+        for (const conv of file.conversations as Array<
+          Record<string, unknown>
+        >) {
+          const contributor = conv.contributor as Record<string, unknown>;
+          if (!contributor) continue;
+
+          // Migrate type: "agent" → "ai"
+          if (contributor.type === "agent") {
+            contributor.type = "ai";
+            migrated = true;
+          }
+
+          // Migrate model → model_id, drop if "unknown"
+          if ("model" in contributor) {
+            const modelValue = contributor.model;
+            contributor.model = undefined;
+            if (modelValue && modelValue !== "unknown") {
+              contributor.model_id = modelValue;
+            }
+            migrated = true;
+          }
+        }
+      }
+    }
+  }
+
+  return { record: data as unknown as TraceRecord, migrated };
 }
 
 /**

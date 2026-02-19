@@ -162,7 +162,7 @@ describe("Agent Trace", () => {
 
     it("should detect model from ANTHROPIC_MODEL", () => {
       process.env.ANTHROPIC_MODEL = "claude-opus-4";
-      expect(detectModel()).toBe("claude-opus-4");
+      expect(detectModel()).toBe("anthropic/claude-opus-4");
     });
 
     it("should return unknown when no model env is set", () => {
@@ -215,7 +215,7 @@ index 0000000..abc1234
       const trace = generateTrace(trajectory, "abc123");
 
       expect(trace).not.toBeNull();
-      expect(trace?.version).toBe(1);
+      expect(trace?.version).toBe("1.0.0");
       expect(trace?.trajectory).toBe("traj_test123");
       expect(trace?.files.length).toBeGreaterThanOrEqual(0); // May be 0 if diff parsing is strict
     });

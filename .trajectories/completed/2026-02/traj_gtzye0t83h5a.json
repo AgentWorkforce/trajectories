@@ -1,0 +1,126 @@
+{
+  "id": "traj_gtzye0t83h5a",
+  "version": 1,
+  "task": {
+    "title": "agent-trace spec compliance and ecosystem positioning"
+  },
+  "status": "completed",
+  "startedAt": "2026-02-19T08:46:34.162Z",
+  "agents": [
+    {
+      "name": "Discoverer",
+      "role": "lead",
+      "joinedAt": "2026-02-19T08:46:34.197Z"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "chap_2zoh90ybdc2t",
+      "title": "Initial work",
+      "agentName": "Discoverer",
+      "startedAt": "2026-02-19T08:46:34.197Z",
+      "events": [
+        {
+          "ts": 1771490810201,
+          "type": "decision",
+          "content": "Use 'ai' instead of 'agent' for ContributorType: Use 'ai' instead of 'agent' for ContributorType",
+          "raw": {
+            "question": "Use 'ai' instead of 'agent' for ContributorType",
+            "chosen": "Use 'ai' instead of 'agent' for ContributorType",
+            "alternatives": [
+              {
+                "option": "Keep 'agent' as a non-compliant extension",
+                "reason": ""
+              }
+            ],
+            "reasoning": "agent-trace spec defines the enum as human/ai/mixed/unknown — 'agent' is not a valid value. Aligning to spec for interoperability."
+          },
+          "significance": "high"
+        },
+        {
+          "ts": 1771490810377,
+          "type": "decision",
+          "content": "Rename model to model_id on TraceContributor: Rename model to model_id on TraceContributor",
+          "raw": {
+            "question": "Rename model to model_id on TraceContributor",
+            "chosen": "Rename model to model_id on TraceContributor",
+            "alternatives": [
+              {
+                "option": "Keep 'model' with a custom convention",
+                "reason": ""
+              }
+            ],
+            "reasoning": "agent-trace spec uses model_id field name with models.dev convention (org/model). Renamed to match spec exactly."
+          },
+          "significance": "high"
+        },
+        {
+          "ts": 1771490810491,
+          "type": "decision",
+          "content": "Switch version field from number (1) to semver string ('1.0.0'): Switch version field from number (1) to semver string ('1.0.0')",
+          "raw": {
+            "question": "Switch version field from number (1) to semver string ('1.0.0')",
+            "chosen": "Switch version field from number (1) to semver string ('1.0.0')",
+            "alternatives": [
+              {
+                "option": "Keep version: 1 as a number (non-compliant)",
+                "reason": ""
+              }
+            ],
+            "reasoning": "agent-trace spec defines version as a semantic version string, not a number. Changed to '1.0.0' for full compliance."
+          },
+          "significance": "high"
+        },
+        {
+          "ts": 1771490810590,
+          "type": "decision",
+          "content": "Switch generateTraceId() from custom nanoid-style to crypto.randomUUID(): Switch generateTraceId() from custom nanoid-style to crypto.randomUUID()",
+          "raw": {
+            "question": "Switch generateTraceId() from custom nanoid-style to crypto.randomUUID()",
+            "chosen": "Switch generateTraceId() from custom nanoid-style to crypto.randomUUID()",
+            "alternatives": [
+              {
+                "option": "Keep trace_[nanoid] format and document the variance",
+                "reason": ""
+              }
+            ],
+            "reasoning": "agent-trace spec requires UUID format for trace record IDs. Node 20+ has crypto.randomUUID() built in with zero added dependencies. Our minimum is already Node 20+."
+          },
+          "significance": "high"
+        },
+        {
+          "ts": 1771490810705,
+          "type": "decision",
+          "content": "Normalize detectModel() output to models.dev format (org/model-name): Normalize detectModel() output to models.dev format (org/model-name)",
+          "raw": {
+            "question": "Normalize detectModel() output to models.dev format (org/model-name)",
+            "chosen": "Normalize detectModel() output to models.dev format (org/model-name)",
+            "alternatives": [
+              {
+                "option": "Pass through raw env var value unchanged",
+                "reason": ""
+              }
+            ],
+            "reasoning": "agent-trace spec uses models.dev convention. ANTHROPIC_MODEL=claude-opus-4 should become anthropic/claude-opus-4 for interoperability across tools."
+          },
+          "significance": "high"
+        }
+      ],
+      "endedAt": "2026-02-19T08:47:21.214Z"
+    }
+  ],
+  "commits": [],
+  "filesChanged": [],
+  "projectId": "/data/repos/trajectories",
+  "tags": [],
+  "_trace": {
+    "startRef": "0203a6c52d02f31c00813515b529a7283a7ef8ca",
+    "endRef": "0203a6c52d02f31c00813515b529a7283a7ef8ca"
+  },
+  "completedAt": "2026-02-19T08:47:21.214Z",
+  "retrospective": {
+    "summary": "Aligned agent-trace output to 0.1.0 spec: contributor type (ai), model_id field, semver version string, UUID trace IDs via crypto.randomUUID(), models.dev model format. Updated README with ecosystem stack positioning, multi-agent as top-level feature, and roadmap with MCP server. PR #12 opened. Key learning: our ID format was never a deliberate decision — crypto.randomUUID() was always available. agent-trace has no adopters list yet — first implementation listing is a traction opportunity.",
+    "approach": "Fetched agent-trace schema, diffed against our trace.ts output, made targeted changes across types.ts/schema.ts/trace.ts/show.ts, updated tests, resolved merge conflict with main, recorded all decisions as trajectory events.",
+    "confidence": 0.95
+  }
+}

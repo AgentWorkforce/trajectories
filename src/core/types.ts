@@ -339,17 +339,19 @@ export interface TraceRange {
 
 /**
  * Contributor type for trace conversations
+ * Follows agent-trace.dev specification
  */
-export type ContributorType = "human" | "agent";
+export type ContributorType = "human" | "ai" | "mixed" | "unknown";
 
 /**
  * Information about the contributor to a conversation
+ * Follows agent-trace.dev specification (model_id uses models.dev convention)
  */
 export interface TraceContributor {
   /** Type of contributor */
   type: ContributorType;
-  /** Model identifier (e.g., 'claude-3-opus', 'gpt-4') */
-  model?: string;
+  /** Model identifier using models.dev convention (e.g., 'anthropic/claude-opus-4-5-20251101') */
+  model_id?: string;
 }
 
 /**
@@ -376,11 +378,12 @@ export interface TraceFile {
 
 /**
  * The main trace record - captures agent contributions to code
+ * Follows agent-trace.dev specification
  */
 export interface TraceRecord {
-  /** Schema version for forward compatibility */
-  version: 1;
-  /** Unique trace ID (format: trace_xxxxxxxxxxxx) */
+  /** Schema version (semver) following agent-trace.dev spec */
+  version: string;
+  /** Unique trace ID (UUID v4 per agent-trace.dev spec) */
   id: string;
   /** When the trace was created (ISO timestamp) */
   timestamp: string;
