@@ -4,15 +4,17 @@
  * Compresses multiple trajectories into a single compacted summary.
  * Useful for reducing context after PR merges by organizing similar
  * decisions into grouped, understandable summaries.
+ *
+ * Default behavior: compact only trajectories that haven't been compacted yet.
  */
 
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { execSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Command } from "commander";
 import type {
   Decision,
   Trajectory,
-  TrajectoryEvent,
 } from "../../core/types.js";
 import { FileStorage, getSearchPaths } from "../../storage/file.js";
 import { generateRandomId } from "../../core/id.js";
@@ -55,10 +57,22 @@ interface CompactedTrajectory {
   commits: string[];
 }
 
+/**
+ * Index entry with compaction tracking
+ */
+interface IndexEntry {
+  title: string;
+  status: string;
+  startedAt: string;
+  completedAt?: string;
+  path: string;
+  compactedInto?: string;
+}
+
 export function registerCompactCommand(program: Command): void {
   program
     .command("compact")
-    .description("Compact trajectories into a summarized form")
+    .description("Compact trajectories into a summarized form (default: uncompacted only)")
     .option(
       "--since <date>",
       "Include trajectories since this date (ISO format or relative like '7d')",
@@ -69,13 +83,22 @@ export function registerCompactCommand(program: Command): void {
     )
     .option("--ids <ids>", "Comma-separated list of trajectory IDs to compact")
     .option("--pr <number>", "Compact trajectories associated with a PR number")
+    .option(
+      "--branch <name>",
+      "Compact trajectories with commits not in the specified branch (e.g., main)",
+    )
+    .option("--all", "Include all trajectories, even previously compacted ones")
     .option("--dry-run", "Preview what would be compacted without saving")
     .option("--output <path>", "Output path for compacted trajectory")
     .action(async (options) => {
       const trajectories = await loadTrajectories(options);
 
       if (trajectories.length === 0) {
-        console.log("No trajectories found matching criteria");
+        if (options.all || options.since || options.ids || options.pr || options.branch) {
+          console.log("No trajectories found matching criteria");
+        } else {
+          console.log("No uncompacted trajectories found. Use --all to include previously compacted.");
+        }
         return;
       }
 
@@ -93,6 +116,9 @@ export function registerCompactCommand(program: Command): void {
       const outputPath = options.output || getDefaultOutputPath(compacted);
       saveCompactedTrajectory(compacted, outputPath);
 
+      // Mark source trajectories as compacted
+      await markTrajectoriesAsCompacted(trajectories, compacted.id);
+
       console.log(`\nCompacted trajectory saved to: ${outputPath}`);
       printCompactedSummary(compacted);
     });
@@ -103,6 +129,8 @@ async function loadTrajectories(options: {
   until?: string;
   ids?: string;
   pr?: string;
+  branch?: string;
+  all?: boolean;
 }): Promise<Trajectory[]> {
   const trajectories: Trajectory[] = [];
   const targetIds = options.ids ? options.ids.split(",").map((s) => s.trim()) : null;
@@ -110,6 +138,12 @@ async function loadTrajectories(options: {
   // Parse date filters
   const sinceDate = options.since ? parseRelativeDate(options.since) : null;
   const untilDate = options.until ? new Date(options.until) : null;
+
+  // Get commits on current branch not in target branch
+  const branchCommits = options.branch ? getBranchCommits(options.branch) : null;
+
+  // Get compaction state from index
+  const compactedIds = options.all ? new Set<string>() : getCompactedTrajectoryIds();
 
   const searchPaths = getSearchPaths();
   const seenIds = new Set<string>();
@@ -128,6 +162,9 @@ async function loadTrajectories(options: {
 
       for (const summary of summaries) {
         if (seenIds.has(summary.id)) continue;
+
+        // Skip already compacted (unless --all)
+        if (compactedIds.has(summary.id)) continue;
 
         // Filter by IDs if specified
         if (targetIds && !targetIds.includes(summary.id)) continue;
@@ -153,6 +190,15 @@ async function loadTrajectories(options: {
             if (!matchesPR) continue;
           }
 
+          // Filter by branch if specified
+          if (branchCommits) {
+            const hasMatchingCommit = trajectory.commits.some((c) =>
+              branchCommits.has(c.slice(0, 7)) || branchCommits.has(c)
+            );
+            if (!hasMatchingCommit && trajectory.commits.length > 0) continue;
+            // Include trajectories with no commits (they might still be relevant)
+          }
+
           trajectories.push(trajectory);
         }
       }
@@ -166,6 +212,102 @@ async function loadTrajectories(options: {
   }
 
   return trajectories;
+}
+
+/**
+ * Get commits that are on the current branch but not in the target branch
+ */
+function getBranchCommits(targetBranch: string): Set<string> {
+  const commits = new Set<string>();
+
+  try {
+    // Get commits on HEAD that are not in target branch
+    const output = execSync(`git log ${targetBranch}..HEAD --format=%H`, {
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+
+    for (const line of output.trim().split("\n")) {
+      if (line) {
+        commits.add(line);
+        commits.add(line.slice(0, 7)); // Also add short hash
+      }
+    }
+  } catch {
+    // Not in a git repo or branch doesn't exist
+    console.warn(`Warning: Could not get commits for branch comparison with ${targetBranch}`);
+  }
+
+  return commits;
+}
+
+/**
+ * Get IDs of trajectories that have already been compacted
+ */
+function getCompactedTrajectoryIds(): Set<string> {
+  const compacted = new Set<string>();
+  const searchPaths = getSearchPaths();
+
+  for (const searchPath of searchPaths) {
+    const indexPath = join(searchPath, "index.json");
+    if (!existsSync(indexPath)) continue;
+
+    try {
+      const indexContent = readFileSync(indexPath, "utf-8");
+      const index = JSON.parse(indexContent) as {
+        trajectories: Record<string, IndexEntry>;
+      };
+
+      for (const [id, entry] of Object.entries(index.trajectories || {})) {
+        if (entry.compactedInto) {
+          compacted.add(id);
+        }
+      }
+    } catch {
+      // Index doesn't exist or is malformed
+    }
+  }
+
+  return compacted;
+}
+
+/**
+ * Mark trajectories as having been compacted into a specific compaction
+ */
+async function markTrajectoriesAsCompacted(
+  trajectories: Trajectory[],
+  compactedIntoId: string,
+): Promise<void> {
+  const searchPaths = getSearchPaths();
+
+  for (const searchPath of searchPaths) {
+    const indexPath = join(searchPath, "index.json");
+    if (!existsSync(indexPath)) continue;
+
+    try {
+      const indexContent = readFileSync(indexPath, "utf-8");
+      const index = JSON.parse(indexContent) as {
+        version: number;
+        lastUpdated: string;
+        trajectories: Record<string, IndexEntry>;
+      };
+
+      let updated = false;
+      for (const traj of trajectories) {
+        if (index.trajectories[traj.id]) {
+          index.trajectories[traj.id].compactedInto = compactedIntoId;
+          updated = true;
+        }
+      }
+
+      if (updated) {
+        index.lastUpdated = new Date().toISOString();
+        writeFileSync(indexPath, JSON.stringify(index, null, 2));
+      }
+    } catch {
+      // Index doesn't exist or is malformed
+    }
+  }
 }
 
 function parseRelativeDate(input: string): Date {

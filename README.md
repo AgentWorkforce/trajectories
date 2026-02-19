@@ -126,9 +126,11 @@ trail export traj_abc123 --format markdown
 trail export --format html --open  # Opens in browser
 
 # Compact trajectories (consolidate similar decisions)
-trail compact --since 7d              # Compact last 7 days
-trail compact --pr 123                # Compact trajectories for a PR
-trail compact --ids traj_a,traj_b     # Compact specific trajectories
+trail compact                         # Uncompacted trajectories (default)
+trail compact --branch main           # Trajectories with commits not in main
+trail compact --pr 123                # Trajectories mentioning PR #123
+trail compact --since 7d              # Last 7 days
+trail compact --all                   # Everything (including previously compacted)
 ```
 
 ### SDK
