@@ -30,6 +30,18 @@ Works with any task system: Beads, Linear, Jira, GitHub Issues, or standalone. T
 - **Timeline** - Linear-style chronological view
 - **JSON** - Full structured data for tooling
 
+### Native Multi-Agent Support
+
+Trajectories is built for teams of agents working together:
+
+- **Shared trajectory** — Multiple agents collaborate on a single task record
+- **Agent participation** — Each agent logged as lead, contributor, or reviewer with timestamps
+- **Chapter handoffs** — When work moves between agents, chapters capture the context shift
+- **Cross-agent messaging** — Integrates with [agent-relay](https://github.com/khaliqgant/agent-relay) to record inter-agent communication as trajectory events
+- **Parallel coordination** — Multiple agents working in parallel on related tasks can reference each other's trajectories
+
+This is a key differentiator: no other tool in the AI dev stack tracks *who* (which agent, which model) made *which decisions* and *why*, across a coordinated multi-agent workflow.
+
 ### Integration Ready
 - Complements [claude-mem](https://github.com/thedotmack/claude-mem) for observation-level memory
 - Integrates with [agent-relay](https://github.com/khaliqgant/agent-relay) for multi-agent messaging
@@ -216,6 +228,36 @@ When an agent starts a new task, it can query the workspace for:
 
 Each layer is independent and can be used alone, but together they form a complete agent memory stack.
 
+## The Narrative Layer in Your AI Stack
+
+Trajectories sits at the top of an emerging ecosystem of AI development tools. Each layer answers a different question:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  AGENT-TRAJECTORIES                                             │
+│  "Why was this built this way?"                                 │
+│  Narrative, decisions, retrospectives, institutional memory     │
+│                            ▲                                    │
+│                            │ gives meaning to                   │
+│  ENTIRE (entireio/cli)                                          │
+│  "What happened in this session?"                               │
+│  Raw session capture, transcripts, recovery, rewind             │
+│                            ▲                                    │
+│                            │ attributes                         │
+│  AGENT-TRACE (agent-trace.dev)                                  │
+│  "Who wrote this line of code?"                                 │
+│  Line-level code attribution, model identification              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Agent Trace** ([agent-trace.dev](https://agent-trace.dev)) is the attribution spec — trajectories implements it automatically, generating `.trace.json` files that comply with the spec on every `trail complete`.
+
+**Entire** ([entireio/cli](https://github.com/entireio/cli)) captures raw session transcripts via git hooks — a complementary layer focused on recovery and rewind.
+
+**Trajectories** is the narrative layer: structured meaning on top of raw events. Where entire captures *what happened*, trajectories captures *why decisions were made* and *what was learned*. Where agent-trace says *who wrote the code*, trajectories explains *why this approach was chosen*.
+
+Used together, these tools give you a complete audit trail of AI-assisted development from attribution through narrative.
+
 ## The Trajectory Format
 
 ```json
@@ -299,9 +341,28 @@ Agent-generated code faces a trust problem. Developers hesitate to ship code the
 
 The result: teams can ship agent code with the same confidence as human-written code—because they understand it just as well.
 
-## Status
+## Roadmap
 
 This project is in early development. See [PROPOSAL-trajectories.md](./PROPOSAL-trajectories.md) for the full design document.
+
+**v1.0 (current)**
+- [x] File-based storage (`.trajectories/`)
+- [x] Core CLI commands (`start`, `decision`, `complete`, `list`, `show`, `export`)
+- [x] Agent Trace spec compliance (`.trace.json` generation)
+- [x] Multi-agent participation tracking
+- [x] Rich export formats (Markdown, JSON, Timeline, HTML)
+
+**v1.1 (next)**
+- [ ] **MCP server** — Real-time bidirectional queries so Claude Code, Cursor, and other tools can read and write trajectories directly within agent sessions
+- [ ] **Claude Code hooks** — Auto-capture on `PostToolUse` and session boundaries
+- [ ] **SQLite storage** — Full-text search across all trajectories
+- [ ] **Git hook integration** — Auto-start/complete trajectories on commit events
+- [ ] **`CLAUDE.md` generation** — Extract patterns from trajectories into reusable context files
+
+**Future**
+- Workspace knowledge base (decisions, patterns, conventions as queryable memory)
+- PostgreSQL/S3 storage for teams
+- Training data export for project-specific model fine-tuning
 
 ## License
 

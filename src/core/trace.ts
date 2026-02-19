@@ -177,22 +177,25 @@ export function getChangedFiles(
 
 /**
  * Detect the model from environment variables
+ * Returns model ID using models.dev convention (org/model-name)
  * @returns Model identifier or 'unknown'
  */
 export function detectModel(): string {
-  // Check custom env var first
+  // Check custom env var first (pass through as-is if already org/model format)
   if (process.env.TRAIL_TRACE_MODEL) {
     return process.env.TRAIL_TRACE_MODEL;
   }
 
-  // Check Anthropic model env var
+  // Check Anthropic model env var - normalize to models.dev convention
   if (process.env.ANTHROPIC_MODEL) {
-    return process.env.ANTHROPIC_MODEL;
+    const model = process.env.ANTHROPIC_MODEL;
+    return model.includes("/") ? model : `anthropic/${model}`;
   }
 
-  // Check common AI provider model env vars
+  // Check common AI provider model env vars - normalize to models.dev convention
   if (process.env.OPENAI_MODEL) {
-    return process.env.OPENAI_MODEL;
+    const model = process.env.OPENAI_MODEL;
+    return model.includes("/") ? model : `openai/${model}`;
   }
 
   return "unknown";
@@ -252,8 +255,8 @@ export function generateTrace(
     conversations: [
       {
         contributor: {
-          type: "agent",
-          model,
+          type: "ai",
+          ...(model !== "unknown" ? { model_id: model } : {}),
         },
         ranges: ranges.map((range) => ({
           ...range,
@@ -264,7 +267,7 @@ export function generateTrace(
   }));
 
   return {
-    version: 1,
+    version: "1.0.0",
     id: generateTraceId(),
     timestamp: new Date().toISOString(),
     trajectory: trajectory.id,

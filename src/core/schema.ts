@@ -171,15 +171,17 @@ export const TraceRangeSchema = z.object({
 
 /**
  * Contributor type schema
+ * Follows agent-trace.dev specification
  */
-export const ContributorTypeSchema = z.enum(["human", "agent"]);
+export const ContributorTypeSchema = z.enum(["human", "ai", "mixed", "unknown"]);
 
 /**
  * Trace contributor schema
+ * model_id follows models.dev convention (e.g., 'anthropic/claude-opus-4-5-20251101')
  */
 export const TraceContributorSchema = z.object({
   type: ContributorTypeSchema,
-  model: z.string().optional(),
+  model_id: z.string().max(250).optional(),
 });
 
 /**
@@ -201,10 +203,11 @@ export const TraceFileSchema = z.object({
 
 /**
  * Trace record schema - the main trace type
+ * Follows agent-trace.dev specification v0.1.0
  */
 export const TraceRecordSchema = z.object({
-  version: z.literal(1),
-  id: z.string().regex(/^trace_[a-z0-9]+$/, "Invalid trace ID format"),
+  version: z.string().min(1, "Version is required"),
+  id: z.string().min(1, "Trace ID is required"),
   timestamp: z.string().datetime(),
   trajectory: z.string().optional(),
   files: z.array(TraceFileSchema),
