@@ -7,7 +7,6 @@
 
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { generateRandomId } from "./id.js";
 import type {
   TraceFile,
   TraceRange,
@@ -202,12 +201,12 @@ export function detectModel(): string {
 }
 
 /**
- * Generate a unique trace ID
- * Format: trace_xxxxxxxxxxxx
- * @returns Unique trace ID
+ * Generate a unique trace ID using UUID v4
+ * Follows agent-trace.dev spec which requires UUID format
+ * @returns UUID v4 string
  */
 export function generateTraceId(): string {
-  return `trace_${generateRandomId()}`;
+  return crypto.randomUUID();
 }
 
 /**
