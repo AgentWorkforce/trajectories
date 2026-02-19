@@ -6,6 +6,15 @@
  * @packageDocumentation
  */
 
+// SDK (high-level API)
+export {
+  TrajectoryClient,
+  TrajectorySession,
+  TrajectoryBuilder,
+  trajectory,
+} from "./sdk/index.js";
+export type { TrajectoryClientOptions } from "./sdk/index.js";
+
 // Core
 export {
   createTrajectory,
@@ -34,6 +43,17 @@ export {
   isValidTrajectoryId,
   isValidChapterId,
 } from "./core/id.js";
+
+// Git trailers
+export {
+  formatTrailer,
+  parseTrajectoryFromMessage,
+  getTrajectoryFromCommit,
+  getCommitsBetween,
+  getFilesChangedBetween,
+  TRAJECTORY_TRAILER_KEY,
+} from "./core/trailers.js";
+export type { CommitInfo } from "./core/trailers.js";
 
 // Types
 export type {
