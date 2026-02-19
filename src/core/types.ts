@@ -383,7 +383,7 @@ export interface TraceFile {
 export interface TraceRecord {
   /** Schema version (semver) following agent-trace.dev spec */
   version: string;
-  /** Unique trace ID (format: trace_xxxxxxxxxxxx) */
+  /** Unique trace ID (UUID v4 per agent-trace.dev spec) */
   id: string;
   /** When the trace was created (ISO timestamp) */
   timestamp: string;
