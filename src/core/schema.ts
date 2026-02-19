@@ -174,7 +174,12 @@ export const TraceRangeSchema = z.object({
  * Contributor type schema
  * Follows agent-trace.dev specification
  */
-export const ContributorTypeSchema = z.enum(["human", "ai", "mixed", "unknown"]);
+export const ContributorTypeSchema = z.enum([
+  "human",
+  "ai",
+  "mixed",
+  "unknown",
+]);
 
 /**
  * Trace contributor schema
