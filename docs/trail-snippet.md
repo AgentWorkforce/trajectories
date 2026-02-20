@@ -102,6 +102,43 @@ View current trajectory:
 trail status
 ```
 
+## Listing and Viewing Trajectories
+
+List all trajectories:
+```bash
+trail list
+```
+
+View a specific trajectory:
+```bash
+trail show <trajectory-id>
+```
+
+Export a trajectory (markdown, json, timeline, html, pr-summary):
+```bash
+trail export <trajectory-id> --format markdown
+```
+
+## Compacting Trajectories
+
+After a PR merge, compact related trajectories into a single summary:
+
+```bash
+trail compact --pr 42
+```
+
+Compact by branch:
+```bash
+trail compact --branch feature/auth
+```
+
+Compact by commit range:
+```bash
+trail compact --commits abc123..def456
+```
+
+Compaction consolidates decisions and creates a grouped summary, reducing noise while preserving key decisions.
+
 ## Why Trail?
 
 Your trajectory helps others understand:
