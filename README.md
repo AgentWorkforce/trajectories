@@ -124,6 +124,35 @@ trail list --search "auth"
 # Export for documentation (markdown, json, timeline, or html)
 trail export traj_abc123 --format markdown
 trail export --format html --open  # Opens in browser
+
+# Compact trajectories (consolidate similar decisions)
+trail compact                         # Uncompacted trajectories (default)
+trail compact --branch main           # Trajectories with commits not in main
+trail compact --commits abc1234,def5678  # Trajectories matching specific commit SHAs
+trail compact --pr 123                # Trajectories mentioning PR #123
+trail compact --since 7d              # Last 7 days
+trail compact --all                   # Everything (including previously compacted)
+```
+
+### Automatic Compaction (GitHub Action)
+
+Add these steps to any workflow that runs on PR merge (e.g., your release or publish flow). Requires `ref: ${{ github.event.pull_request.base.ref }}` and `fetch-depth: 0` on checkout, plus `contents: write` permission:
+
+```yaml
+      - name: Compact trajectories
+        run: |
+          PR_COMMITS=$(git log ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} --format=%H | paste -sd, -)
+          OUTPUT=".trajectories/compacted/pr-${{ github.event.pull_request.number }}.json"
+          if [ -n "$PR_COMMITS" ]; then
+            npx agent-trajectories compact --commits "$PR_COMMITS" --output "$OUTPUT"
+          else
+            npx agent-trajectories compact --pr ${{ github.event.pull_request.number }} --output "$OUTPUT"
+          fi
+      - name: Commit compacted trajectories
+        run: |
+          git add .trajectories/compacted/ || true
+          git diff --cached --quiet || \
+            (git commit -m "chore: compact trajectories for PR #${{ github.event.pull_request.number }}" && git push)
 ```
 
 ### SDK

@@ -1,0 +1,52 @@
+name: Compact Trajectories on PR Merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  compact:
+    # Only run when PR is actually merged, not just closed
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0  # Need full history for trajectory lookup
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Compact trajectories for this PR
+        run: |
+          PR_COMMITS=$(git log ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} --format=%H | paste -sd, -)
+          OUTPUT=".trajectories/compacted/pr-${{ github.event.pull_request.number }}.json"
+          if [ -n "$PR_COMMITS" ]; then
+            npx trail compact --commits "$PR_COMMITS" --output "$OUTPUT"
+          else
+            npx trail compact --pr ${{ github.event.pull_request.number }} --output "$OUTPUT"
+          fi
+
+      - name: Commit compacted trajectories
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .trajectories/compacted/ || true
+          git diff --cached --quiet || \
+            (git commit -m "chore: compact trajectories for PR #${{ github.event.pull_request.number }}" && git push)

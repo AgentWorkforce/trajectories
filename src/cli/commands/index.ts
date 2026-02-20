@@ -3,7 +3,7 @@
  *
  * Registers all commands with the program.
  *
- * Core commands (11 total):
+ * Core commands (12 total):
  * - start: Begin tracking a new task
  * - status: Show current trajectory state
  * - decision: Record a decision point
@@ -15,10 +15,12 @@
  * - export: Output in various formats (with --open)
  * - enable: Install git hook for trajectory trailers
  * - disable: Remove the trajectory git hook
+ * - compact: Compress trajectories into summarized form
  */
 
 import type { Command } from "commander";
 import { registerAbandonCommand } from "./abandon.js";
+import { registerCompactCommand } from "./compact.js";
 import { registerCompleteCommand } from "./complete.js";
 import { registerDecisionCommand } from "./decision.js";
 import { registerEnableCommand } from "./enable.js";
@@ -43,4 +45,5 @@ export function registerCommands(program: Command): void {
   registerShowCommand(program);
   registerExportCommand(program);
   registerEnableCommand(program);
+  registerCompactCommand(program);
 }
