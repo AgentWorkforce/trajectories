@@ -215,8 +215,10 @@ async function loadTrajectories(options: {
           // Filter by PR if specified
           if (options.pr) {
             const escaped = options.pr.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            // Match "#N" or "PR #N" / "PR N" patterns, requiring word boundaries
+            // to avoid false matches on words containing "pr" (e.g., "Improve")
             const prPattern = new RegExp(
-              `#${escaped}\\b|PR.*${escaped}\\b`,
+              `#${escaped}\\b|\\bPR\\s*#?\\s*${escaped}\\b`,
               "i",
             );
             const matchesPR =
