@@ -86,6 +86,10 @@ export function registerCompactCommand(program: Command): void {
       "--branch <name>",
       "Compact trajectories with commits not in the specified branch (e.g., main)",
     )
+    .option(
+      "--commits <shas>",
+      "Comma-separated commit SHAs to match trajectories against",
+    )
     .option("--all", "Include all trajectories, even previously compacted ones")
     .option("--dry-run", "Preview what would be compacted without saving")
     .option("--output <path>", "Output path for compacted trajectory")
@@ -98,7 +102,8 @@ export function registerCompactCommand(program: Command): void {
           options.since ||
           options.ids ||
           options.pr ||
-          options.branch
+          options.branch ||
+          options.commits
         ) {
           console.log("No trajectories found matching criteria");
         } else {
@@ -137,6 +142,7 @@ async function loadTrajectories(options: {
   ids?: string;
   pr?: string;
   branch?: string;
+  commits?: string;
   all?: boolean;
 }): Promise<Trajectory[]> {
   const trajectories: Trajectory[] = [];
@@ -151,6 +157,17 @@ async function loadTrajectories(options: {
   // Get commits on current branch not in target branch
   const branchCommits = options.branch
     ? getBranchCommits(options.branch)
+    : null;
+
+  // Parse --commits into a set with both full and short forms
+  const targetCommits = options.commits
+    ? new Set(
+        options.commits.split(",").flatMap((sha) => {
+          const trimmed = sha.trim();
+          if (!trimmed) return [];
+          return [trimmed, trimmed.slice(0, 7)];
+        }),
+      )
     : null;
 
   // Get compaction state from index
@@ -213,6 +230,14 @@ async function loadTrajectories(options: {
             );
             if (!hasMatchingCommit && trajectory.commits.length > 0) continue;
             // Include trajectories with no commits (they might still be relevant)
+          }
+
+          // Filter by commits if specified
+          if (targetCommits) {
+            const hasMatchingCommit = trajectory.commits.some(
+              (c) => targetCommits.has(c) || targetCommits.has(c.slice(0, 7)),
+            );
+            if (!hasMatchingCommit) continue;
           }
 
           trajectories.push(trajectory);
