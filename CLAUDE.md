@@ -23,6 +23,12 @@ Usage notes:
 <path>.openskills/prpm-json-best-practices-skill/SKILL.md</path>
 </skill>
 
+<skill activation="lazy">
+<name>using-trajectories-sdk</name>
+<description>Use when programmatically creating or managing agent trajectories in TypeScript - provides TrajectoryClient for persistent storage and TrajectoryBuilder for in-memory construction</description>
+<path>.openskills/using-trajectories-sdk/SKILL.md</path>
+</skill>
+
 </available_skills>
 </skills_system>
 

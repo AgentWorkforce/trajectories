@@ -102,7 +102,17 @@
           "position": "append"
         }
       }
+    },
+    "@prpm/creating-skills-skill#claude": {
+      "version": "1.0.4",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40prpm%2Fcreating-skills-skill/1.0.4.tar.gz",
+      "integrity": "sha256-845d12bda6e5b37ed3177e2a867f57319327704b2206d58643d8e06cecb64241",
+      "format": "claude",
+      "subtype": "skill",
+      "sourceFormat": "claude",
+      "sourceSubtype": "skill",
+      "installedPath": ".claude/skills/creating-skills-skill/SKILL.md"
     }
   },
-  "generated": "2026-01-30T10:39:38.246Z"
+  "generated": "2026-02-20T16:18:25.877Z"
 }
