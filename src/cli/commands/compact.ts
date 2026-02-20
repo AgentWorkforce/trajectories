@@ -12,12 +12,9 @@ import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Command } from "commander";
-import type {
-  Decision,
-  Trajectory,
-} from "../../core/types.js";
-import { FileStorage, getSearchPaths } from "../../storage/file.js";
 import { generateRandomId } from "../../core/id.js";
+import type { Decision, Trajectory } from "../../core/types.js";
+import { FileStorage, getSearchPaths } from "../../storage/file.js";
 
 /**
  * A group of related decisions
@@ -72,7 +69,9 @@ interface IndexEntry {
 export function registerCompactCommand(program: Command): void {
   program
     .command("compact")
-    .description("Compact trajectories into a summarized form (default: uncompacted only)")
+    .description(
+      "Compact trajectories into a summarized form (default: uncompacted only)",
+    )
     .option(
       "--since <date>",
       "Include trajectories since this date (ISO format or relative like '7d')",
@@ -94,10 +93,18 @@ export function registerCompactCommand(program: Command): void {
       const trajectories = await loadTrajectories(options);
 
       if (trajectories.length === 0) {
-        if (options.all || options.since || options.ids || options.pr || options.branch) {
+        if (
+          options.all ||
+          options.since ||
+          options.ids ||
+          options.pr ||
+          options.branch
+        ) {
           console.log("No trajectories found matching criteria");
         } else {
-          console.log("No uncompacted trajectories found. Use --all to include previously compacted.");
+          console.log(
+            "No uncompacted trajectories found. Use --all to include previously compacted.",
+          );
         }
         return;
       }
@@ -133,17 +140,23 @@ async function loadTrajectories(options: {
   all?: boolean;
 }): Promise<Trajectory[]> {
   const trajectories: Trajectory[] = [];
-  const targetIds = options.ids ? options.ids.split(",").map((s) => s.trim()) : null;
+  const targetIds = options.ids
+    ? options.ids.split(",").map((s) => s.trim())
+    : null;
 
   // Parse date filters
   const sinceDate = options.since ? parseRelativeDate(options.since) : null;
   const untilDate = options.until ? new Date(options.until) : null;
 
   // Get commits on current branch not in target branch
-  const branchCommits = options.branch ? getBranchCommits(options.branch) : null;
+  const branchCommits = options.branch
+    ? getBranchCommits(options.branch)
+    : null;
 
   // Get compaction state from index
-  const compactedIds = options.all ? new Set<string>() : getCompactedTrajectoryIds();
+  const compactedIds = options.all
+    ? new Set<string>()
+    : getCompactedTrajectoryIds();
 
   const searchPaths = getSearchPaths();
   const seenIds = new Set<string>();
@@ -181,7 +194,10 @@ async function loadTrajectories(options: {
 
           // Filter by PR if specified
           if (options.pr) {
-            const prPattern = new RegExp(`#${options.pr}\\b|PR.*${options.pr}`, "i");
+            const prPattern = new RegExp(
+              `#${options.pr}\\b|PR.*${options.pr}`,
+              "i",
+            );
             const matchesPR =
               prPattern.test(trajectory.task.title) ||
               prPattern.test(trajectory.task.description || "") ||
@@ -192,8 +208,8 @@ async function loadTrajectories(options: {
 
           // Filter by branch if specified
           if (branchCommits) {
-            const hasMatchingCommit = trajectory.commits.some((c) =>
-              branchCommits.has(c.slice(0, 7)) || branchCommits.has(c)
+            const hasMatchingCommit = trajectory.commits.some(
+              (c) => branchCommits.has(c.slice(0, 7)) || branchCommits.has(c),
             );
             if (!hasMatchingCommit && trajectory.commits.length > 0) continue;
             // Include trajectories with no commits (they might still be relevant)
@@ -206,7 +222,8 @@ async function loadTrajectories(options: {
       if (originalDataDir !== undefined) {
         process.env.TRAJECTORIES_DATA_DIR = originalDataDir;
       } else {
-        process.env.TRAJECTORIES_DATA_DIR = undefined;
+        // biome-ignore lint/performance/noDelete: process.env requires delete to truly unset (assignment stores string "undefined")
+        delete process.env.TRAJECTORIES_DATA_DIR;
       }
     }
   }
@@ -222,10 +239,13 @@ function getBranchCommits(targetBranch: string): Set<string> {
 
   try {
     // Get commits on HEAD that are not in target branch
-    const output = execSync(`git log ${targetBranch}..HEAD --format=%H`, {
-      encoding: "utf-8",
-      stdio: ["pipe", "pipe", "pipe"],
-    });
+    const output = execSync(
+      `git log '${targetBranch.replace(/'/g, "'\\''")}'..HEAD --format=%H`,
+      {
+        encoding: "utf-8",
+        stdio: ["pipe", "pipe", "pipe"],
+      },
+    );
 
     for (const line of output.trim().split("\n")) {
       if (line) {
@@ -235,7 +255,9 @@ function getBranchCommits(targetBranch: string): Set<string> {
     }
   } catch {
     // Not in a git repo or branch doesn't exist
-    console.warn(`Warning: Could not get commits for branch comparison with ${targetBranch}`);
+    console.warn(
+      `Warning: Could not get commits for branch comparison with ${targetBranch}`,
+    );
   }
 
   return commits;
@@ -409,7 +431,11 @@ function compactTrajectories(trajectories: Trajectory[]): CompactedTrajectory {
   const dates = trajectories.map((t) => new Date(t.startedAt).getTime());
   const minDate = new Date(Math.min(...dates));
   const maxDate = new Date(
-    Math.max(...trajectories.map((t) => new Date(t.completedAt || t.startedAt).getTime())),
+    Math.max(
+      ...trajectories.map((t) =>
+        new Date(t.completedAt || t.startedAt).getTime(),
+      ),
+    ),
   );
 
   return {
@@ -446,11 +472,25 @@ function groupDecisions(
   const categories: Record<string, DecisionGroup> = {};
 
   const categoryKeywords: Record<string, string[]> = {
-    architecture: ["architecture", "structure", "pattern", "design", "module", "component"],
+    architecture: [
+      "architecture",
+      "structure",
+      "pattern",
+      "design",
+      "module",
+      "component",
+    ],
     api: ["api", "endpoint", "rest", "graphql", "http", "request", "response"],
     database: ["database", "schema", "migration", "query", "sql", "model"],
     testing: ["test", "spec", "coverage", "assertion", "mock"],
-    security: ["security", "auth", "permission", "token", "credential", "encrypt"],
+    security: [
+      "security",
+      "auth",
+      "permission",
+      "token",
+      "credential",
+      "encrypt",
+    ],
     performance: ["performance", "optimize", "cache", "speed", "memory"],
     tooling: ["tool", "config", "build", "lint", "format", "ci", "cd"],
     naming: ["name", "rename", "convention", "format"],
@@ -527,7 +567,9 @@ function printCompactedSummary(compacted: CompactedTrajectory): void {
 
   console.log("=== Decision Groups ===\n");
   for (const group of compacted.decisionGroups) {
-    console.log(`${capitalize(group.category)} (${group.decisions.length} decisions):`);
+    console.log(
+      `${capitalize(group.category)} (${group.decisions.length} decisions):`,
+    );
     for (const decision of group.decisions.slice(0, 3)) {
       console.log(`  - ${decision.question}`);
       console.log(`    Chose: ${decision.chosen}`);

@@ -47,6 +47,8 @@ jobs:
 
       - name: Commit compacted trajectories
         if: steps.compact.outputs.compacted == 'true'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -56,5 +58,5 @@ jobs:
           Automatically generated trajectory compaction.
 
           Source PR: #${{ github.event.pull_request.number }}
-          PR Title: ${{ github.event.pull_request.title }}" || echo "No changes to commit"
+          PR Title: $PR_TITLE" || echo "No changes to commit"
           git push
