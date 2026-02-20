@@ -114,7 +114,7 @@ View a specific trajectory:
 trail show <trajectory-id>
 ```
 
-Export a trajectory (markdown, json, timeline, html, pr-summary):
+Export a trajectory (markdown, json, timeline, html):
 ```bash
 trail export <trajectory-id> --format markdown
 ```
@@ -127,14 +127,14 @@ After a PR merge, compact related trajectories into a single summary:
 trail compact --pr 42
 ```
 
-Compact by branch:
+Compact by branch (finds trajectories with commits not in the specified base branch):
 ```bash
-trail compact --branch feature/auth
+trail compact --branch main
 ```
 
-Compact by commit range:
+Compact by specific commits:
 ```bash
-trail compact --commits abc123..def456
+trail compact --commits abc123,def456
 ```
 
 Compaction consolidates decisions and creates a grouped summary, reducing noise while preserving key decisions.
