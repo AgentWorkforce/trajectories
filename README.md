@@ -136,7 +136,7 @@ trail compact --all                   # Everything (including previously compact
 
 ### Automatic Compaction (GitHub Action)
 
-Add these steps to any workflow that runs on PR merge (e.g., your release or publish flow). Requires `fetch-depth: 0` on checkout and `contents: write` permission:
+Add these steps to any workflow that runs on PR merge (e.g., your release or publish flow). Requires `ref: ${{ github.event.pull_request.base.ref }}` and `fetch-depth: 0` on checkout, plus `contents: write` permission:
 
 ```yaml
       - name: Compact trajectories
