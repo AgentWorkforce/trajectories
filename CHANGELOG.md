@@ -1,3 +1,13 @@
+## [0.5.1](https://github.com/AgentWorkforce/trajectories/compare/v0.5.0...v0.5.1) (2026-02-20)
+
+
+### Features
+
+* add --branch flag and uncompacted-default behavior ([eba1a58](https://github.com/AgentWorkforce/trajectories/commit/eba1a58f760e5a009cf9814bf59da2cd31873921))
+* add trajectory compaction for PR merges ([00132e4](https://github.com/AgentWorkforce/trajectories/commit/00132e4a40ef1698da994b188f6832a52a852dac))
+
+
+
 # [0.5.0](https://github.com/AgentWorkforce/trajectories/compare/v0.4.1...v0.5.0) (2026-02-19)
 
 
