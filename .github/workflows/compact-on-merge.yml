@@ -48,4 +48,4 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .trajectories/compacted/ || true
           git diff --cached --quiet || \
-            git commit -m "chore: compact trajectories for PR #${{ github.event.pull_request.number }}" && git push
+            (git commit -m "chore: compact trajectories for PR #${{ github.event.pull_request.number }}" && git push)

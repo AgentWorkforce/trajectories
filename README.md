@@ -152,7 +152,7 @@ Add these steps to any workflow that runs on PR merge (e.g., your release or pub
         run: |
           git add .trajectories/compacted/ || true
           git diff --cached --quiet || \
-            git commit -m "chore: compact trajectories for PR #${{ github.event.pull_request.number }}" && git push
+            (git commit -m "chore: compact trajectories for PR #${{ github.event.pull_request.number }}" && git push)
 ```
 
 ### SDK
