@@ -188,7 +188,10 @@ async function loadTrajectories(options: {
       const storage = new FileStorage();
       await storage.initialize();
 
-      const summaries = await storage.list({ status: "completed", limit: Number.MAX_SAFE_INTEGER });
+      const summaries = await storage.list({
+        status: "completed",
+        limit: Number.MAX_SAFE_INTEGER,
+      });
 
       for (const summary of summaries) {
         if (seenIds.has(summary.id)) continue;
