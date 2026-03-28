@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { resolveCli } from "@agent-relay/sdk";
 import type { CompactionConfig } from "./config.js";
 
 // Note: extends prompts.ts Message with additional "assistant" role for provider responses
@@ -370,24 +371,11 @@ export async function resolveProvider(
 }
 
 async function resolveCLIProvider(): Promise<CLIProvider | null> {
-  try {
-    const sdk = (await import(
-      /* webpackIgnore: true */ "@agent-relay/sdk"
-    )) as {
-      resolveCli: (
-        cli: string,
-      ) => Promise<{ binary: string; path: string } | undefined>;
-    };
-    const { resolveCli } = sdk;
-
-    for (const cli of SUPPORTED_CLIS) {
-      const resolved = await resolveCli(cli);
-      if (resolved) {
-        return new CLIProvider(cli, resolved.path);
-      }
+  for (const cli of SUPPORTED_CLIS) {
+    const resolved = await resolveCli(cli);
+    if (resolved) {
+      return new CLIProvider(cli, resolved.path);
     }
-  } catch {
-    // relay SDK not available or resolveCli failed
   }
 
   return null;
