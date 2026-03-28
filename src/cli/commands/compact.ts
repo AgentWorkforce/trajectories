@@ -22,6 +22,7 @@ import {
 import { buildCompactionPrompt } from "../../compact/prompts.js";
 import {
   AnthropicProvider,
+  CLIProvider,
   type CompactionLLM,
   type Message,
   OpenAIProvider,
@@ -170,7 +171,7 @@ export function registerCompactCommand(program: Command): void {
       console.log(`Compacting ${trajectories.length} trajectories...\n`);
 
       const config = getCompactionConfig();
-      const provider = resolveProvider(config);
+      const provider = await resolveProvider(config);
       const useLLM = shouldUseLLM(options, provider !== null);
       const markdownEnabled = options.markdown !== false;
       const mechanicalCompacted = compactTrajectories(trajectories);
@@ -775,6 +776,10 @@ function getProviderLabel(provider: CompactionLLM): string {
 
   if (provider instanceof AnthropicProvider) {
     return "Anthropic";
+  }
+
+  if (provider instanceof CLIProvider) {
+    return `CLI (${provider.cliName})`;
   }
 
   return "LLM";

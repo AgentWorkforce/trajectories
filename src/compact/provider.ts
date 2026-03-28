@@ -1,4 +1,8 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import type { CompactionConfig } from "./config.js";
+
+const execFileAsync = promisify(execFile);
 
 export interface Message {
   role: "system" | "user" | "assistant";
@@ -199,9 +203,79 @@ export class AnthropicProvider implements CompactionLLM {
   }
 }
 
-export function resolveProvider(
+const SUPPORTED_CLIS = ["claude", "codex"] as const;
+type SupportedCli = (typeof SUPPORTED_CLIS)[number];
+
+export class CLIProvider implements CompactionLLM {
+  private readonly cli: SupportedCli;
+  private readonly binaryPath: string;
+
+  constructor(cli: SupportedCli, binaryPath: string) {
+    this.cli = cli;
+    this.binaryPath = binaryPath;
+  }
+
+  get cliName(): string {
+    return this.cli;
+  }
+
+  async complete(
+    messages: Message[],
+    _options: CompletionOptions = {},
+  ): Promise<string> {
+    const prompt = messagesToPrompt(messages);
+    const args = buildCliArgs(this.cli, prompt);
+
+    const { stdout } = await execFileAsync(this.binaryPath, args, {
+      timeout: 300_000,
+      maxBuffer: 10 * 1024 * 1024,
+      env: { ...process.env },
+    });
+
+    const output = stdout.trim();
+    if (!output) {
+      throw new Error(`${this.cli} CLI returned empty output`);
+    }
+
+    return output;
+  }
+}
+
+function messagesToPrompt(messages: Message[]): string {
+  const systemParts: string[] = [];
+  const conversationParts: string[] = [];
+
+  for (const msg of messages) {
+    if (msg.role === "system") {
+      systemParts.push(msg.content.trim());
+    } else {
+      conversationParts.push(msg.content.trim());
+    }
+  }
+
+  const parts: string[] = [];
+  if (systemParts.length > 0) {
+    parts.push(systemParts.join("\n\n"));
+  }
+  if (conversationParts.length > 0) {
+    parts.push(conversationParts.join("\n\n"));
+  }
+
+  return parts.join("\n\n---\n\n");
+}
+
+function buildCliArgs(cli: SupportedCli, prompt: string): string[] {
+  switch (cli) {
+    case "claude":
+      return ["-p", "--output-format", "text", prompt];
+    case "codex":
+      return ["exec", "-q", prompt];
+  }
+}
+
+export async function resolveProvider(
   config: Partial<CompactionConfig> = {},
-): CompactionLLM | null {
+): Promise<CompactionLLM | null> {
   const explicitProvider = (
     config.provider ?? process.env.TRAJECTORIES_LLM_PROVIDER
   )?.toLowerCase();
@@ -217,6 +291,10 @@ export function resolveProvider(
       : null;
   }
 
+  if (explicitProvider === "cli") {
+    return resolveCLIProvider();
+  }
+
   if (explicitProvider && explicitProvider !== "auto") {
     return null;
   }
@@ -227,6 +305,23 @@ export function resolveProvider(
 
   if (process.env.ANTHROPIC_API_KEY) {
     return new AnthropicProvider({ model });
+  }
+
+  return resolveCLIProvider();
+}
+
+async function resolveCLIProvider(): Promise<CLIProvider | null> {
+  try {
+    const { resolveCli } = await import("@agent-relay/sdk");
+
+    for (const cli of SUPPORTED_CLIS) {
+      const resolved = await resolveCli(cli);
+      if (resolved) {
+        return new CLIProvider(cli, resolved.path);
+      }
+    }
+  } catch {
+    // relay SDK not available or resolveCli failed
   }
 
   return null;

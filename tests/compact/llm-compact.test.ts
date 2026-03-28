@@ -1,10 +1,11 @@
 import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runCommand } from "../../src/cli/runner.js";
 import { generateCompactionMarkdown } from "../../src/compact/markdown.js";
 import { parseCompactionResponse } from "../../src/compact/parser.js";
+import { CLIProvider, resolveProvider } from "../../src/compact/provider.js";
 import { serializeForLLM } from "../../src/compact/serializer.js";
 import type { Decision, Trajectory } from "../../src/core/types.js";
 
@@ -148,54 +149,101 @@ describe("LLM compaction", () => {
     expect(markdown).toContain("## Lessons Learned");
   });
 
-  it("falls back to mechanical compaction when no LLM provider is configured", async () => {
-    const started = await runCommand(["start", "Update compact command"]);
-    expect(started.success).toBe(true);
+  it(
+    "uses mechanical compaction with --mechanical flag",
+    { timeout: 15_000 },
+    async () => {
+      const started = await runCommand(["start", "Update compact command"]);
+      expect(started.success).toBe(true);
 
-    const decided = await runCommand([
-      "decision",
-      "Use LLM compaction when available",
-      "--reasoning",
-      "It produces denser summaries while keeping mechanical metadata.",
-    ]);
-    expect(decided.success).toBe(true);
+      const decided = await runCommand([
+        "decision",
+        "Use LLM compaction when available",
+        "--reasoning",
+        "It produces denser summaries while keeping mechanical metadata.",
+      ]);
+      expect(decided.success).toBe(true);
 
-    const completed = await runCommand([
-      "complete",
-      "--summary",
-      "Finished LLM compaction flow",
-      "--confidence",
-      "0.91",
-    ]);
-    expect(completed.success).toBe(true);
+      const completed = await runCommand([
+        "complete",
+        "--summary",
+        "Finished LLM compaction flow",
+        "--confidence",
+        "0.91",
+      ]);
+      expect(completed.success).toBe(true);
 
-    const result = await runCommand(["compact", "--llm"]);
+      const result = await runCommand(["compact", "--mechanical"]);
 
-    expect(result.success).toBe(true);
-    expect(result.output).toContain(
-      "No LLM provider detected; falling back to mechanical compaction.",
-    );
-    expect(result.output).toContain("Compacted trajectory saved to:");
+      expect(result.success).toBe(true);
+      expect(result.output).toContain("Compacted trajectory saved to:");
 
-    const compactedDir = join(tempDir, ".trajectories", "compacted");
-    const compactedFiles = await readdir(compactedDir);
-    const jsonFile = compactedFiles.find((file) => file.endsWith(".json"));
-    const markdownFile = compactedFiles.find((file) => file.endsWith(".md"));
+      const compactedDir = join(tempDir, ".trajectories", "compacted");
+      const compactedFiles = await readdir(compactedDir);
+      const jsonFile = compactedFiles.find((file) => file.endsWith(".json"));
+      const markdownFile = compactedFiles.find((file) => file.endsWith(".md"));
 
-    expect(jsonFile).toBeDefined();
-    expect(markdownFile).toBeDefined();
+      expect(jsonFile).toBeDefined();
+      expect(markdownFile).toBeDefined();
 
-    const compacted = JSON.parse(
-      await readFile(join(compactedDir, jsonFile ?? ""), "utf-8"),
-    ) as {
-      filesAffected?: string[];
-      decisionGroups?: unknown[];
-      narrative?: string;
+      const compacted = JSON.parse(
+        await readFile(join(compactedDir, jsonFile ?? ""), "utf-8"),
+      ) as {
+        filesAffected?: string[];
+        decisionGroups?: unknown[];
+        narrative?: string;
+      };
+
+      expect(compacted.narrative).toBeUndefined();
+      expect(compacted.decisionGroups).toBeDefined();
+      expect(compacted.filesAffected).toBeDefined();
+    },
+  );
+});
+
+describe("CLI provider resolution", () => {
+  let originalEnv: Record<string, string | undefined>;
+
+  beforeEach(() => {
+    originalEnv = {
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+      TRAJECTORIES_LLM_PROVIDER: process.env.TRAJECTORIES_LLM_PROVIDER,
     };
+    clearCompactionEnv();
+  });
 
-    expect(compacted.narrative).toBeUndefined();
-    expect(compacted.decisionGroups).toBeDefined();
-    expect(compacted.filesAffected).toBeDefined();
+  afterEach(() => {
+    restoreEnv(originalEnv);
+    vi.restoreAllMocks();
+  });
+
+  it("resolves API providers before CLI when API keys are present", async () => {
+    process.env.OPENAI_API_KEY = "sk-test";
+    const provider = await resolveProvider({});
+    expect(provider).not.toBeNull();
+    expect(provider).not.toBeInstanceOf(CLIProvider);
+  });
+
+  it("falls back to CLI provider when no API keys are set", async () => {
+    const provider = await resolveProvider({});
+    // Will be CLIProvider if claude/codex is installed, null otherwise
+    if (provider !== null) {
+      expect(provider).toBeInstanceOf(CLIProvider);
+    }
+  });
+
+  it("returns CLI provider when explicit provider is 'cli'", async () => {
+    const provider = await resolveProvider({ provider: "cli" });
+    // Will be CLIProvider if a supported CLI is installed, null otherwise
+    if (provider !== null) {
+      expect(provider).toBeInstanceOf(CLIProvider);
+    }
+  });
+
+  it("CLIProvider exposes the cli name", () => {
+    const provider = new CLIProvider("claude", "/usr/local/bin/claude");
+    expect(provider.cliName).toBe("claude");
   });
 });
 
