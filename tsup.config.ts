@@ -13,7 +13,6 @@ export default defineConfig([
     sourcemap: true,
     target: "node20",
     shims: true,
-    external: ["@agent-relay/sdk"],
   },
   // CLI (needs shebang banner)
   {
@@ -25,7 +24,6 @@ export default defineConfig([
     sourcemap: true,
     target: "node20",
     shims: true,
-    external: ["@agent-relay/sdk"],
     banner: {
       js: "#!/usr/bin/env node",
     },

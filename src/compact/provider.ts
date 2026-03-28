@@ -1,6 +1,11 @@
-import { spawn } from "node:child_process";
-import { resolveCli } from "@agent-relay/sdk";
+import { execFile, spawn } from "node:child_process";
+import { constants, accessSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { promisify } from "node:util";
 import type { CompactionConfig } from "./config.js";
+
+const execFileAsync = promisify(execFile);
 
 // Note: extends prompts.ts Message with additional "assistant" role for provider responses
 export interface Message {
@@ -370,15 +375,48 @@ export async function resolveProvider(
   return resolveCLIProvider();
 }
 
+const CLI_SEARCH_PATHS = [
+  "~/.local/bin",
+  "~/.claude/local",
+  "/usr/local/bin",
+  "/opt/homebrew/bin",
+];
+
 async function resolveCLIProvider(): Promise<CLIProvider | null> {
   for (const cli of SUPPORTED_CLIS) {
-    const resolved = await resolveCli(cli);
-    if (resolved) {
-      return new CLIProvider(cli, resolved.path);
+    const path = await findBinary(cli);
+    if (path) {
+      return new CLIProvider(cli, path);
     }
   }
 
   return null;
+}
+
+async function findBinary(name: string): Promise<string | undefined> {
+  // Try PATH first via `which`
+  try {
+    const { stdout } = await execFileAsync("which", [name]);
+    const path = stdout.trim();
+    if (path) return path;
+  } catch {
+    // not in PATH
+  }
+
+  // Fall back to well-known install directories
+  const home = homedir();
+  for (const dir of CLI_SEARCH_PATHS) {
+    const expanded = dir.startsWith("~/") ? join(home, dir.slice(2)) : dir;
+    const candidate = join(expanded, name);
+    try {
+      accessSync(candidate, constants.X_OK);
+      return candidate;
+    } catch {
+      // not found here
+    }
+  }
+
+  return undefined;
 }
 
 function normalizeModel(value: string | undefined): string | undefined {
