@@ -1,9 +1,7 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
+import { spawn } from "node:child_process";
 import type { CompactionConfig } from "./config.js";
 
-const execFileAsync = promisify(execFile);
-
+// Note: extends prompts.ts Message with additional "assistant" role for provider responses
 export interface Message {
   role: "system" | "user" | "assistant";
   content: string;
@@ -63,13 +61,20 @@ export class OpenAIProvider implements CompactionLLM {
   private readonly baseUrl: string;
 
   constructor(config: Partial<ProviderConfig> = {}) {
-    this.apiKey = config.apiKey ?? process.env.OPENAI_API_KEY ?? "";
+    this.apiKey =
+      config.apiKey?.trim() || process.env.OPENAI_API_KEY?.trim() || "";
     this.model =
       normalizeModel(config.model) ??
       normalizeModel(process.env.TRAJECTORIES_LLM_MODEL) ??
       DEFAULT_OPENAI_MODEL;
     this.baseUrl =
       config.baseUrl ?? process.env.OPENAI_BASE_URL ?? DEFAULT_OPENAI_BASE_URL;
+
+    if (this.baseUrl !== DEFAULT_OPENAI_BASE_URL) {
+      console.warn(
+        `[trajectories] OpenAI base URL overridden to: ${this.baseUrl}`,
+      );
+    }
 
     if (!this.apiKey) {
       throw new Error("OPENAI_API_KEY is required for OpenAIProvider");
@@ -80,35 +85,44 @@ export class OpenAIProvider implements CompactionLLM {
     messages: Message[],
     options: CompletionOptions = {},
   ): Promise<string> {
-    const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: this.model,
-        messages,
-        max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
-        temperature: options.temperature ?? 0.2,
-        response_format: options.jsonMode ? { type: "json_object" } : undefined,
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 300_000);
+    try {
+      const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: this.model,
+          messages,
+          max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
+          temperature: options.temperature ?? 0.2,
+          response_format: options.jsonMode
+            ? { type: "json_object" }
+            : undefined,
+        }),
+        signal: controller.signal,
+      });
 
-    const body = (await parseJson(response)) as OpenAIChatResponse;
-    if (!response.ok) {
-      throw new Error(
-        body.error?.message ??
-          `OpenAI request failed with status ${response.status}`,
-      );
+      const body = (await parseJson(response)) as OpenAIChatResponse;
+      if (!response.ok) {
+        throw new Error(
+          body.error?.message ??
+            `OpenAI request failed with status ${response.status}`,
+        );
+      }
+
+      const content = body.choices?.[0]?.message?.content;
+      if (!content) {
+        throw new Error("OpenAI response did not include completion content");
+      }
+
+      return content;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const content = body.choices?.[0]?.message?.content;
-    if (!content) {
-      throw new Error("OpenAI response did not include completion content");
-    }
-
-    return content;
   }
 }
 
@@ -118,7 +132,8 @@ export class AnthropicProvider implements CompactionLLM {
   private readonly baseUrl: string;
 
   constructor(config: Partial<ProviderConfig> = {}) {
-    this.apiKey = config.apiKey ?? process.env.ANTHROPIC_API_KEY ?? "";
+    this.apiKey =
+      config.apiKey?.trim() || process.env.ANTHROPIC_API_KEY?.trim() || "";
     this.model =
       normalizeModel(config.model) ??
       normalizeModel(process.env.TRAJECTORIES_LLM_MODEL) ??
@@ -127,6 +142,12 @@ export class AnthropicProvider implements CompactionLLM {
       config.baseUrl ??
       process.env.ANTHROPIC_BASE_URL ??
       DEFAULT_ANTHROPIC_BASE_URL;
+
+    if (this.baseUrl !== DEFAULT_ANTHROPIC_BASE_URL) {
+      console.warn(
+        `[trajectories] Anthropic base URL overridden to: ${this.baseUrl}`,
+      );
+    }
 
     if (!this.apiKey) {
       throw new Error("ANTHROPIC_API_KEY is required for AnthropicProvider");
@@ -149,57 +170,65 @@ export class AnthropicProvider implements CompactionLLM {
         content: message.content,
       }));
 
-    const response = await fetch(`${this.baseUrl}/v1/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "anthropic-version": "2023-06-01",
-        "x-api-key": this.apiKey,
-      },
-      body: JSON.stringify({
-        model: this.model,
-        system:
-          systemMessages.length > 0 ? systemMessages.join("\n\n") : undefined,
-        messages:
-          conversation.length > 0
-            ? conversation
-            : [{ role: "user", content: "Summarize the provided sessions." }],
-        max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
-        temperature: options.temperature ?? 0.2,
-      }),
-    });
+    if (conversation.length === 0) {
+      throw new Error("AnthropicProvider requires at least one user message");
+    }
 
-    const body = (await parseJson(response)) as AnthropicResponse;
-    if (!response.ok) {
-      throw new Error(
-        body.error?.message ??
-          `Anthropic request failed with status ${response.status}`,
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 300_000);
+    try {
+      const response = await fetch(`${this.baseUrl}/v1/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "anthropic-version": "2024-10-22",
+          "x-api-key": this.apiKey,
+        },
+        body: JSON.stringify({
+          model: this.model,
+          system:
+            systemMessages.length > 0 ? systemMessages.join("\n\n") : undefined,
+          messages: conversation,
+          max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
+          temperature: options.temperature ?? 0.2,
+        }),
+        signal: controller.signal,
+      });
+
+      const body = (await parseJson(response)) as AnthropicResponse;
+      if (!response.ok) {
+        throw new Error(
+          body.error?.message ??
+            `Anthropic request failed with status ${response.status}`,
+        );
+      }
+
+      const textBlocks = (body.content ?? []).filter(
+        (
+          block,
+        ): block is Extract<
+          AnthropicResponse["content"],
+          Array<unknown>
+        >[number] & {
+          type: "text";
+          text: string;
+        } =>
+          block.type === "text" &&
+          typeof (block as { text?: unknown }).text === "string",
       );
+      const content = textBlocks
+        .map((block) => block.text)
+        .join("\n")
+        .trim();
+
+      if (!content) {
+        throw new Error("Anthropic response did not include text content");
+      }
+
+      return content;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const textBlocks = (body.content ?? []).filter(
-      (
-        block,
-      ): block is Extract<
-        AnthropicResponse["content"],
-        Array<unknown>
-      >[number] & {
-        type: "text";
-        text: string;
-      } =>
-        block.type === "text" &&
-        typeof (block as { text?: unknown }).text === "string",
-    );
-    const content = textBlocks
-      .map((block) => block.text)
-      .join("\n")
-      .trim();
-
-    if (!content) {
-      throw new Error("Anthropic response did not include text content");
-    }
-
-    return content;
   }
 }
 
@@ -224,15 +253,10 @@ export class CLIProvider implements CompactionLLM {
     _options: CompletionOptions = {},
   ): Promise<string> {
     const prompt = messagesToPrompt(messages);
-    const args = buildCliArgs(this.cli, prompt);
+    const args = buildCliArgs(this.cli);
 
-    const { stdout } = await execFileAsync(this.binaryPath, args, {
-      timeout: 300_000,
-      maxBuffer: 10 * 1024 * 1024,
-      env: { ...process.env },
-    });
-
-    const output = stdout.trim();
+    // Use stdin to avoid OS argument length limits for large prompts
+    const output = await spawnWithStdin(this.binaryPath, args, prompt);
     if (!output) {
       throw new Error(`${this.cli} CLI returned empty output`);
     }
@@ -264,13 +288,48 @@ function messagesToPrompt(messages: Message[]): string {
   return parts.join("\n\n---\n\n");
 }
 
-function buildCliArgs(cli: SupportedCli, prompt: string): string[] {
+function buildCliArgs(cli: SupportedCli): string[] {
   switch (cli) {
     case "claude":
-      return ["-p", "--output-format", "text", prompt];
+      return ["-p", "--output-format", "text"];
     case "codex":
-      return ["exec", "-q", prompt];
+      return ["exec", "-q"];
   }
+}
+
+function spawnWithStdin(
+  command: string,
+  args: string[],
+  input: string,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      timeout: 300_000,
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+
+    const chunks: Buffer[] = [];
+    child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk));
+
+    let stderr = "";
+    child.stderr.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString();
+    });
+
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code !== 0) {
+        reject(
+          new Error(`CLI exited with code ${code}: ${stderr.slice(0, 200)}`),
+        );
+      } else {
+        resolve(Buffer.concat(chunks).toString().trim());
+      }
+    });
+
+    child.stdin.write(input);
+    child.stdin.end();
+  });
 }
 
 export async function resolveProvider(
@@ -345,6 +404,8 @@ async function parseJson(response: Response): Promise<unknown> {
   try {
     return JSON.parse(text) as unknown;
   } catch {
-    throw new Error(`Invalid JSON response: ${text.slice(0, 500)}`);
+    throw new Error(
+      `Invalid JSON response (status ${response.status}, length ${text.length})`,
+    );
   }
 }

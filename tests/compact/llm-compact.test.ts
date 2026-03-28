@@ -4,8 +4,18 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runCommand } from "../../src/cli/runner.js";
 import { generateCompactionMarkdown } from "../../src/compact/markdown.js";
-import { parseCompactionResponse } from "../../src/compact/parser.js";
-import { CLIProvider, resolveProvider } from "../../src/compact/provider.js";
+import {
+  mergeCompactionWithMetadata,
+  parseCompactionResponse,
+} from "../../src/compact/parser.js";
+import { buildCompactionPrompt } from "../../src/compact/prompts.js";
+import type { Message as PromptMessage } from "../../src/compact/prompts.js";
+import {
+  CLIProvider,
+  type CompactionLLM,
+  type CompletionOptions,
+  resolveProvider,
+} from "../../src/compact/provider.js";
 import { serializeForLLM } from "../../src/compact/serializer.js";
 import type { Decision, Trajectory } from "../../src/core/types.js";
 
@@ -147,6 +157,93 @@ describe("LLM compaction", () => {
     expect(markdown).toContain("| Question | Decision | Impact |");
     expect(markdown).toContain("## Conventions Established");
     expect(markdown).toContain("## Lessons Learned");
+  });
+
+  it("runs the full LLM compaction pipeline with a mocked provider", () => {
+    const stubbedResponse = JSON.stringify({
+      narrative: "Sessions focused on adding LLM-backed compaction.",
+      decisions: [
+        {
+          question: "How to integrate LLM output?",
+          chosen: "Merge with mechanical metadata.",
+          reasoning: "Keeps deterministic data intact.",
+          impact: "Reliable file and commit lists.",
+        },
+      ],
+      conventions: [
+        {
+          pattern: "Always retain mechanical metadata.",
+          rationale: "It is deterministic.",
+          scope: "compact command",
+        },
+      ],
+      lessons: [
+        {
+          lesson: "Token budgeting prevents context overflow.",
+          context: "Large trajectories exceed model limits.",
+          recommendation: "Truncate chapters proportionally.",
+        },
+      ],
+      openQuestions: ["Should raw model responses be persisted?"],
+    });
+
+    const mockProvider: CompactionLLM = {
+      complete: async (
+        _messages: PromptMessage[],
+        _options?: CompletionOptions,
+      ): Promise<string> => stubbedResponse,
+    };
+
+    const trajectory = createTrajectory();
+    const serialized = serializeForLLM([trajectory], 4000);
+    const messages = buildCompactionPrompt(serialized);
+
+    // Verify the prompt was built with user + system messages
+    expect(messages.length).toBeGreaterThanOrEqual(2);
+    expect(messages[0]?.role).toBe("system");
+
+    // Run the mocked provider
+    return mockProvider.complete(messages, { jsonMode: true }).then((raw) => {
+      const parsed = parseCompactionResponse(raw);
+
+      expect(parsed.narrative).toContain("LLM-backed compaction");
+      expect(parsed.decisions).toHaveLength(1);
+      expect(parsed.conventions).toHaveLength(1);
+      expect(parsed.lessons).toHaveLength(1);
+      expect(parsed.openQuestions).toHaveLength(1);
+
+      // Merge with metadata
+      const merged = mergeCompactionWithMetadata(
+        {
+          id: "compact_mock",
+          version: 1,
+          type: "compacted",
+          compactedAt: new Date().toISOString(),
+          sourceTrajectories: [trajectory.id],
+          dateRange: {
+            start: trajectory.startedAt,
+            end: trajectory.completedAt ?? trajectory.startedAt,
+          },
+          summary: {
+            totalDecisions: 1,
+            totalEvents: 2,
+            uniqueAgents: ["Worker"],
+          },
+          filesAffected: trajectory.filesChanged ?? [],
+          commits: trajectory.commits ?? [],
+        },
+        parsed,
+      );
+
+      expect(merged.id).toBe("compact_mock");
+      expect(merged.narrative).toContain("LLM-backed compaction");
+      expect(merged.filesAffected).toContain("src/cli/commands/compact.ts");
+
+      // Verify markdown generation works end-to-end
+      const md = generateCompactionMarkdown(merged);
+      expect(md).toContain("## Summary");
+      expect(md).toContain("LLM-backed compaction");
+    });
   });
 
   it(

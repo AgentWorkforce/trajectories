@@ -57,6 +57,9 @@ function loadFileConfig(): Partial<CompactionConfig> {
       return {};
     }
 
+    // Merge precedence (last wins): root < compaction < llm
+    // e.g. { "model": "x", "compaction": { "model": "y" }, "llm": { "model": "z" } }
+    // results in model = "z"
     const merged: Record<string, unknown> = {};
     for (const section of [raw, raw.compaction, raw.llm]) {
       if (!isRecord(section)) {
@@ -64,6 +67,9 @@ function loadFileConfig(): Partial<CompactionConfig> {
       }
 
       for (const [key, value] of Object.entries(section)) {
+        if (key === "compaction" || key === "llm") {
+          continue;
+        }
         merged[key] = value;
       }
     }

@@ -23,7 +23,7 @@
 
 import { workflow } from "@agent-relay/sdk/workflows";
 
-const TRAJ_ROOT = "/Users/khaliqgant/Projects/Agent Workforce/trajectories";
+const TRAJ_ROOT = process.cwd();
 
 async function main() {
   const result = await workflow("llm-compaction")

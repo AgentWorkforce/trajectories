@@ -8,13 +8,14 @@
  * Default behavior: compact only trajectories that haven't been compacted yet.
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { Command } from "commander";
 import { getCompactionConfig } from "../../compact/config.js";
 import { generateCompactionMarkdown } from "../../compact/markdown.js";
 import {
+  type CompactedTrajectoryMetadata,
   type LLMCompactedOutput,
   mergeCompactionWithMetadata,
   parseCompactionResponse,
@@ -47,28 +48,13 @@ interface DecisionGroup {
 }
 
 /**
- * Compacted trajectory summary
+ * Compacted trajectory summary — extends the shared metadata type from parser.ts
+ * with mechanical compaction fields and optional LLM output.
  */
-interface CompactedTrajectory {
-  id: string;
-  version: number;
-  type: "compacted";
-  compactedAt: string;
-  sourceTrajectories: string[];
-  dateRange: {
-    start: string;
-    end: string;
-  };
-  summary: {
-    totalDecisions: number;
-    totalEvents: number;
-    uniqueAgents: string[];
-  };
+interface CompactedTrajectory extends CompactedTrajectoryMetadata {
   decisionGroups: DecisionGroup[];
   keyLearnings: string[];
   keyFindings: string[];
-  filesAffected: string[];
-  commits: string[];
   narrative?: string;
   decisions?: LLMCompactedOutput["decisions"];
   conventions?: LLMCompactedOutput["conventions"];
@@ -230,7 +216,7 @@ export function registerCompactCommand(program: Command): void {
       const llmOutput = await provider.complete(llmPlan.messages, {
         maxTokens: config.maxOutputTokens,
         temperature: config.temperature,
-        jsonMode: true,
+        jsonMode: provider instanceof OpenAIProvider,
       });
       const llmCompacted = parseCompactionResponse(llmOutput);
       const mergedCompaction = mergeCompactionWithMetadata(
@@ -311,80 +297,79 @@ async function loadTrajectories(options: {
   for (const searchPath of searchPaths) {
     if (!existsSync(searchPath)) continue;
 
+    // Set env var only for the synchronous FileStorage constructor, then
+    // immediately restore to avoid leaking state across async boundaries.
     const originalDataDir = process.env.TRAJECTORIES_DATA_DIR;
     process.env.TRAJECTORIES_DATA_DIR = searchPath;
+    const storage = new FileStorage();
+    if (originalDataDir !== undefined) {
+      process.env.TRAJECTORIES_DATA_DIR = originalDataDir;
+    } else {
+      // biome-ignore lint/performance/noDelete: process.env requires delete to truly unset (assignment stores string "undefined")
+      delete process.env.TRAJECTORIES_DATA_DIR;
+    }
 
-    try {
-      const storage = new FileStorage();
-      await storage.initialize();
+    await storage.initialize();
 
-      const summaries = await storage.list({
-        status: "completed",
-        limit: Number.MAX_SAFE_INTEGER,
-      });
+    const summaries = await storage.list({
+      status: "completed",
+      limit: Number.MAX_SAFE_INTEGER,
+    });
 
-      for (const summary of summaries) {
-        if (seenIds.has(summary.id)) continue;
+    for (const summary of summaries) {
+      if (seenIds.has(summary.id)) continue;
 
-        // Skip already compacted (unless --all)
-        if (compactedIds.has(summary.id)) continue;
+      // Skip already compacted (unless --all)
+      if (compactedIds.has(summary.id)) continue;
 
-        // Filter by IDs if specified
-        if (targetIds && !targetIds.includes(summary.id)) continue;
+      // Filter by IDs if specified
+      if (targetIds && !targetIds.includes(summary.id)) continue;
 
-        // Filter by date range
-        const startDate = new Date(summary.startedAt);
-        if (sinceDate && startDate < sinceDate) continue;
-        if (untilDate && startDate > untilDate) continue;
+      // Filter by date range
+      const startDate = new Date(summary.startedAt);
+      if (sinceDate && startDate < sinceDate) continue;
+      if (untilDate && startDate > untilDate) continue;
 
-        // Load full trajectory
-        const trajectory = await storage.get(summary.id);
-        if (trajectory) {
-          seenIds.add(summary.id);
+      // Load full trajectory
+      const trajectory = await storage.get(summary.id);
+      if (trajectory) {
+        seenIds.add(summary.id);
 
-          // Filter by PR if specified
-          if (options.pr) {
-            const escaped = options.pr.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            // Match "#N" or "PR #N" / "PR N" patterns, requiring word boundaries
-            // to avoid false matches on words containing "pr" (e.g., "Improve")
-            const prPattern = new RegExp(
-              `#${escaped}\\b|\\bPR\\s*#?\\s*${escaped}\\b`,
-              "i",
-            );
-            const matchesPR =
-              prPattern.test(trajectory.task.title) ||
-              prPattern.test(trajectory.task.description || "") ||
-              trajectory.commits.some((c) => prPattern.test(c));
+        // Filter by PR if specified
+        if (options.pr) {
+          const escaped = options.pr.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          // Match "#N" or "PR #N" / "PR N" patterns, requiring word boundaries
+          // to avoid false matches on words containing "pr" (e.g., "Improve")
+          const prPattern = new RegExp(
+            `#${escaped}\\b|\\bPR\\s*#?\\s*${escaped}\\b`,
+            "i",
+          );
+          const matchesPR =
+            prPattern.test(trajectory.task.title) ||
+            prPattern.test(trajectory.task.description || "") ||
+            trajectory.commits.some((c) => prPattern.test(c));
 
-            if (!matchesPR) continue;
-          }
-
-          // Filter by branch if specified
-          if (branchCommits) {
-            const hasMatchingCommit = trajectory.commits.some(
-              (c) => branchCommits.has(c.slice(0, 7)) || branchCommits.has(c),
-            );
-            if (!hasMatchingCommit && trajectory.commits.length > 0) continue;
-            // Include trajectories with no commits (they might still be relevant)
-          }
-
-          // Filter by commits if specified
-          if (targetCommits) {
-            const hasMatchingCommit = trajectory.commits.some(
-              (c) => targetCommits.has(c) || targetCommits.has(c.slice(0, 7)),
-            );
-            if (!hasMatchingCommit) continue;
-          }
-
-          trajectories.push(trajectory);
+          if (!matchesPR) continue;
         }
-      }
-    } finally {
-      if (originalDataDir !== undefined) {
-        process.env.TRAJECTORIES_DATA_DIR = originalDataDir;
-      } else {
-        // biome-ignore lint/performance/noDelete: process.env requires delete to truly unset (assignment stores string "undefined")
-        delete process.env.TRAJECTORIES_DATA_DIR;
+
+        // Filter by branch if specified
+        if (branchCommits) {
+          const hasMatchingCommit = trajectory.commits.some(
+            (c) => branchCommits.has(c.slice(0, 7)) || branchCommits.has(c),
+          );
+          if (!hasMatchingCommit && trajectory.commits.length > 0) continue;
+          // Include trajectories with no commits (they might still be relevant)
+        }
+
+        // Filter by commits if specified
+        if (targetCommits) {
+          const hasMatchingCommit = trajectory.commits.some(
+            (c) => targetCommits.has(c) || targetCommits.has(c.slice(0, 7)),
+          );
+          if (!hasMatchingCommit) continue;
+        }
+
+        trajectories.push(trajectory);
       }
     }
   }
@@ -400,8 +385,9 @@ function getBranchCommits(targetBranch: string): Set<string> {
 
   try {
     // Get commits on HEAD that are not in target branch
-    const output = execSync(
-      `git log '${targetBranch.replace(/'/g, "'\\''")}'..HEAD --format=%H`,
+    const output = execFileSync(
+      "git",
+      ["log", `${targetBranch}..HEAD`, "--format=%H"],
       {
         encoding: "utf-8",
         stdio: ["pipe", "pipe", "pipe"],
