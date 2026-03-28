@@ -371,7 +371,14 @@ export async function resolveProvider(
 
 async function resolveCLIProvider(): Promise<CLIProvider | null> {
   try {
-    const { resolveCli } = await import("@agent-relay/sdk");
+    const sdk = (await import(
+      /* webpackIgnore: true */ "@agent-relay/sdk"
+    )) as {
+      resolveCli: (
+        cli: string,
+      ) => Promise<{ binary: string; path: string } | undefined>;
+    };
+    const { resolveCli } = sdk;
 
     for (const cli of SUPPORTED_CLIS) {
       const resolved = await resolveCli(cli);
