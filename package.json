@@ -46,13 +46,17 @@
     "type": "git",
     "url": "https://github.com/AgentWorkforce/trajectories"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "engines": {
     "node": ">=20.0.0"
   },
   "dependencies": {
     "@agent-relay/sdk": "^3.2.22",
     "@clack/prompts": "^0.7.0",
+    "@relayauth/sdk": "^0.1.4",
+    "@relayfile/sdk": "^0.1.6",
     "commander": "^12.0.0",
     "zod": "^3.23.0"
   },
