@@ -20,6 +20,7 @@
 
 import type { Command } from "commander";
 import { registerAbandonCommand } from "./abandon.js";
+import { registerCommitCommand } from "./commit.js";
 import { registerCompactCommand } from "./compact.js";
 import { registerCompleteCommand } from "./complete.js";
 import { registerDecisionCommand } from "./decision.js";
@@ -46,4 +47,5 @@ export function registerCommands(program: Command): void {
   registerExportCommand(program);
   registerEnableCommand(program);
   registerCompactCommand(program);
+  registerCommitCommand(program);
 }
