@@ -2,7 +2,7 @@ import { workflow } from "@agent-relay/sdk/workflows";
 
 const result = await workflow("70-server-scaffold")
   .description(
-    "Create trail-viewer/server/package.json AND trail-viewer/server/tsconfig.json — Node.js server scaffold",
+    "Create trail-viewer/server/package.json AND trail-viewer/server/tsconfig.json",
   )
   .pattern("pipeline")
   .channel("wf-70-server-scaffold")
@@ -24,75 +24,45 @@ const result = await workflow("70-server-scaffold")
 
   .step("plan", {
     agent: "planner",
-    task: `Output the COMPLETE contents of TWO files for the Trail Viewer local server:
+    task: `Output the COMPLETE contents of TWO files for the Trail Viewer local server.
 
 FILE 1: package.json
-\`\`\`json
-{
-  "name": "trail-viewer-server",
-  "version": "1.0.0",
-  "description": "Local HTTP server for Trail Viewer macOS app — serves trajectory data and chat API",
-  "type": "module",
-  "main": "dist/server.js",
-  "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "start": "node dist/server.js",
-    "build": "tsc"
-  },
-  "dependencies": {
-    "agent-trajectories": "file:../../",
-    "@agent-relay/sdk": "*",
-    "hono": "^4.0.0",
-    "@hono/node-server": "^1.8.0",
-    "ws": "^8.16.0"
-  },
-  "devDependencies": {
-    "@types/ws": "^8.5.10",
-    "tsx": "^4.7.0",
-    "typescript": "^5.3.0"
-  }
-}
-\`\`\`
+- name: trail-viewer-server, version 1.0.0, type: module
+- dependencies: agent-trajectories (file:../../), @agent-relay/sdk, hono, @hono/node-server, ws
+- devDependencies: @types/ws, tsx, typescript
+- scripts: dev (tsx watch src/server.ts), start (node dist/server.js), build (tsc)
 
 FILE 2: tsconfig.json
-\`\`\`json
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "lib": ["ES2022"]
-  },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
-}
-\`\`\`
+- target ES2022, module ESNext, moduleResolution bundler, strict, esModuleInterop
+- outDir dist, rootDir src, include src/**/*.ts
 
-Output both files clearly labeled with their filenames.`,
-    verification: { type: "output_contains", value: "trail-viewer-server" },
+Output both files clearly labeled with their filenames and complete JSON contents.
+
+IMPORTANT: Write your complete output to the file .relay/specs/70-server-scaffold.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/70-server-scaffold.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/70-server-scaffold.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create TWO files for the Trail Viewer server from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
-1. Create trail-viewer/server/package.json with the package.json content
-2. Create trail-viewer/server/tsconfig.json with the tsconfig.json content
+1. Create trail-viewer/server/package.json
+2. Create trail-viewer/server/tsconfig.json
 
-Create the directory trail-viewer/server/ and trail-viewer/server/src/ if they do not exist.
+Create the directory trail-viewer/server/ if it does not exist.
 IMPORTANT: Write BOTH files to disk. Do NOT output to stdout.`,
     verification: {
       type: "file_exists",
@@ -104,7 +74,7 @@ IMPORTANT: Write BOTH files to disk. Do NOT output to stdout.`,
     type: "deterministic",
     dependsOn: ["implement"],
     command:
-      'cd trail-viewer && git add server/package.json server/tsconfig.json && git commit -m "chore: add server scaffold — package.json and tsconfig.json for trail-viewer-server"',
+      'cd trail-viewer && git add server/package.json server/tsconfig.json && git commit -m "chore: add server scaffold — package.json and tsconfig.json"',
     failOnError: true,
   })
 

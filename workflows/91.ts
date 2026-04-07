@@ -66,16 +66,28 @@ Requirements:
     - < 604800s: "{days} days ago" (or "1 day ago" / "yesterday")
     - else: full date "January 15, 2025" using dateFormat "MMMM d, yyyy"
 
-Output the COMPLETE Swift file ready to write to disk.`,
-    verification: { type: "output_contains", value: "RelativeTimeFormatter" },
+Output the COMPLETE Swift file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/91-relative-time.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/91-relative-time.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/91-relative-time.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Services/RelativeTimeFormatter.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the Swift code and write it to trail-viewer/Sources/Services/RelativeTimeFormatter.swift.
 Create the directory trail-viewer/Sources/Services/ if it does not exist.

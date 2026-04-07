@@ -73,19 +73,28 @@ Requirements:
 - Assume Theme, Typography, EmptyState, BookCard are available
 - Add a PreviewProvider showing all three states
 
-Output the COMPLETE Swift file ready to write to disk.`,
+Output the COMPLETE Swift file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/56-chat-empty-states.md on disk. This ensures clean handoff to the implementer.`,
     verification: {
-      type: "output_contains",
-      value: "NoTrajectorySelectedState",
+      type: "file_exists",
+      value: ".relay/specs/56-chat-empty-states.md",
     },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/56-chat-empty-states.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Views/Chat/ChatEmptyStates.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the Swift code and write it to trail-viewer/Sources/Views/Chat/ChatEmptyStates.swift.
 Create the directory trail-viewer/Sources/Views/Chat/ if it does not exist.

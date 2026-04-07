@@ -57,19 +57,28 @@ Requirements:
   - Skip chapters, events, alternatives, detailed reasoning
   - Suitable for quick context injection
 
-Output the COMPLETE TypeScript file ready to write to disk.`,
+Output the COMPLETE TypeScript file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/74-trajectory-formatter.md on disk. This ensures clean handoff to the implementer.`,
     verification: {
-      type: "output_contains",
-      value: "formatTrajectoryForAgent",
+      type: "file_exists",
+      value: ".relay/specs/74-trajectory-formatter.md",
     },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/74-trajectory-formatter.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/server/src/trajectory-formatter.ts from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the TypeScript code and write it to trail-viewer/server/src/trajectory-formatter.ts.
 Create the directory trail-viewer/server/src/ if it does not exist.

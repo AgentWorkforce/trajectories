@@ -85,16 +85,28 @@ Requirements:
     func show(_ text: String) { message = text; DispatchQueue.main.asyncAfter(deadline: .now() + 2) { self.message = nil } }
   }
 
-Output the COMPLETE Swift file ready to write to disk.`,
-    verification: { type: "output_contains", value: "ClipboardService" },
+Output the COMPLETE Swift file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/92-clipboard-service.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/92-clipboard-service.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/92-clipboard-service.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Services/ClipboardService.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the Swift code and write it to trail-viewer/Sources/Services/ClipboardService.swift.
 Create the directory trail-viewer/Sources/Services/ if it does not exist.

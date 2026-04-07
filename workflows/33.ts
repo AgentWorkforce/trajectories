@@ -49,16 +49,28 @@ Requirements:
 - Assume SignificanceDot, Theme are available from Design/ folder
 - Add a PreviewProvider with mock events and simple Text content
 
-Output the COMPLETE Swift file ready to write to disk.`,
-    verification: { type: "output_contains", value: "TimelineRail" },
+Output the COMPLETE Swift file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/33-timeline-rail.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/33-timeline-rail.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/33-timeline-rail.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Views/Detail/TimelineRail.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the Swift code and write it to trail-viewer/Sources/Views/Detail/TimelineRail.swift.
 Create the directory trail-viewer/Sources/Views/Detail/ if it does not exist.

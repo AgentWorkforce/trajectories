@@ -25,9 +25,15 @@ const result = await workflow("63-app-integration-hubspoke")
   .maxConcurrency(4)
   .timeout(3_600_000)
 
-  .agent("lead", {
+  .agent("planner", {
     cli: "claude",
-    role: "Integration lead — plans, reviews output, adjusts. Posts to channel.",
+    role: "Integration planner — designs the wiring spec with clean stdout",
+    preset: "lead",
+    retries: 2,
+  })
+  .agent("reviewer", {
+    cli: "claude",
+    role: "Integration reviewer — reads files, verifies wiring, fixes issues",
     preset: "lead",
     retries: 2,
   })
@@ -51,7 +57,7 @@ const result = await workflow("63-app-integration-hubspoke")
   })
 
   .step("plan-integration", {
-    agent: "lead",
+    agent: "planner",
     dependsOn: ["read-existing"],
     task: `You are the integration lead. Plan COMPLETE Swift code for 4 files that wire the entire app.
 
@@ -69,15 +75,27 @@ FILE 4: TrailViewerApp.swift (REWRITE) — All stores as @State. .environment() 
 
 DEPENDENCY ORDER: StatusBar + Shortcuts first (parallel), then ContentView (uses both), then App (uses ContentView).
 
-Output ALL 4 files with clear markers.`,
-    verification: { type: "output_contains", value: "ContentView" },
+Output ALL 4 files with clear markers.
+
+IMPORTANT: Write your complete output to the file .relay/specs/63-integration.md on disk. This ensures clean handoff to the implementers.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/63-integration.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan-integration"],
+    command: "cat .relay/specs/63-integration.md",
+    captureOutput: true,
   })
 
   // StatusBar + KeyboardShortcuts (parallel — no dependencies on each other)
   .step("impl-status-bar", {
     agent: "impl-1",
-    dependsOn: ["plan-integration"],
-    task: "Create trail-viewer/Sources/Views/StatusBar.swift from spec:\n\n{{steps.plan-integration.output}}\n\nWrite to disk. Only this one file.",
+    dependsOn: ["read-spec"],
+    task: "Create trail-viewer/Sources/Views/StatusBar.swift from spec:\n\n{{steps.read-spec.output}}\n\nWrite to disk. Only this one file.",
     verification: {
       type: "file_exists",
       value: "trail-viewer/Sources/Views/StatusBar.swift",
@@ -86,8 +104,8 @@ Output ALL 4 files with clear markers.`,
 
   .step("impl-keyboard", {
     agent: "impl-2",
-    dependsOn: ["plan-integration"],
-    task: "Create trail-viewer/Sources/Services/KeyboardShortcuts.swift from spec:\n\n{{steps.plan-integration.output}}\n\nWrite to disk. Only this one file.",
+    dependsOn: ["read-spec"],
+    task: "Create trail-viewer/Sources/Services/KeyboardShortcuts.swift from spec:\n\n{{steps.read-spec.output}}\n\nWrite to disk. Only this one file.",
     verification: {
       type: "file_exists",
       value: "trail-viewer/Sources/Services/KeyboardShortcuts.swift",
@@ -98,7 +116,7 @@ Output ALL 4 files with clear markers.`,
   .step("impl-content-view", {
     agent: "impl-1",
     dependsOn: ["impl-status-bar", "impl-keyboard"],
-    task: "OVERWRITE trail-viewer/Sources/ContentView.swift from spec:\n\n{{steps.plan-integration.output}}\n\nExtract the REWRITE version. Replace existing file.",
+    task: "OVERWRITE trail-viewer/Sources/ContentView.swift from spec:\n\n{{steps.read-spec.output}}\n\nExtract the REWRITE version. Replace existing file.",
     verification: { type: "exit_code" },
   })
 
@@ -106,13 +124,13 @@ Output ALL 4 files with clear markers.`,
   .step("impl-app-entry", {
     agent: "impl-2",
     dependsOn: ["impl-content-view"],
-    task: "OVERWRITE trail-viewer/Sources/TrailViewerApp.swift from spec:\n\n{{steps.plan-integration.output}}\n\nExtract the REWRITE version. Replace existing file.",
+    task: "OVERWRITE trail-viewer/Sources/TrailViewerApp.swift from spec:\n\n{{steps.read-spec.output}}\n\nExtract the REWRITE version. Replace existing file.",
     verification: { type: "exit_code" },
   })
 
   // Hub reviews the integration
   .step("review", {
-    agent: "lead",
+    agent: "reviewer",
     dependsOn: ["impl-app-entry"],
     task: `Review the integration. Read these 4 files and verify they're wired correctly:
 1. trail-viewer/Sources/Views/StatusBar.swift

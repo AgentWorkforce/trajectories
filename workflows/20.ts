@@ -67,16 +67,28 @@ Requirements:
    - Launch, wait with timeout
    - Return trimmed stdout output or nil on error
 
-Output the full file contents ready to write to disk.`,
-    verification: { type: "output_contains", value: "CLIDetector" },
+Output the full file contents ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/20-cli-detector.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/20-cli-detector.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/20-cli-detector.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Services/CLIDetector.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the CLIDetector.swift code and write it to trail-viewer/Sources/Services/CLIDetector.swift.
 Create the trail-viewer/Sources/Services directory if it does not exist.

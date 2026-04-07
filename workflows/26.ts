@@ -43,16 +43,28 @@ Requirements:
 - Assume Theme, Typography, and RuleLine are defined in the Design/ folder and available
 - Add a PreviewProvider with mock data
 
-Output the COMPLETE Swift file ready to write to disk.`,
-    verification: { type: "output_contains", value: "SidebarHeader" },
+Output the COMPLETE Swift file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/26-sidebar-header.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/26-sidebar-header.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/26-sidebar-header.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Views/Sidebar/SidebarHeader.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the Swift code and write it to trail-viewer/Sources/Views/Sidebar/SidebarHeader.swift.
 Create the directory trail-viewer/Sources/Views/Sidebar/ if it does not exist.

@@ -89,16 +89,25 @@ CLIENT TO SERVER messages:
 - Export a type guard function: isClientMessage(data: unknown): data is ClientToServerMessage
   - Checks that data is an object with a valid "type" field
 
-Output the COMPLETE TypeScript file ready to write to disk.`,
-    verification: { type: "output_contains", value: "ServerToClientMessage" },
+Output the COMPLETE TypeScript file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/82-ws-types.md on disk. This ensures clean handoff to the implementer.`,
+    verification: { type: "file_exists", value: ".relay/specs/82-ws-types.md" },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/82-ws-types.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/server/src/ws-types.ts from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the TypeScript code and write it to trail-viewer/server/src/ws-types.ts.
 Create the directory trail-viewer/server/src/ if it does not exist.

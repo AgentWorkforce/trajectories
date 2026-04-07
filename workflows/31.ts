@@ -48,16 +48,28 @@ Requirements:
 - Assume Theme, Typography, StatusBadge, TagPill, RuleLine are available from Design/ folder
 - Add a PreviewProvider with mock Trajectory data
 
-Output the COMPLETE Swift file ready to write to disk.`,
-    verification: { type: "output_contains", value: "TrajectoryHeaderView" },
+Output the COMPLETE Swift file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/31-trajectory-header.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/31-trajectory-header.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/31-trajectory-header.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Views/Detail/TrajectoryHeaderView.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the Swift code and write it to trail-viewer/Sources/Views/Detail/TrajectoryHeaderView.swift.
 Create the directory trail-viewer/Sources/Views/Detail/ if it does not exist.

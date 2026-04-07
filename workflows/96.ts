@@ -135,8 +135,13 @@ OUTPUT: Complete Swift code for SpotlightRegistration.swift,
 the Package.swift diff/update, and any Info.plist content needed.
 
 Prefer the IN-APP indexing approach (SpotlightRegistration called on launch)
-over a separate mdimporter extension, since we're using SPM not Xcode.`,
-    verification: { type: "output_contains", value: "SpotlightRegistration" },
+over a separate mdimporter extension, since we're using SPM not Xcode.
+
+IMPORTANT: Write your complete output to the file .relay/specs/96-spotlight.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/96-spotlight.md",
+    },
   })
 
   .step("impl-spotlight", {
@@ -144,7 +149,7 @@ over a separate mdimporter extension, since we're using SPM not Xcode.`,
     dependsOn: ["plan"],
     task: `Create trail-viewer/Sources/Services/SpotlightRegistration.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the SpotlightRegistration.swift code and write it to disk.
 IMPORTANT: Write the file to disk. Do NOT output to stdout. Only create this one file.`,
@@ -159,7 +164,7 @@ IMPORTANT: Write the file to disk. Do NOT output to stdout. Only create this one
     dependsOn: ["plan"],
     task: `Update trail-viewer/Package.swift to add CoreSpotlight framework based on this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Read the current Package.swift, apply the changes described in the spec,
 and write the updated file.

@@ -126,18 +126,31 @@ CONSISTENCY RULES (apply to ALL views):
 - Assume TrajectoryEvent has: id, type, content, timestamp, agentName?, significance, confidence?
 - Each file is self-contained with its own struct + PreviewProvider
 
-Output ALL 8 complete Swift files with clear FILE markers.`,
-    verification: { type: "output_contains", value: "EventCardBase" },
+Output ALL 8 complete Swift files with clear FILE markers.
+
+IMPORTANT: Write your complete output to the file .relay/specs/35-event-views.md on disk. This ensures clean handoff to the implementers.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/35-event-views.md",
+    },
+  })
+
+  // ── Read spec cleanly from file (no PTY garble) ───────────────────
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["design-all"],
+    command: "cat .relay/specs/35-event-views.md",
+    captureOutput: true,
   })
 
   // ── 4 workers fan out in parallel, each implements 2 files ────────
 
   .step("impl-base-note", {
     agent: "impl-1",
-    dependsOn: ["design-all"],
+    dependsOn: ["read-spec"],
     task: `Create 2 files from this spec:
 
-{{steps.design-all.output}}
+{{steps.read-spec.output}}
 
 1. trail-viewer/Sources/Views/Detail/Events/EventCardBase.swift
 2. trail-viewer/Sources/Views/Detail/Events/NoteEventView.swift
@@ -152,10 +165,10 @@ IMPORTANT: Write BOTH files to disk. Do NOT output to stdout.`,
 
   .step("impl-finding-thinking", {
     agent: "impl-2",
-    dependsOn: ["design-all"],
+    dependsOn: ["read-spec"],
     task: `Create 2 files from this spec:
 
-{{steps.design-all.output}}
+{{steps.read-spec.output}}
 
 1. trail-viewer/Sources/Views/Detail/Events/FindingEventView.swift
 2. trail-viewer/Sources/Views/Detail/Events/ThinkingEventView.swift
@@ -170,10 +183,10 @@ IMPORTANT: Write BOTH files to disk. Do NOT output to stdout.`,
 
   .step("impl-tool-reflection", {
     agent: "impl-3",
-    dependsOn: ["design-all"],
+    dependsOn: ["read-spec"],
     task: `Create 2 files from this spec:
 
-{{steps.design-all.output}}
+{{steps.read-spec.output}}
 
 1. trail-viewer/Sources/Views/Detail/Events/ToolCallEventView.swift
 2. trail-viewer/Sources/Views/Detail/Events/ReflectionEventView.swift
@@ -188,10 +201,10 @@ IMPORTANT: Write BOTH files to disk. Do NOT output to stdout.`,
 
   .step("impl-error-message", {
     agent: "impl-4",
-    dependsOn: ["design-all"],
+    dependsOn: ["read-spec"],
     task: `Create 2 files from this spec:
 
-{{steps.design-all.output}}
+{{steps.read-spec.output}}
 
 1. trail-viewer/Sources/Views/Detail/Events/ErrorEventView.swift
 2. trail-viewer/Sources/Views/Detail/Events/MessageEventView.swift

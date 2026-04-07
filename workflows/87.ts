@@ -77,16 +77,28 @@ Requirements:
 
 - Wait for server process: wait $SERVER_PID
 
-Output the COMPLETE shell script ready to write to disk.`,
-    verification: { type: "output_contains", value: "launch" },
+Output the COMPLETE shell script ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/87-launch-script.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/87-launch-script.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/87-launch-script.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/launch.sh from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the shell script and write it to trail-viewer/launch.sh.
 Make sure the file is executable (chmod +x trail-viewer/launch.sh after writing).

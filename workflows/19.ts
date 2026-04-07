@@ -91,16 +91,28 @@ Requirements:
    - messages = []
    - typingPersonas = []
 
-Output the full file contents ready to write to disk.`,
-    verification: { type: "output_contains", value: "RelayConnection" },
+Output the full file contents ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/19-relay-connection.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/19-relay-connection.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/19-relay-connection.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Data/RelayConnection.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the RelayConnection.swift code and write it to trail-viewer/Sources/Data/RelayConnection.swift.
 Create the trail-viewer/Sources/Data directory if it does not exist.

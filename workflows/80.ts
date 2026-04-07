@@ -85,16 +85,28 @@ Requirements:
   private broadcastTyping(personaId: string, isTyping: boolean): void
   - For each callback in typingCallbacks, call callback(personaId, isTyping)
 
-Output the COMPLETE TypeScript file ready to write to disk.`,
-    verification: { type: "output_contains", value: "ChatService" },
+Output the COMPLETE TypeScript file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/80-chat-service.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/80-chat-service.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/80-chat-service.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/server/src/chat-service.ts from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the TypeScript code and write it to trail-viewer/server/src/chat-service.ts.
 Create the directory trail-viewer/server/src/ if it does not exist.

@@ -81,16 +81,28 @@ Requirements:
      - process.on('SIGINT', async () => { bridge.close(); server.close(); process.exit(0); })
      - process.on('SIGTERM', async () => { bridge.close(); server.close(); process.exit(0); })
 
-Output the COMPLETE TypeScript file ready to write to disk.`,
-    verification: { type: "output_contains", value: "RelayBridge" },
+Output the COMPLETE TypeScript file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/84-server-main.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/84-server-main.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/84-server-main.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `REWRITE trail-viewer/server/src/server.ts from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the TypeScript code and OVERWRITE trail-viewer/server/src/server.ts with the new content.
 Create the directory trail-viewer/server/src/ if it does not exist.

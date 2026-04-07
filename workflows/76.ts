@@ -54,16 +54,28 @@ Requirements:
 - 500 status with error message on exceptions
 - Export the factory function as default
 
-Output the COMPLETE TypeScript file ready to write to disk.`,
-    verification: { type: "output_contains", value: "createExportRoutes" },
+Output the COMPLETE TypeScript file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/76-routes-exports.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/76-routes-exports.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/76-routes-exports.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/server/src/routes/exports.ts from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the TypeScript code and write it to trail-viewer/server/src/routes/exports.ts.
 Create the directory trail-viewer/server/src/routes/ if it does not exist.

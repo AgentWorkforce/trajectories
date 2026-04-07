@@ -62,16 +62,25 @@ Requirements:
      - Frame: size x size
      - Clip to Circle shape
 
-Output the full file contents ready to write to disk.`,
-    verification: { type: "output_contains", value: "StatusBadge" },
+Output the full file contents ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/09-badges.md on disk. This ensures clean handoff to the implementer.`,
+    verification: { type: "file_exists", value: ".relay/specs/09-badges.md" },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/09-badges.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Design/Badges.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the Badges.swift code and write it to trail-viewer/Sources/Design/Badges.swift.
 Create the trail-viewer/Sources/Design directory if it does not exist.

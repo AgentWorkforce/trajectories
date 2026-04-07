@@ -102,16 +102,28 @@ Requirements:
   - Clear agents map
   - Unsubscribe from channel
 
-Output the COMPLETE TypeScript file ready to write to disk.`,
-    verification: { type: "output_contains", value: "ChatSession" },
+Output the COMPLETE TypeScript file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/79-chat-session.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/79-chat-session.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/79-chat-session.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/server/src/chat-session.ts from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the TypeScript code and write it to trail-viewer/server/src/chat-session.ts.
 Create the directory trail-viewer/server/src/ if it does not exist.

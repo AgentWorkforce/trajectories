@@ -137,16 +137,28 @@ Requirements:
 
 5. Use JSONDecoder.DateDecodingStrategy.iso8601 compatible dates.
 
-Output the full file contents ready to write to disk.`,
-    verification: { type: "output_contains", value: "Trajectory" },
+Output the full file contents ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/14-trajectory-models.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/14-trajectory-models.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/14-trajectory-models.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Data/TrajectoryModels.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the TrajectoryModels.swift code and write it to trail-viewer/Sources/Data/TrajectoryModels.swift.
 Create the trail-viewer/Sources/Data directory if it does not exist.

@@ -71,16 +71,25 @@ Requirements:
 - Export function getAllPersonas(): Persona[]
   - Return Object.values(PERSONAS)
 
-Output the COMPLETE TypeScript file ready to write to disk.`,
-    verification: { type: "output_contains", value: "buildPersonaPrompt" },
+Output the COMPLETE TypeScript file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/78-personas.md on disk. This ensures clean handoff to the implementer.`,
+    verification: { type: "file_exists", value: ".relay/specs/78-personas.md" },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/78-personas.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/server/src/personas.ts from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the TypeScript code and write it to trail-viewer/server/src/personas.ts.
 Create the directory trail-viewer/server/src/ if it does not exist.

@@ -39,16 +39,28 @@ Requirements:
   - appVersion: String = "1.0.0"
 - Add a comment header explaining this is the app configuration
 
-Output the full file contents ready to write to disk.`,
-    verification: { type: "output_contains", value: "AppConfiguration" },
+Output the full file contents ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/03-app-config.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/03-app-config.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/03-app-config.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/AppConfiguration.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the AppConfiguration.swift code and write it to trail-viewer/Sources/AppConfiguration.swift.
 IMPORTANT: Write the file to disk. Do NOT output to stdout. Only create this one file.`,

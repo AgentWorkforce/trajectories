@@ -80,16 +80,28 @@ Requirements:
 - Give each trajectory realistic dates (createdAt, updatedAt) using new Date() offsets
 - Events should have timestamps, descriptions, significance scores (1-5), and agent references
 
-Output the COMPLETE TypeScript file ready to write to disk.`,
-    verification: { type: "output_contains", value: "MockTrajectoryService" },
+Output the COMPLETE TypeScript file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/85-mock-trajectories.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/85-mock-trajectories.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/85-mock-trajectories.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/server/src/mock-trajectories.ts from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the TypeScript code and write it to trail-viewer/server/src/mock-trajectories.ts.
 Create the directory trail-viewer/server/src/ if it does not exist.

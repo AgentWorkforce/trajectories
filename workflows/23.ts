@@ -100,16 +100,28 @@ Requirements:
    clearChat():
    - chatMessages = []
 
-Output the full file contents ready to write to disk.`,
-    verification: { type: "output_contains", value: "ChatStore" },
+Output the full file contents ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/23-chat-store.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/23-chat-store.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/23-chat-store.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Data/ChatStore.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the ChatStore.swift code and write it to trail-viewer/Sources/Data/ChatStore.swift.
 Create the trail-viewer/Sources/Data directory if it does not exist.

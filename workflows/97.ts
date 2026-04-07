@@ -128,8 +128,13 @@ FILE 3: TrajectoryPreviewCard.swift (SwiftUI, in-app preview)
   - BookCard styling with subtle shadow
   - Use for: .popover(), CommandPalette result hover, drag preview
 
-Output ALL 3 complete files with clear markers.`,
-    verification: { type: "output_contains", value: "generatePreview" },
+Output ALL 3 complete files with clear markers.
+
+IMPORTANT: Write your complete output to the file .relay/specs/97-quicklook.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/97-quicklook.md",
+    },
   })
 
   // Swift files (parallel)
@@ -138,7 +143,7 @@ Output ALL 3 complete files with clear markers.`,
     dependsOn: ["plan"],
     task: `Create 2 Swift files from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 1. trail-viewer/Sources/Services/QuickLookGenerator.swift
 2. trail-viewer/Sources/Views/TrajectoryPreviewCard.swift
@@ -156,7 +161,7 @@ Write BOTH files to disk. Do NOT output to stdout.`,
     dependsOn: ["plan"],
     task: `Create trail-viewer/server/src/preview-generator.ts from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the preview-generator.ts code and write it to disk.
 IMPORTANT: Write the file to disk. Do NOT output to stdout. Only create this one file.`,

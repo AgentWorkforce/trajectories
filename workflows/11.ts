@@ -41,16 +41,28 @@ Requirements:
    - Frame: maxWidth .infinity, maxHeight .infinity (fills available space)
    - Padding: Theme.spacingXL (36) on all sides
 
-Output the full file contents ready to write to disk.`,
-    verification: { type: "output_contains", value: "EmptyState" },
+Output the full file contents ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/11-empty-state.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/11-empty-state.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/11-empty-state.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Design/EmptyState.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the EmptyState.swift code and write it to trail-viewer/Sources/Design/EmptyState.swift.
 Create the trail-viewer/Sources/Design directory if it does not exist.

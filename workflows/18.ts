@@ -78,16 +78,28 @@ Requirements:
 
 6. For the markdown/timeline endpoints that return raw text, use a separate method that returns String instead of decoding JSON.
 
-Output the full file contents ready to write to disk.`,
-    verification: { type: "output_contains", value: "APIClient" },
+Output the full file contents ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/18-api-client.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/18-api-client.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/18-api-client.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Data/APIClient.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the APIClient.swift code and write it to trail-viewer/Sources/Data/APIClient.swift.
 Create the trail-viewer/Sources/Data directory if it does not exist.

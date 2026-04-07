@@ -70,14 +70,26 @@ FILE 5: ChatBubble.swift — User (right, blueMuted) vs Agent (left, cardBg, per
 FILE 6: ChatInputBar.swift — Multi-line TextEditor, send button, Cmd+Enter.
 
 All use Theme, Typography. Assume ChatMessage, ChatPersona models exist. Include Previews.
-Output ALL 6 files with clear markers.`,
-    verification: { type: "output_contains", value: "ChatBubble" },
+Output ALL 6 files with clear markers.
+
+IMPORTANT: Write your complete output to the file .relay/specs/49-chat-components.md on disk. This ensures clean handoff to the implementers.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/49-chat-components.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["design-all"],
+    command: "cat .relay/specs/49-chat-components.md",
+    captureOutput: true,
   })
 
   .step("impl-markdown", {
     agent: "impl-1",
-    dependsOn: ["design-all"],
-    task: "Create 2 files from spec:\n\n{{steps.design-all.output}}\n\n1. trail-viewer/Sources/Views/Chat/MarkdownRenderer.swift\n2. trail-viewer/Sources/Views/Chat/CodeBlockView.swift\n\nWrite BOTH to disk. Do NOT output to stdout.",
+    dependsOn: ["read-spec"],
+    task: "Create 2 files from spec:\n\n{{steps.read-spec.output}}\n\n1. trail-viewer/Sources/Views/Chat/MarkdownRenderer.swift\n2. trail-viewer/Sources/Views/Chat/CodeBlockView.swift\n\nWrite BOTH to disk. Do NOT output to stdout.",
     verification: {
       type: "file_exists",
       value: "trail-viewer/Sources/Views/Chat/MarkdownRenderer.swift",
@@ -86,8 +98,8 @@ Output ALL 6 files with clear markers.`,
 
   .step("impl-indicators", {
     agent: "impl-2",
-    dependsOn: ["design-all"],
-    task: "Create 2 files from spec:\n\n{{steps.design-all.output}}\n\n1. trail-viewer/Sources/Views/Chat/TypingIndicator.swift\n2. trail-viewer/Sources/Views/Chat/PersonaCard.swift\n\nWrite BOTH to disk. Do NOT output to stdout.",
+    dependsOn: ["read-spec"],
+    task: "Create 2 files from spec:\n\n{{steps.read-spec.output}}\n\n1. trail-viewer/Sources/Views/Chat/TypingIndicator.swift\n2. trail-viewer/Sources/Views/Chat/PersonaCard.swift\n\nWrite BOTH to disk. Do NOT output to stdout.",
     verification: {
       type: "file_exists",
       value: "trail-viewer/Sources/Views/Chat/PersonaCard.swift",
@@ -96,8 +108,8 @@ Output ALL 6 files with clear markers.`,
 
   .step("impl-bubbles", {
     agent: "impl-3",
-    dependsOn: ["design-all"],
-    task: "Create 2 files from spec:\n\n{{steps.design-all.output}}\n\n1. trail-viewer/Sources/Views/Chat/ChatBubble.swift\n2. trail-viewer/Sources/Views/Chat/ChatInputBar.swift\n\nWrite BOTH to disk. Do NOT output to stdout.",
+    dependsOn: ["read-spec"],
+    task: "Create 2 files from spec:\n\n{{steps.read-spec.output}}\n\n1. trail-viewer/Sources/Views/Chat/ChatBubble.swift\n2. trail-viewer/Sources/Views/Chat/ChatInputBar.swift\n\nWrite BOTH to disk. Do NOT output to stdout.",
     verification: {
       type: "file_exists",
       value: "trail-viewer/Sources/Views/Chat/ChatBubble.swift",

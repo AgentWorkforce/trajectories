@@ -57,16 +57,28 @@ Requirements:
    Static:
    - defaultPreferences: AppPreferences (all defaults)
 
-Output the full file contents ready to write to disk.`,
-    verification: { type: "output_contains", value: "CLIInfo" },
+Output the full file contents ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/16-settings-models.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/16-settings-models.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/16-settings-models.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Data/SettingsModels.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the SettingsModels.swift code and write it to trail-viewer/Sources/Data/SettingsModels.swift.
 Create the trail-viewer/Sources/Data directory if it does not exist.

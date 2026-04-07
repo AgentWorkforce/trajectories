@@ -57,16 +57,28 @@ Requirements:
 - If BookCard is not available, create a simple highlighted card inline (cardBg background, rounded, subtle shadow)
 - Add a PreviewProvider with a rich mock decision
 
-Output the COMPLETE Swift file ready to write to disk.`,
-    verification: { type: "output_contains", value: "DecisionCard" },
+Output the COMPLETE Swift file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/43-decision-card.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/43-decision-card.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/43-decision-card.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Views/Detail/DecisionCard.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the Swift code and write it to trail-viewer/Sources/Views/Detail/DecisionCard.swift.
 Create the directory trail-viewer/Sources/Views/Detail/ if it does not exist.

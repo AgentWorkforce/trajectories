@@ -50,16 +50,28 @@ Requirements:
 - Assume Theme, Typography, StatusBadge, TagPill, RuleLine are available from Design/ folder
 - Add a PreviewProvider with mock data for both selected and unselected states
 
-Output the COMPLETE Swift file ready to write to disk.`,
-    verification: { type: "output_contains", value: "TrajectoryRow" },
+Output the COMPLETE Swift file ready to write to disk.
+
+IMPORTANT: Write your complete output to the file .relay/specs/28-trajectory-row.md on disk. This ensures clean handoff to the implementer.`,
+    verification: {
+      type: "file_exists",
+      value: ".relay/specs/28-trajectory-row.md",
+    },
+  })
+
+  .step("read-spec", {
+    type: "deterministic",
+    dependsOn: ["plan"],
+    command: "cat .relay/specs/28-trajectory-row.md",
+    captureOutput: true,
   })
 
   .step("implement", {
     agent: "impl",
-    dependsOn: ["plan"],
+    dependsOn: ["read-spec"],
     task: `Create trail-viewer/Sources/Views/Sidebar/TrajectoryRow.swift from this spec:
 
-{{steps.plan.output}}
+{{steps.read-spec.output}}
 
 Extract the Swift code and write it to trail-viewer/Sources/Views/Sidebar/TrajectoryRow.swift.
 Create the directory trail-viewer/Sources/Views/Sidebar/ if it does not exist.
