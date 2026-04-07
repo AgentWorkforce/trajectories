@@ -1,0 +1,3 @@
+Created  hapterView.swift](/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/ChapterView.swift) with the requested collapsible chapter layout, event-type routing, timeline integration, and preview mock data, adapted to the repo’s current `Chapter`, `TrajectoryEvent`, `Theme`, and `DecisionCard` APIs.
+
+I also ran `swift build` in `trail-viewer` as a sanity check. The package still fails on unrelated existing issues elsewhere in the repo (`#Preview` macro/plugin setup, `Typography` references, `TrajectoryStore`, `APIClient`, sidebar files), but `ChapterView.swift` itself was included in compilation and did not surface its own compiler errors.
