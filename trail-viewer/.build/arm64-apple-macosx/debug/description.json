@@ -78,6 +78,10 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/HelpTooltips.swift"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/LayoutConstants.swift"
         },
         {
@@ -110,11 +114,31 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/ClipboardService.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/FocusManagement.swift"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/KeyboardShortcuts.swift"
         },
         {
           "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/LocalServerManager.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/QuickLookGenerator.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/RelativeTimeFormatter.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/SpotlightRegistration.swift"
         },
         {
           "kind": "file",
@@ -278,6 +302,10 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/TrajectoryPreviewCard.swift"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/WelcomeView.swift"
         },
         {
@@ -309,6 +337,7 @@
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/Badges.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/BookCard.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/EmptyState.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/HelpTooltips.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/LayoutConstants.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/SearchHighlight.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/SectionElements.swift.o",
@@ -317,8 +346,13 @@
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ToastView.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/Typography.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/CLIDetector.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ClipboardService.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/FocusManagement.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/KeyboardShortcuts.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/LocalServerManager.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/QuickLookGenerator.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/RelativeTimeFormatter.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/SpotlightRegistration.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrailViewerApp.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatBubble.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatEmptyStates.swift.o",
@@ -359,6 +393,7 @@
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryListView.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryRow.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/StatusBar.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryPreviewCard.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/WelcomeView.swift.o"
       ],
       "otherArguments": [
@@ -472,6 +507,10 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/HelpTooltips.swift.o"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/LayoutConstants.swift.o"
         },
         {
@@ -504,11 +543,31 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ClipboardService.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/FocusManagement.swift.o"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/KeyboardShortcuts.swift.o"
         },
         {
           "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/LocalServerManager.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/QuickLookGenerator.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/RelativeTimeFormatter.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/SpotlightRegistration.swift.o"
         },
         {
           "kind": "file",
@@ -672,6 +731,10 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryPreviewCard.swift.o"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/WelcomeView.swift.o"
         },
         {
@@ -697,6 +760,7 @@
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/Badges.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/BookCard.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/EmptyState.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/HelpTooltips.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/LayoutConstants.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/SearchHighlight.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/SectionElements.swift",
@@ -705,8 +769,13 @@
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/ToastView.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/Typography.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/CLIDetector.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/ClipboardService.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/FocusManagement.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/KeyboardShortcuts.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/LocalServerManager.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/QuickLookGenerator.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/RelativeTimeFormatter.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/SpotlightRegistration.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/TrailViewerApp.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatBubble.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatEmptyStates.swift",
@@ -747,6 +816,7 @@
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Sidebar/TrajectoryListView.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Sidebar/TrajectoryRow.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/StatusBar.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/TrajectoryPreviewCard.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/WelcomeView.swift"
       ],
       "tempsPath": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build",
@@ -778,6 +848,7 @@
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/Badges.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/BookCard.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/EmptyState.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/HelpTooltips.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/LayoutConstants.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/SearchHighlight.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/SectionElements.swift",
@@ -786,8 +857,13 @@
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/ToastView.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/Typography.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/CLIDetector.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/ClipboardService.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/FocusManagement.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/KeyboardShortcuts.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/LocalServerManager.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/QuickLookGenerator.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/RelativeTimeFormatter.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/SpotlightRegistration.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/TrailViewerApp.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatBubble.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatEmptyStates.swift",
@@ -828,6 +904,7 @@
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Sidebar/TrajectoryListView.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Sidebar/TrajectoryRow.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/StatusBar.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/TrajectoryPreviewCard.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/WelcomeView.swift",
       "-I",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/Modules",
@@ -972,6 +1049,10 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/HelpTooltips.swift"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/LayoutConstants.swift"
         },
         {
@@ -1004,11 +1085,31 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/ClipboardService.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/FocusManagement.swift"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/KeyboardShortcuts.swift"
         },
         {
           "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/LocalServerManager.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/QuickLookGenerator.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/RelativeTimeFormatter.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/SpotlightRegistration.swift"
         },
         {
           "kind": "file",
@@ -1172,6 +1273,10 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/TrajectoryPreviewCard.swift"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/WelcomeView.swift"
         }
       ],
@@ -1258,6 +1363,10 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ClipboardService.swift.o"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/CodeBlockView.swift.o"
         },
         {
@@ -1314,6 +1423,14 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/FocusManagement.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/HelpTooltips.swift.o"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/KeyboardShortcuts.swift.o"
         },
         {
@@ -1350,7 +1467,15 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/QuickLookGenerator.swift.o"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ReflectionEventView.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/RelativeTimeFormatter.swift.o"
         },
         {
           "kind": "file",
@@ -1387,6 +1512,10 @@
         {
           "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/SkeletonView.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/SpotlightRegistration.swift.o"
         },
         {
           "kind": "file",
@@ -1431,6 +1560,10 @@
         {
           "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryModels.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryPreviewCard.swift.o"
         },
         {
           "kind": "file",

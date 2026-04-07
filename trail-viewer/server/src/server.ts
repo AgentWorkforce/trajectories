@@ -1,113 +1,65 @@
-import type { AddressInfo } from "node:net";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { config, healthHandler } from "./health.js";
+import { ChatService } from "./chat-service";
+import { RelayBridge } from "./relay-bridge";
+import { createChatRoutes } from "./routes/chat";
+import { createExportRoutes } from "./routes/exports";
+import { createTrajectoryRoutes } from "./routes/trajectories";
+import { TrajectoryService } from "./trajectory-service";
 
-// ---------------------------------------------------------------------------
-// App
-// ---------------------------------------------------------------------------
+const PORT = Number.parseInt(process.env.PORT || "3847", 10);
 
-const app = new Hono();
+async function main() {
+  // 1. Initialize TrajectoryService
+  const trajectoryService = new TrajectoryService();
+  await trajectoryService.init();
+  console.log("Trajectory service initialized");
 
-// ---------------------------------------------------------------------------
-// Middleware
-// ---------------------------------------------------------------------------
+  // 2. Create ChatService
+  const chatService = new ChatService();
 
-app.use("*", cors());
+  // 3. Create Hono app
+  const app = new Hono();
+  app.use("/*", cors());
 
-// ---------------------------------------------------------------------------
-// Routes
-// ---------------------------------------------------------------------------
+  // 4. Health check
+  app.get("/health", (c) =>
+    c.json({ status: "ok", timestamp: new Date().toISOString() }),
+  );
 
-// Health
-app.get("/health", (c) => c.json(healthHandler()));
+  // 5. Mount route groups
+  app.route("/api", createTrajectoryRoutes(trajectoryService));
+  app.route("/api", createExportRoutes(trajectoryService));
+  app.route("/api", createChatRoutes(chatService, trajectoryService));
 
-// Trajectories
-const trajectories = new Hono();
+  // 6. Start server
+  const server = serve({ fetch: app.fetch, port: PORT });
 
-trajectories.get("/", (c) => {
-  // TODO: list trajectories
-  return c.json({ trajectories: [] });
-});
+  // 7. Attach RelayBridge
+  const bridge = new RelayBridge(server, chatService, trajectoryService);
 
-trajectories.get("/:id", (c) => {
-  const id = c.req.param("id");
-  // TODO: get trajectory by id
-  return c.json({ id, trajectory: null });
-});
+  // 8. Startup banner
+  console.log("=".repeat(50));
+  console.log("Trail Viewer Server");
+  console.log(`Port: ${PORT}`);
+  console.log(`Health: http://localhost:${PORT}/health`);
+  console.log(`API: http://localhost:${PORT}/api/trajectories`);
+  console.log(`WebSocket: ws://localhost:${PORT}/ws`);
+  console.log("=".repeat(50));
 
-app.route("/api/trajectories", trajectories);
+  // 9. Graceful shutdown
+  process.on("SIGINT", async () => {
+    bridge.close();
+    server.close();
+    process.exit(0);
+  });
 
-// Chat
-const chat = new Hono();
-
-chat.post("/sessions", (c) => {
-  // TODO: create chat session
-  return c.json({ session: null }, 201);
-});
-
-chat.post("/sessions/:id/messages", (c) => {
-  const id = c.req.param("id");
-  // TODO: post message to session
-  return c.json({ sessionId: id, message: null }, 201);
-});
-
-app.route("/api/chat", chat);
-
-// Personas
-const personas = new Hono();
-
-personas.get("/", (c) => {
-  // TODO: list personas
-  return c.json({ personas: [] });
-});
-
-app.route("/api/personas", personas);
-
-// ---------------------------------------------------------------------------
-// Error handling
-// ---------------------------------------------------------------------------
-
-app.onError((err, c) => {
-  console.error(`[server] unhandled error: ${err.message}`);
-  return c.json({ error: "Internal Server Error" }, 500);
-});
-
-app.notFound((c) => {
-  return c.json({ error: "Not Found" }, 404);
-});
-
-// ---------------------------------------------------------------------------
-// Server lifecycle
-// ---------------------------------------------------------------------------
-
-const server = serve(
-  {
-    fetch: app.fetch,
-    hostname: config.host,
-    port: config.port,
-  },
-  (info: AddressInfo) => {
-    console.log(
-      `[trail-viewer] server listening on http://${info.address}:${info.port} (pid ${process.pid})`,
-    );
-  },
-);
-
-function shutdown(signal: string) {
-  console.log(`\n[trail-viewer] received ${signal}, shutting down...`);
-  server.close(() => {
-    console.log("[trail-viewer] server closed");
+  process.on("SIGTERM", async () => {
+    bridge.close();
+    server.close();
     process.exit(0);
   });
 }
 
-process.on("SIGINT", () => shutdown("SIGINT"));
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-
-// ---------------------------------------------------------------------------
-// Export for testing
-// ---------------------------------------------------------------------------
-
-export { app };
+main();

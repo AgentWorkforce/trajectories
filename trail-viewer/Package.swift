@@ -14,7 +14,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "TrailViewer",
-            path: "Sources"
+            path: "Sources",
+            linkerSettings: [
+                .linkedFramework("CoreSpotlight")
+            ]
         )
     ]
 )

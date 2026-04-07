@@ -1,3 +1,13 @@
 {
-  "workers": []
+  "workers": [
+    {
+      "name": "impl-spotlight-d9f2ae33",
+      "cli": "codex",
+      "task": "Create trail-viewer/Sources/Services/SpotlightRegistration.swift from this spec:\n\n{{steps.read-spec.output}}\n\nExtract the SpotlightRegistration.swift code and write it to disk.\nIMPORTANT: Write the file to disk. Do NOT output to stdout. Only create this one file.",
+      "spawnedAt": 1775590293629,
+      "pid": 26964,
+      "interactive": false,
+      "logFile": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/.agent-relay/team/worker-logs/impl-spotlight-d9f2ae33.log"
+    }
+  ]
 }

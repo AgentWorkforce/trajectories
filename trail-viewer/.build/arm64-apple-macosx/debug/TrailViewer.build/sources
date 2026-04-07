@@ -14,6 +14,7 @@
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/Badges.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/BookCard.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/EmptyState.swift
+/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/HelpTooltips.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/LayoutConstants.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/SearchHighlight.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/SectionElements.swift
@@ -22,8 +23,13 @@
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/ToastView.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/Typography.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/CLIDetector.swift
+/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/ClipboardService.swift
+/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/FocusManagement.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/KeyboardShortcuts.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/LocalServerManager.swift
+/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/QuickLookGenerator.swift
+/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/RelativeTimeFormatter.swift
+/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/SpotlightRegistration.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/TrailViewerApp.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatBubble.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatEmptyStates.swift
@@ -64,4 +70,5 @@
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Sidebar/TrajectoryListView.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Sidebar/TrajectoryRow.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/StatusBar.swift
+/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/TrajectoryPreviewCard.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/WelcomeView.swift

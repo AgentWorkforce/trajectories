@@ -1,0 +1,48 @@
+{
+  "cli": "codex",
+  "sessionId": "019d6969-346e-7292-938b-6f522ee3d660",
+  "model": null,
+  "provider": "openai",
+  "durationMs": 2000,
+  "cost": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cacheRead": 0
+  },
+  "turns": 0,
+  "toolCalls": [],
+  "errors": [],
+  "finalStatus": "unknown",
+  "summary": null,
+  "raw": {
+    "matchedVia": "threads",
+    "thread": {
+      "id": "019d6969-346e-7292-938b-6f522ee3d660",
+      "rollout_path": "/Users/khaliqgant/.codex/sessions/2026/04/07/rollout-2026-04-07T21-26-35-019d6969-346e-7292-938b-6f522ee3d660.jsonl",
+      "created_at": 1775589995,
+      "updated_at": 1775589997,
+      "source": "exec",
+      "model_provider": "openai",
+      "cwd": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories",
+      "title": "You are a non-interactive worker agent. Produce clean, structured output to stdout.\nDo NOT use mcp__relaycast__agent_add, add_agent, or any MCP tool to spawn sub-agents.\nDo NOT use mcp__relaycast__message_dm_send or any Relaycast messaging tools — you have no relay connection.\n\nCreate trail-viewer/Sources/Design/HelpTooltips.swift from this spec:\n\n# HelpTooltips.swift — Complete File\n\n```swift\nimport SwiftUI\n\n// MARK: - HelpTooltipModifier\n\nstruct HelpTooltipModifier: ViewModifier {\n    let text: String\n\n    func body(content: Content) -> some View {\n        content\n            .help(text)\n    }\n}\n\n// MARK: - View Extension\n\nextension View {\n    func helpTooltip(_ text: String) -> some View {\n        self.modifier(HelpTooltipModifier(text: text))\n    }\n}\n\n// MARK: - HelpTooltips\n\nstruct HelpTooltips {\n    static let toggleSidebar = \"Show/Hide Sidebar (⌘0)\"\n    static let toggleChat = \"Toggle Chat (⌘⇧C)\"\n    static let commandPalette = \"Search (⌘K)\"\n    static let refreshTrajectories = \"Refresh (⌘R)\"\n    static let exportMarkdown = \"Export as Markdown\"\n    static let exportTimeline = \"Export Timeline\"\n    static let exportJSON = \"Export as JSON\"\n    static let copyToClipboard = \"Copy to Clipboard\"\n    static let filterByStatus = \"Filter by Status\"\n    static let searchTrajectories = \"Search Trajectories\"\n    static let selectPersona = \"Select Chat Persona\"\n    static let sendMessage = \"Send Message (Return)\"\n    static let stopSession = \"Stop Chat Session\"\n}\n\n// MARK: - Preview\n\nstruct HelpTooltips_Previews: PreviewProvider {\n    static var previews: some View {\n        HStack(spacing: 16) {\n            Button(action: {}) {\n                Image(systemName: \"sidebar.left\")\n            }\n            .helpTooltip(HelpTooltips.toggleSidebar)\n\n            Button(action: {}) {\n                Image(systemName: \"magnifyingglass\")\n            }\n            .helpTooltip(HelpTooltips.commandPalette)\n\n            Button(action: {}) {\n                Image(systemName: \"arrow.clockwise\")\n            }\n            .helpTooltip(HelpTooltips.refreshTrajectories)\n        }\n        .padding()\n    }\n}\n```\n\n\nExtract the Swift code and write it to trail-viewer/Sources/Design/HelpTooltips.swift.\nCreate the directory trail-viewer/Sources/Design/ if it does not exist.\nIMPORTANT: Write the file to disk. Do NOT output to stdout. Only create this one file.\n\n---\nIMPORTANT: You are running as a non-interactive subprocess. Do NOT call mcp__relaycast__agent_add, add_agent, or any MCP tool to spawn or manage other agents.\n\nCRITICAL REQUIREMENT — YOU MUST FOLLOW THIS EXACTLY:\nYou are running in non-interactive mode. There is NO opportunity for follow-up, clarification, or additional input. Your stdout output is your ONLY deliverable.\n\nYou MUST:\n1. Complete the ENTIRE task in a single pass — no partial work, no \"I'll continue later\"\n2. Print your COMPLETE deliverable to stdout — this is the ONLY output that will be captured\n3. Be thorough and self-contained — another agent will consume your output with zero context about your process\n4. End with a clear summary of what was accomplished and any artifacts produced\n\nDO NOT:\n- Ask questions or request clarification (there is no one to answer)\n- Output partial results expecting a follow-up (there will be none)\n- Skip steps or leave work incomplete\n- Output only status messages without the actual deliverable content",
+      "sandbox_policy": "{\"type\":\"danger-full-access\"}",
+      "approval_mode": "never",
+      "tokens_used": 0,
+      "has_user_event": 0,
+      "archived": 0,
+      "archived_at": null,
+      "git_sha": "68b988df04cb43ee4fa6c63ad7a417a69200e3d4",
+      "git_branch": "trail-viewer",
+      "git_origin_url": "git@github.com:AgentWorkforce/trajectories.git",
+      "cli_version": "0.117.0",
+      "first_user_message": "You are a non-interactive worker agent. Produce clean, structured output to stdout.\nDo NOT use mcp__relaycast__agent_add, add_agent, or any MCP tool to spawn sub-agents.\nDo NOT use mcp__relaycast__message_dm_send or any Relaycast messaging tools — you have no relay connection.\n\nCreate trail-viewer/Sources/Design/HelpTooltips.swift from this spec:\n\n# HelpTooltips.swift — Complete File\n\n```swift\nimport SwiftUI\n\n// MARK: - HelpTooltipModifier\n\nstruct HelpTooltipModifier: ViewModifier {\n    let text: String\n\n    func body(content: Content) -> some View {\n        content\n            .help(text)\n    }\n}\n\n// MARK: - View Extension\n\nextension View {\n    func helpTooltip(_ text: String) -> some View {\n        self.modifier(HelpTooltipModifier(text: text))\n    }\n}\n\n// MARK: - HelpTooltips\n\nstruct HelpTooltips {\n    static let toggleSidebar = \"Show/Hide Sidebar (⌘0)\"\n    static let toggleChat = \"Toggle Chat (⌘⇧C)\"\n    static let commandPalette = \"Search (⌘K)\"\n    static let refreshTrajectories = \"Refresh (⌘R)\"\n    static let exportMarkdown = \"Export as Markdown\"\n    static let exportTimeline = \"Export Timeline\"\n    static let exportJSON = \"Export as JSON\"\n    static let copyToClipboard = \"Copy to Clipboard\"\n    static let filterByStatus = \"Filter by Status\"\n    static let searchTrajectories = \"Search Trajectories\"\n    static let selectPersona = \"Select Chat Persona\"\n    static let sendMessage = \"Send Message (Return)\"\n    static let stopSession = \"Stop Chat Session\"\n}\n\n// MARK: - Preview\n\nstruct HelpTooltips_Previews: PreviewProvider {\n    static var previews: some View {\n        HStack(spacing: 16) {\n            Button(action: {}) {\n                Image(systemName: \"sidebar.left\")\n            }\n            .helpTooltip(HelpTooltips.toggleSidebar)\n\n            Button(action: {}) {\n                Image(systemName: \"magnifyingglass\")\n            }\n            .helpTooltip(HelpTooltips.commandPalette)\n\n            Button(action: {}) {\n                Image(systemName: \"arrow.clockwise\")\n            }\n            .helpTooltip(HelpTooltips.refreshTrajectories)\n        }\n        .padding()\n    }\n}\n```\n\n\nExtract the Swift code and write it to trail-viewer/Sources/Design/HelpTooltips.swift.\nCreate the directory trail-viewer/Sources/Design/ if it does not exist.\nIMPORTANT: Write the file to disk. Do NOT output to stdout. Only create this one file.\n\n---\nIMPORTANT: You are running as a non-interactive subprocess. Do NOT call mcp__relaycast__agent_add, add_agent, or any MCP tool to spawn or manage other agents.\n\nCRITICAL REQUIREMENT — YOU MUST FOLLOW THIS EXACTLY:\nYou are running in non-interactive mode. There is NO opportunity for follow-up, clarification, or additional input. Your stdout output is your ONLY deliverable.\n\nYou MUST:\n1. Complete the ENTIRE task in a single pass — no partial work, no \"I'll continue later\"\n2. Print your COMPLETE deliverable to stdout — this is the ONLY output that will be captured\n3. Be thorough and self-contained — another agent will consume your output with zero context about your process\n4. End with a clear summary of what was accomplished and any artifacts produced\n\nDO NOT:\n- Ask questions or request clarification (there is no one to answer)\n- Output partial results expecting a follow-up (there will be none)\n- Skip steps or leave work incomplete\n- Output only status messages without the actual deliverable content",
+      "agent_nickname": null,
+      "agent_role": null,
+      "memory_mode": "enabled",
+      "model": "gpt-5.4",
+      "reasoning_effort": "high",
+      "agent_path": null
+    }
+  }
+}
