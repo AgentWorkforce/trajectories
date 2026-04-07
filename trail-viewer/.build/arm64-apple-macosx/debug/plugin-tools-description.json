@@ -110,6 +110,30 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatBubble.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatInputBar.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/CodeBlockView.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/MarkdownRenderer.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/PersonaCard.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/TypingIndicator.swift"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/ChapterNavigation.swift"
         },
         {
@@ -162,11 +186,19 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/FileChangesView.swift"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/RetrospectiveView.swift"
         },
         {
           "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TimelineRail.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TrajectoryDetailView.swift"
         },
         {
           "kind": "file",
@@ -229,6 +261,12 @@
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/CLIDetector.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/LocalServerManager.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrailViewerApp.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatBubble.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatInputBar.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/CodeBlockView.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/MarkdownRenderer.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/PersonaCard.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TypingIndicator.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChapterNavigation.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChapterView.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ConfidenceMeter.swift.o",
@@ -242,8 +280,10 @@
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ReflectionEventView.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ThinkingEventView.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ToolCallEventView.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/FileChangesView.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/RetrospectiveView.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TimelineRail.swift.o",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryDetailView.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryHeaderView.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/FilterBar.swift.o",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/SidebarHeader.swift.o",
@@ -394,6 +434,30 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatBubble.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatInputBar.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/CodeBlockView.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/MarkdownRenderer.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/PersonaCard.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TypingIndicator.swift.o"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChapterNavigation.swift.o"
         },
         {
@@ -446,11 +510,19 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/FileChangesView.swift.o"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/RetrospectiveView.swift.o"
         },
         {
           "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TimelineRail.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryDetailView.swift.o"
         },
         {
           "kind": "file",
@@ -507,6 +579,12 @@
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/CLIDetector.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/LocalServerManager.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/TrailViewerApp.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatBubble.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatInputBar.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/CodeBlockView.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/MarkdownRenderer.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/PersonaCard.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/TypingIndicator.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/ChapterNavigation.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/ChapterView.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/ConfidenceMeter.swift",
@@ -520,8 +598,10 @@
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/Events/ReflectionEventView.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/Events/ThinkingEventView.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/Events/ToolCallEventView.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/FileChangesView.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/RetrospectiveView.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TimelineRail.swift",
+        "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TrajectoryDetailView.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TrajectoryHeaderView.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Sidebar/FilterBar.swift",
         "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Sidebar/SidebarHeader.swift",
@@ -566,6 +646,12 @@
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/CLIDetector.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/LocalServerManager.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/TrailViewerApp.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatBubble.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatInputBar.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/CodeBlockView.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/MarkdownRenderer.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/PersonaCard.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/TypingIndicator.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/ChapterNavigation.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/ChapterView.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/ConfidenceMeter.swift",
@@ -579,8 +665,10 @@
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/Events/ReflectionEventView.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/Events/ThinkingEventView.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/Events/ToolCallEventView.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/FileChangesView.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/RetrospectiveView.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TimelineRail.swift",
+      "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TrajectoryDetailView.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TrajectoryHeaderView.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Sidebar/FilterBar.swift",
       "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Sidebar/SidebarHeader.swift",
@@ -762,6 +850,30 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatBubble.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatInputBar.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/CodeBlockView.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/MarkdownRenderer.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/PersonaCard.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/TypingIndicator.swift"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/ChapterNavigation.swift"
         },
         {
@@ -814,11 +926,19 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/FileChangesView.swift"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/RetrospectiveView.swift"
         },
         {
           "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TimelineRail.swift"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TrajectoryDetailView.swift"
         },
         {
           "kind": "file",
@@ -900,11 +1020,23 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatBubble.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatInputBar.swift.o"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatModels.swift.o"
         },
         {
           "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatStore.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/CodeBlockView.swift.o"
         },
         {
           "kind": "file",
@@ -932,6 +1064,10 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/FileChangesView.swift.o"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/FilterBar.swift.o"
         },
         {
@@ -948,11 +1084,19 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/MarkdownRenderer.swift.o"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/MessageEventView.swift.o"
         },
         {
           "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/NoteEventView.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/PersonaCard.swift.o"
         },
         {
           "kind": "file",
@@ -1012,6 +1156,10 @@
         },
         {
           "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryDetailView.swift.o"
+        },
+        {
+          "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryHeaderView.swift.o"
         },
         {
@@ -1029,6 +1177,10 @@
         {
           "kind": "file",
           "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryStore.swift.o"
+        },
+        {
+          "kind": "file",
+          "name": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TypingIndicator.swift.o"
         },
         {
           "kind": "file",

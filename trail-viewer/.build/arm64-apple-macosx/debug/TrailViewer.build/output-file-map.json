@@ -170,6 +170,48 @@
     "swift-dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrailViewerApp.swiftdeps",
     "diagnostics": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrailViewerApp.dia"
   },
+  "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatBubble.swift": {
+    "dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatBubble.d",
+    "object": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatBubble.swift.o",
+    "swiftmodule": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatBubble~partial.swiftmodule",
+    "swift-dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatBubble.swiftdeps",
+    "diagnostics": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatBubble.dia"
+  },
+  "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/ChatInputBar.swift": {
+    "dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatInputBar.d",
+    "object": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatInputBar.swift.o",
+    "swiftmodule": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatInputBar~partial.swiftmodule",
+    "swift-dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatInputBar.swiftdeps",
+    "diagnostics": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChatInputBar.dia"
+  },
+  "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/CodeBlockView.swift": {
+    "dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/CodeBlockView.d",
+    "object": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/CodeBlockView.swift.o",
+    "swiftmodule": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/CodeBlockView~partial.swiftmodule",
+    "swift-dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/CodeBlockView.swiftdeps",
+    "diagnostics": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/CodeBlockView.dia"
+  },
+  "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/MarkdownRenderer.swift": {
+    "dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/MarkdownRenderer.d",
+    "object": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/MarkdownRenderer.swift.o",
+    "swiftmodule": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/MarkdownRenderer~partial.swiftmodule",
+    "swift-dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/MarkdownRenderer.swiftdeps",
+    "diagnostics": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/MarkdownRenderer.dia"
+  },
+  "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/PersonaCard.swift": {
+    "dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/PersonaCard.d",
+    "object": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/PersonaCard.swift.o",
+    "swiftmodule": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/PersonaCard~partial.swiftmodule",
+    "swift-dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/PersonaCard.swiftdeps",
+    "diagnostics": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/PersonaCard.dia"
+  },
+  "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/TypingIndicator.swift": {
+    "dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TypingIndicator.d",
+    "object": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TypingIndicator.swift.o",
+    "swiftmodule": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TypingIndicator~partial.swiftmodule",
+    "swift-dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TypingIndicator.swiftdeps",
+    "diagnostics": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TypingIndicator.dia"
+  },
   "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/ChapterNavigation.swift": {
     "dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChapterNavigation.d",
     "object": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ChapterNavigation.swift.o",
@@ -261,6 +303,13 @@
     "swift-dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ToolCallEventView.swiftdeps",
     "diagnostics": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/ToolCallEventView.dia"
   },
+  "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/FileChangesView.swift": {
+    "dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/FileChangesView.d",
+    "object": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/FileChangesView.swift.o",
+    "swiftmodule": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/FileChangesView~partial.swiftmodule",
+    "swift-dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/FileChangesView.swiftdeps",
+    "diagnostics": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/FileChangesView.dia"
+  },
   "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/RetrospectiveView.swift": {
     "dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/RetrospectiveView.d",
     "object": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/RetrospectiveView.swift.o",
@@ -274,6 +323,13 @@
     "swiftmodule": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TimelineRail~partial.swiftmodule",
     "swift-dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TimelineRail.swiftdeps",
     "diagnostics": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TimelineRail.dia"
+  },
+  "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TrajectoryDetailView.swift": {
+    "dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryDetailView.d",
+    "object": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryDetailView.swift.o",
+    "swiftmodule": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryDetailView~partial.swiftmodule",
+    "swift-dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryDetailView.swiftdeps",
+    "diagnostics": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryDetailView.dia"
   },
   "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TrajectoryHeaderView.swift": {
     "dependencies": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/.build/arm64-apple-macosx/debug/TrailViewer.build/TrajectoryHeaderView.d",

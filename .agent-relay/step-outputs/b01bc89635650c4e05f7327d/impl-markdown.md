@@ -1,0 +1,3 @@
+Created [MarkdownRenderer.swift](/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/MarkdownRenderer.swift) and  odeBlockView.swift](/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Chat/CodeBlockView.swift) under `trail-viewer/Sources/Views/Chat/`, adapted to the repo’s actual `Theme` and `ChatModels` APIs.
+
+Validation: `swiftc -typecheck Sources/Design/Theme.swift Sources/Data/ChatModels.swift Sources/Views/Chat/MarkdownRenderer.swift Sources/Views/Chat/CodeBlockView.swift -module-name TrailViewer` passed. A full `swift build` still fails due to pre-existing unrelated repo errors outside these two files.
