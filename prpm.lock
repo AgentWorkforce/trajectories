@@ -112,7 +112,27 @@
       "sourceFormat": "claude",
       "sourceSubtype": "skill",
       "installedPath": ".claude/skills/creating-skills-skill/SKILL.md"
+    },
+    "@agent-relay/writing-agent-relay-workflows#claude": {
+      "version": "1.3.0",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40agent-relay%2Fwriting-agent-relay-workflows/1.3.0.tar.gz",
+      "integrity": "sha256-f002a0ad706fc34e7e0ef6260c70c67ce756615ab1dda436a7e09709cd52803f",
+      "format": "claude",
+      "subtype": "skill",
+      "sourceFormat": "claude",
+      "sourceSubtype": "skill",
+      "installedPath": ".claude/skills/writing-agent-relay-workflows/SKILL.md"
+    },
+    "@agent-relay/choosing-swarm-patterns#claude": {
+      "version": "1.0.0",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40agent-relay%2Fchoosing-swarm-patterns/1.0.0.tar.gz",
+      "integrity": "sha256-2b28661abb540c56b46ad980b238589c6dcf59faaa3e66c80c72f72c01407f38",
+      "format": "claude",
+      "subtype": "skill",
+      "sourceFormat": "claude",
+      "sourceSubtype": "skill",
+      "installedPath": ".claude/skills/choosing-swarm-patterns/SKILL.md"
     }
   },
-  "generated": "2026-02-20T16:18:25.877Z"
+  "generated": "2026-04-07T13:03:06.450Z"
 }
