@@ -23,6 +23,8 @@
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/LocalServerManager.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/TrailViewerApp.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/ChapterNavigation.swift
+/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/ConfidenceMeter.swift
+/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/DecisionCard.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/DetailSkeleton.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/Events/ErrorEventView.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/Events/EventCardBase.swift
@@ -32,6 +34,7 @@
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/Events/ReflectionEventView.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/Events/ThinkingEventView.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/Events/ToolCallEventView.swift
+/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/RetrospectiveView.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TimelineRail.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TrajectoryHeaderView.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Sidebar/FilterBar.swift
