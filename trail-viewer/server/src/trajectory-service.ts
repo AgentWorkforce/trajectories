@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import { readFile, readdir } from "node:fs/promises";
+import { join } from "node:path";
 import type {
   Trajectory,
   TrajectoryQuery,
@@ -10,7 +13,7 @@ import { TrajectoryClient } from "agent-trajectories/sdk";
 // Default data directory
 // ---------------------------------------------------------------------------
 
-const DEFAULT_DATA_DIR = "../../data";
+const DEFAULT_DATA_DIR = "../..";
 
 // ---------------------------------------------------------------------------
 // TrajectoryService
@@ -34,7 +37,189 @@ export class TrajectoryService {
   // -------------------------------------------------------------------------
 
   async init(): Promise<void> {
+    // Suppress SDK validation noise during init
+    const origError = console.error;
+    console.error = () => {};
+    try {
+      await this.client.init();
+    } finally {
+      console.error = origError;
+    }
+    await this.rebuildIndex();
+  }
+
+  /**
+   * Switch to a different data directory at runtime.
+   */
+  async switchDataDir(newDataDir: string): Promise<void> {
+    this.dataDir = newDataDir;
+    // Set env var so FileStorageProvider picks it up
+    process.env.TRAJECTORIES_DATA_DIR = join(newDataDir, ".trajectories");
+    this.client = new TrajectoryClient({
+      dataDir: newDataDir,
+      autoSave: false,
+    });
     await this.client.init();
+    await this.rebuildIndex();
+  }
+
+  /**
+   * Scan disk for trajectory files not in the index and register them.
+   */
+  private async rebuildIndex(): Promise<void> {
+    // Get already-indexed IDs
+    const indexed = await this.client.list();
+    const indexedIds = new Set(indexed.map((t) => t.id));
+
+    // Resolve the .trajectories directory
+    const dataDir = process.env.TRAJECTORIES_DATA_DIR;
+    const trajDir = dataDir ?? join(this.dataDir, ".trajectories");
+    const completedDir = join(trajDir, "completed");
+    const activeDir = join(trajDir, "active");
+    const indexPath = join(trajDir, "index.json");
+
+    const allNewEntries: Record<
+      string,
+      {
+        title: string;
+        status: string;
+        startedAt: string;
+        completedAt?: string;
+        path: string;
+      }
+    > = {};
+    let discovered = 0;
+
+    // Scan completed directory (may have subdirs like 2026-01/)
+    if (existsSync(completedDir)) {
+      const result = await this.scanDir(completedDir, indexedIds);
+      discovered += result.count;
+      Object.assign(allNewEntries, result.entries);
+    }
+
+    // Scan active directory
+    if (existsSync(activeDir)) {
+      const result = await this.scanDir(activeDir, indexedIds);
+      discovered += result.count;
+      Object.assign(allNewEntries, result.entries);
+    }
+
+    if (discovered > 0) {
+      // Read existing index and merge
+      let index: {
+        version: number;
+        lastUpdated: string;
+        trajectories: Record<string, unknown>;
+      };
+      try {
+        const content = await readFile(indexPath, "utf-8");
+        index = JSON.parse(content);
+      } catch {
+        index = {
+          version: 1,
+          lastUpdated: new Date().toISOString(),
+          trajectories: {},
+        };
+      }
+
+      // Remove any trace_ entries that shouldn't be in the index
+      for (const key of Object.keys(index.trajectories)) {
+        if (key.startsWith("trace_")) {
+          delete index.trajectories[key];
+        }
+      }
+
+      Object.assign(index.trajectories, allNewEntries);
+      index.lastUpdated = new Date().toISOString();
+      const { writeFile: writeFileAsync } = await import("node:fs/promises");
+      await writeFileAsync(indexPath, JSON.stringify(index, null, 2), "utf-8");
+
+      // Re-init the client to pick up the new index.
+      // Suppress console.error during init — the SDK logs validation warnings
+      // for trajectories that don't match its strict schema.
+      const origError = console.error;
+      console.error = () => {};
+      try {
+        this.client = new TrajectoryClient({
+          dataDir: this.dataDir,
+          autoSave: false,
+        });
+        await this.client.init();
+      } finally {
+        console.error = origError;
+      }
+
+      console.log(
+        `Indexed ${discovered} new trajectories (${Object.keys(index.trajectories).length} total)`,
+      );
+    }
+  }
+
+  private async scanDir(
+    dir: string,
+    indexedIds: Set<string>,
+  ): Promise<{
+    count: number;
+    entries: Record<
+      string,
+      {
+        title: string;
+        status: string;
+        startedAt: string;
+        completedAt?: string;
+        path: string;
+      }
+    >;
+  }> {
+    let count = 0;
+    const newEntries: Record<
+      string,
+      {
+        title: string;
+        status: string;
+        startedAt: string;
+        completedAt?: string;
+        path: string;
+      }
+    > = {};
+    const dirEntries = await readdir(dir, { withFileTypes: true });
+
+    for (const entry of dirEntries) {
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        const sub = await this.scanDir(fullPath, indexedIds);
+        count += sub.count;
+        Object.assign(newEntries, sub.entries);
+      } else if (
+        entry.name.endsWith(".json") &&
+        entry.name.startsWith("traj_") &&
+        !entry.name.startsWith("trace_")
+      ) {
+        const id = entry.name.replace(".json", "");
+        if (!indexedIds.has(id)) {
+          try {
+            const content = await readFile(fullPath, "utf-8");
+            const data = JSON.parse(content);
+            if (data.id) {
+              const title = data.task?.title ?? data.title ?? data.id;
+              newEntries[data.id] = {
+                title,
+                status: data.status ?? "completed",
+                startedAt: data.startedAt ?? new Date().toISOString(),
+                completedAt: data.completedAt,
+                path: fullPath,
+              };
+              indexedIds.add(data.id);
+              count++;
+            }
+          } catch {
+            // Skip invalid files
+          }
+        }
+      }
+    }
+
+    return { count, entries: newEntries };
   }
 
   // -------------------------------------------------------------------------
@@ -52,7 +237,15 @@ export class TrajectoryService {
       clientQuery.status = query.status;
     }
 
-    let results = await this.client.list(clientQuery);
+    // Suppress SDK validation noise for trajectories that don't match strict schema
+    const origError = console.error;
+    console.error = () => {};
+    let results: TrajectorySummary[];
+    try {
+      results = await this.client.list(clientQuery);
+    } finally {
+      console.error = origError;
+    }
 
     if (query?.search) {
       const term = query.search.toLowerCase();
@@ -102,7 +295,68 @@ export class TrajectoryService {
   // -------------------------------------------------------------------------
 
   async getTrajectory(id: string): Promise<Trajectory | null> {
-    return this.client.get(id);
+    // Suppress SDK validation noise
+    const origError = console.error;
+    console.error = () => {};
+    let result: Trajectory | null;
+    try {
+      result = await this.client.get(id);
+    } finally {
+      console.error = origError;
+    }
+
+    if (result) return result;
+
+    // Fallback: read the raw JSON file directly (bypasses strict validation)
+    const dataDir = process.env.TRAJECTORIES_DATA_DIR;
+    const trajDir = dataDir ?? join(this.dataDir, ".trajectories");
+    const indexPath = join(trajDir, "index.json");
+
+    try {
+      const indexContent = await readFile(indexPath, "utf-8");
+      const index = JSON.parse(indexContent);
+      const entry = index.trajectories?.[id];
+      if (entry?.path && existsSync(entry.path)) {
+        const content = await readFile(entry.path, "utf-8");
+        return JSON.parse(content) as Trajectory;
+      }
+    } catch {
+      // Fall through
+    }
+
+    // Search directories manually
+    for (const subdir of ["active", "completed"]) {
+      const dir = join(trajDir, subdir);
+      if (!existsSync(dir)) continue;
+      const found = await this.findFileRecursive(dir, `${id}.json`);
+      if (found) {
+        try {
+          const content = await readFile(found, "utf-8");
+          return JSON.parse(content) as Trajectory;
+        } catch {
+          // Skip
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private async findFileRecursive(
+    dir: string,
+    filename: string,
+  ): Promise<string | null> {
+    const entries = await readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        const found = await this.findFileRecursive(fullPath, filename);
+        if (found) return found;
+      } else if (entry.name === filename) {
+        return fullPath;
+      }
+    }
+    return null;
   }
 
   // -------------------------------------------------------------------------

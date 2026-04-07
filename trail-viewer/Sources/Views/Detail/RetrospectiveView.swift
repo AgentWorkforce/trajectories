@@ -18,7 +18,7 @@ struct RetrospectiveView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Typography.spacingLG) {
+        VStack(alignment: .leading, spacing: Theme.spacingLG) {
 
             // 1. Ornament divider
             OrnamentDivider(symbol: "\u{2726}")
@@ -123,10 +123,10 @@ struct RetrospectiveView: View {
                     .foregroundColor(Theme.textTertiary)
                     .frame(maxWidth: .infinity)
                     .multilineTextAlignment(.center)
-                    .padding(.top, Typography.spacingMD)
+                    .padding(.top, Theme.spacingMD)
             }
         }
-        .padding(Typography.spacingXXL)
+        .padding(Theme.spacingXXL)
         .background(Theme.yellowMuted)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
@@ -150,16 +150,7 @@ struct RetrospectiveView: View {
 
 // MARK: - Local Tokens
 
-private enum Typography {
-    static let chapterTitle = Font.system(size: 26, weight: .bold, design: .serif)
-    static let sectionTitle = Font.system(size: 18, weight: .semibold, design: .serif)
-    static let body = Font.system(size: 13.5)
-    static let caption = Font.system(size: 11, weight: .medium)
-
-    static let spacingMD: CGFloat = 16
-    static let spacingLG: CGFloat = 20
-    static let spacingXXL: CGFloat = 32
-}
+// Typography is now defined globally in Design/Typography.swift
 
 // MARK: - Compatibility
 
@@ -195,11 +186,11 @@ private extension Retrospective {
     ) {
         self.init(
             summary: summary,
+            approach: approach,
+            confidence: confidence,
             whatWentWell: nil,
             whatCouldImprove: challenges,
-            approach: approach,
-            learnings: learnings,
-            timestamp: nil
+            learnings: learnings
         )
 
         RetrospectiveExtraStore.extras[self] = RetrospectiveExtras(
@@ -210,7 +201,7 @@ private extension Retrospective {
     }
 
     var confidenceValue: Double {
-        RetrospectiveExtraStore.extras[self]?.confidence ?? 0.75
+        confidence ?? RetrospectiveExtraStore.extras[self]?.confidence ?? 0.75
     }
 
     var challengeItems: [String] {

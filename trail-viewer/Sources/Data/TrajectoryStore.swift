@@ -38,7 +38,7 @@ class TrajectoryStore {
         }
 
         if !selectedTags.isEmpty {
-            result = result.filter { !selectedTags.isDisjoint(with: $0.tags) }
+            result = result.filter { !selectedTags.isDisjoint(with: $0.tags ?? []) }
         }
 
         return result
@@ -46,7 +46,7 @@ class TrajectoryStore {
 
     var allTags: [String] {
         let tagSet = trajectories.reduce(into: Set<String>()) { result, trajectory in
-            result.formUnion(trajectory.tags)
+            result.formUnion(trajectory.tags ?? [])
         }
         return tagSet.sorted()
     }

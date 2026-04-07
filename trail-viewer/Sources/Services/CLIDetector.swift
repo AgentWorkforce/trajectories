@@ -26,10 +26,10 @@ enum CLIDetector {
     static func detectAll() async -> [CLIInfo] {
         await withTaskGroup(of: CLIInfo?.self, returning: [CLIInfo].self) { group in
             for cli in knownCLIs {
-                group.addTask {
+                group.addTask { () -> CLIInfo? in
                     guard let path = resolveOnPath(named: cli) else { return nil }
                     let version = detectVersion(at: path)
-                    return CLIInfo(name: cli, path: path, version: version, isAvailable: true)
+                    return CLIInfo(name: cli, version: version, path: path)
                 }
             }
 

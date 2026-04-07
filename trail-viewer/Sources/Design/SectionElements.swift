@@ -51,6 +51,7 @@ struct OrnamentDivider: View {
 
 // MARK: - Previews
 
+#if false // Disabled: #Preview requires Xcode
 #Preview("SectionHeader") {
     VStack(spacing: 20) {
         SectionHeader(title: "Overview", icon: "doc.text")
@@ -69,3 +70,4 @@ struct OrnamentDivider: View {
     .padding()
     .frame(width: 400)
 }
+#endif

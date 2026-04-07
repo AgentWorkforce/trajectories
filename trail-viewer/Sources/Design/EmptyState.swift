@@ -24,6 +24,7 @@ struct EmptyState: View {
     }
 }
 
+#if false // Disabled: #Preview requires Xcode
 #Preview("No Trajectories") {
     EmptyState(
         icon: "doc.text.magnifyingglass",
@@ -39,3 +40,4 @@ struct EmptyState: View {
         subtitle: "Try adjusting your search or filters to find what you're looking for."
     )
 }
+#endif

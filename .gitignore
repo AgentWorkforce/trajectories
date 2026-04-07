@@ -29,5 +29,5 @@ npm-debug.log*
 .env.*.local
 
 # Trajectories - don't commit active work
-.trajectories/active/
 .agent-relay
+trail-viewer/.build

@@ -24,9 +24,10 @@ struct EventCardBase<Content: View>: View {
     }
 
     private var formattedTime: String {
+        guard let date = event.timestamp else { return "--:--" }
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
-        return formatter.string(from: event.timestamp)
+        return formatter.string(from: date)
     }
 
     private var confidenceText: String? {
@@ -38,7 +39,7 @@ struct EventCardBase<Content: View>: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: Theme.spacingBase) {
-            SignificanceDot(level: event.significance?.rawValue ?? "low")
+            SignificanceDot(level: event.significance ?? "low")
                 .padding(.top, 5)
 
             VStack(alignment: .leading, spacing: Theme.spacingSM) {
@@ -70,14 +71,12 @@ struct EventCardBase<Content: View>: View {
 struct EventCardBase_Previews: PreviewProvider {
     static var previews: some View {
         let event = TrajectoryEvent(
-            id: "preview-1",
+            ts: Date().timeIntervalSince1970 * 1000,
             type: .note,
-            timestamp: Date(),
-            agent: "Architect",
             content: "This is a sample event card with some body text to demonstrate the layout.",
-            significance: .medium,
-            metadata: ["confidence": "0.85"],
-            chapterId: "ch-1"
+            agent: "Architect",
+            significance: "medium",
+            metadata: ["confidence": "0.85"]
         )
 
         EventCardBase(event: event, chapterAgent: "Lead") {

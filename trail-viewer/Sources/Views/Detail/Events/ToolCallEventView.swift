@@ -71,14 +71,12 @@ struct ToolCallEventView: View {
 struct ToolCallEventView_Previews: PreviewProvider {
     static var previews: some View {
         let event = TrajectoryEvent(
-            id: "tool-1",
+            ts: Date().timeIntervalSince1970 * 1000,
             type: .toolCall,
-            timestamp: Date(),
-            agent: "Worker",
             content: "grep -r 'localStorage.setItem' src/auth/\n\nsrc/auth/session.ts:42:  localStorage.setItem('session_token', token)\nsrc/auth/refresh.ts:18:  localStorage.setItem('refresh_token', refresh)",
-            significance: .medium,
-            metadata: ["tool": "grep"],
-            chapterId: "ch-1"
+            agent: "Worker",
+            significance: "medium",
+            metadata: ["tool": "grep"]
         )
 
         ToolCallEventView(event: event)

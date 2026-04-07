@@ -53,31 +53,26 @@ struct PathSettingsView: View {
                             .font(Typography.caption)
                             .foregroundColor(Theme.textTertiary)
                     } else {
-                        ForEach(Array(appStateStore.recentPaths.enumerated()), id: \.element.path) { index, recent in
+                        ForEach(Array(appStateStore.recentPaths.enumerated()), id: \.element) { index, path in
                             if index > 0 {
                                 Divider()
                                     .background(Theme.borderLight)
                             }
 
                             Button(action: {
-                                appStateStore.openRepository(at: recent.path)
+                                appStateStore.currentPath = path
+                                appStateStore.addRecentPath(path)
                             }) {
                                 HStack {
                                     Image(systemName: "folder")
                                         .foregroundColor(Theme.textTertiary)
                                         .font(.system(size: 14))
 
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(recent.path)
-                                            .font(Typography.caption)
-                                            .foregroundColor(Theme.textPrimary)
-                                            .lineLimit(1)
-                                            .truncationMode(.middle)
-
-                                        Text("last opened \(relativeTimeString(from: recent.lastOpened))")
-                                            .font(Typography.caption)
-                                            .foregroundColor(Theme.textTertiary)
-                                    }
+                                    Text(path)
+                                        .font(Typography.caption)
+                                        .foregroundColor(Theme.textPrimary)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
 
                                     Spacer()
                                 }
@@ -102,16 +97,9 @@ struct PathSettingsView: View {
         panel.message = "Choose a folder containing trajectory data"
 
         if panel.runModal() == .OK, let url = panel.url {
-            appStateStore.openRepository(at: url.path)
+            appStateStore.currentPath = url.path
+            appStateStore.addRecentPath(url.path)
         }
-    }
-
-    // MARK: - Relative Time Formatting
-
-    private func relativeTimeString(from date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: date, relativeTo: Date())
     }
 }
 

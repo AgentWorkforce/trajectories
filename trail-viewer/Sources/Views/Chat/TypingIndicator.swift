@@ -54,6 +54,7 @@ struct TypingIndicator: View {
 
 // MARK: - Preview
 
+#if false // Disabled: #Preview requires Xcode
 #Preview("Typing Indicator") {
     let persona = ChatPersona(
         id: "analyst",
@@ -70,3 +71,4 @@ struct TypingIndicator: View {
     .padding(Theme.spacingXL)
     .background(Theme.pageBg)
 }
+#endif

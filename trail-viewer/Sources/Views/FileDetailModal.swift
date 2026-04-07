@@ -244,13 +244,7 @@ private struct CodeContentView: View {
     }
 }
 
-// MARK: - Local Typography
-
-private enum Typography {
-    static let heading = Font.system(size: 15, weight: .semibold)
-    static let body = Font.system(size: 13.5)
-    static let caption = Font.system(size: 11, weight: .medium)
-}
+// Typography is now defined globally in Design/Typography.swift
 
 // MARK: - Preview
 

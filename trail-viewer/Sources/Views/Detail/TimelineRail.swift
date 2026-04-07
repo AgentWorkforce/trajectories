@@ -57,27 +57,28 @@ struct TimelineRail<Content: View>: View {
 
 // MARK: - Preview
 
+#if false // Disabled: #Preview requires Xcode
 #Preview("TimelineRail") {
     let mockEvents: [TrajectoryEvent] = [
         TrajectoryEvent(
-            id: "evt-1",
-            significance: .critical
+            mockId: "evt-1",
+            significance: "high"
         ),
         TrajectoryEvent(
-            id: "evt-2",
-            significance: .significant
+            mockId: "evt-2",
+            significance: "medium"
         ),
         TrajectoryEvent(
-            id: "evt-3",
-            significance: .notable
+            mockId: "evt-3",
+            significance: "low"
         ),
         TrajectoryEvent(
-            id: "evt-4",
-            significance: .routine
+            mockId: "evt-4",
+            significance: "low"
         ),
         TrajectoryEvent(
-            id: "evt-5",
-            significance: .routine
+            mockId: "evt-5",
+            significance: "low"
         ),
     ]
 
@@ -101,33 +102,25 @@ struct TimelineRail<Content: View>: View {
     .frame(width: 360, height: 500)
     .background(Theme.surfacePrimary)
 }
+#endif
 
 // MARK: - Compatibility
 
 private extension SignificanceDot {
-    init(significance: EventSignificance?) {
-        self.init(level: significance?.rawValue ?? "")
+    init(significance: String?) {
+        self.init(level: significance ?? "")
     }
 }
 
-private extension EventSignificance {
-    static let critical: EventSignificance = .high
-    static let significant: EventSignificance = .medium
-    static let notable: EventSignificance = .low
-    static let routine: EventSignificance = .low
-}
-
 private extension TrajectoryEvent {
-    init(id: String, significance: EventSignificance?) {
+    init(mockId: String, significance: String?) {
         self.init(
-            id: id,
+            ts: Date().timeIntervalSince1970 * 1000,
             type: .note,
-            timestamp: Date(),
-            agent: nil,
             content: "",
+            agent: nil,
             significance: significance,
-            metadata: nil,
-            chapterId: nil
+            metadata: nil
         )
     }
 }

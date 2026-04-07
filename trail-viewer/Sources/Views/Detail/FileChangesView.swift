@@ -1,8 +1,13 @@
 import SwiftUI
 
+struct CommitInfo: Hashable {
+    let hash: String
+    let message: String
+}
+
 struct FileChangesView: View {
     let files: [String]
-    let commits: [CommitInfo]
+    let commits: [String]
 
     @State private var showFiles: Bool = false
     @State private var showCommits: Bool = false
@@ -75,18 +80,12 @@ struct FileChangesView: View {
 
             if showCommits {
                 VStack(alignment: .leading, spacing: 6) {
-                    ForEach(commits, id: \.hash) { commit in
-                        HStack(alignment: .firstTextBaseline, spacing: 8) {
-                            Text(String(commit.hash.prefix(7)))
-                                .font(Typography.code)
-                                .foregroundColor(Theme.blue)
-
-                            Text(commit.message)
-                                .font(Typography.caption)
-                                .foregroundColor(Theme.textSecondary)
-                                .lineLimit(1)
-                        }
-                        .padding(.leading, 20)
+                    ForEach(commits, id: \.self) { commit in
+                        Text(commit)
+                            .font(Typography.code)
+                            .foregroundColor(Theme.textSecondary)
+                            .lineLimit(1)
+                            .padding(.leading, 20)
                     }
                 }
                 .transition(.opacity.combined(with: .move(edge: .top)))
@@ -106,13 +105,13 @@ struct FileChangesView_Previews: PreviewProvider {
                 "Tests/TrailViewerTests/TimelineTests.swift"
             ],
             commits: [
-                CommitInfo(hash: "a1b2c3d4e5f6789", message: "feat: add timeline scrubbing controls"),
-                CommitInfo(hash: "f9e8d7c6b5a4321", message: "fix: correct date formatting in chapter headers"),
-                CommitInfo(hash: "1234567890abcdef", message: "refactor: extract theme constants to Design folder")
+                "a1b2c3d feat: add timeline scrubbing controls",
+                "f9e8d7c fix: correct date formatting in chapter headers",
+                "1234567 refactor: extract theme constants to Design folder"
             ]
         )
         .padding(Theme.spacingXL)
         .frame(width: 500)
-        .background(Theme.backgroundPrimary)
+        .background(Theme.pageBg)
     }
 }

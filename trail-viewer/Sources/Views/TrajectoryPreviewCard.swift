@@ -12,14 +12,6 @@ struct TrajectoryPreviewCard: View {
         max((summary.tags ?? []).count - visibleTags.count, 0)
     }
 
-    private var retrospectiveSummary: String? {
-        reflectedString(named: "retrospectiveSummary")
-    }
-
-    private var confidenceValue: Double? {
-        reflectedDouble(named: "confidence")
-    }
-
     var body: some View {
         BookCard {
             VStack(alignment: .leading, spacing: Theme.spacingSM) {
@@ -31,18 +23,14 @@ struct TrajectoryPreviewCard: View {
                 HStack(spacing: Theme.spacingSM) {
                     StatusBadge(status: summary.status.rawValue)
 
-                    Label("\(summary.agents.count)", systemImage: "person.2.fill")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(Theme.textSecondary)
-
-                    Label("\(summary.chapterCount)", systemImage: "book.closed.fill")
+                    Label("\(summary.chapterCount ?? 0)", systemImage: "book.closed.fill")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(Theme.textSecondary)
 
                     Spacer(minLength: 0)
 
-                    if let confidenceValue {
-                        Text("\(Int(clamped(confidenceValue) * 100))%")
+                    if let confidence = summary.confidence {
+                        Text("\(Int(min(max(confidence, 0), 1) * 100))%")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(Theme.blue)
                     }
@@ -64,19 +52,9 @@ struct TrajectoryPreviewCard: View {
                     }
                 }
 
-                if let retrospectiveSummary,
-                   !retrospectiveSummary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    Text(retrospectiveSummary)
-                        .font(.system(size: 11))
-                        .italic()
-                        .foregroundColor(Theme.textSecondary)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
                 Spacer(minLength: 0)
 
-                Text(RelativeTimeFormatter.format(summary.updatedAt))
+                Text(RelativeTimeFormatter.format(summary.startedAt ?? Date()))
                     .caption()
                     .foregroundColor(Theme.textTertiary)
             }
@@ -84,18 +62,6 @@ struct TrajectoryPreviewCard: View {
         }
         .frame(width: 280, height: 180, alignment: .topLeading)
         .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
-    }
-
-    private func reflectedString(named key: String) -> String? {
-        Mirror(reflecting: summary).children.first(where: { $0.label == key })?.value as? String
-    }
-
-    private func reflectedDouble(named key: String) -> Double? {
-        Mirror(reflecting: summary).children.first(where: { $0.label == key })?.value as? Double
-    }
-
-    private func clamped(_ value: Double) -> Double {
-        min(max(value, 0), 1)
     }
 }
 
@@ -107,11 +73,11 @@ struct TrajectoryPreviewCard_Previews: PreviewProvider {
                 title: "Implement Quick Look preview generation for trajectory files",
                 status: .completed,
                 chapterCount: 4,
-                eventCount: 18,
-                agents: ["Lead", "Worker-1", "Reviewer"],
-                tags: ["macos", "preview", "swiftui", "finder"],
-                createdAt: Date().addingTimeInterval(-7_200),
-                updatedAt: Date().addingTimeInterval(-2_400)
+                decisionCount: 3,
+                confidence: 0.85,
+                startedAt: Date().addingTimeInterval(-7_200),
+                completedAt: Date().addingTimeInterval(-2_400),
+                tags: ["macos", "preview", "swiftui", "finder"]
             )
         )
         .padding(24)

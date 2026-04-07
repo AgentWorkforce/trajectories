@@ -49,14 +49,12 @@ struct ThinkingEventView: View {
 struct ThinkingEventView_Previews: PreviewProvider {
     static var previews: some View {
         let event = TrajectoryEvent(
-            id: "thinking-1",
+            ts: Date().timeIntervalSince1970 * 1000,
             type: .thinking,
-            timestamp: Date(),
-            agent: "Lead",
             content: "If we migrate the session store from localStorage to HTTP-only cookies, we need to consider CSRF protection. The existing CORS configuration should handle most cases, but we should also add a CSRF token for state-mutating requests.",
-            significance: .low,
-            metadata: nil,
-            chapterId: "ch-1"
+            agent: "Lead",
+            significance: "low",
+            metadata: nil
         )
 
         VStack {

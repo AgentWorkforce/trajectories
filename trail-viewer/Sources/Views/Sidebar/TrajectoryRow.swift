@@ -1,38 +1,5 @@
 import SwiftUI
 
-// MARK: - Relative Time Formatter
-
-private struct RelativeTimeFormatter {
-    static func string(from date: Date) -> String {
-        let now = Date()
-        let interval = now.timeIntervalSince(date)
-
-        guard interval > 0 else { return "just now" }
-
-        let minutes = Int(interval / 60)
-        let hours = Int(interval / 3600)
-        let days = Int(interval / 86400)
-        let weeks = Int(interval / 604800)
-
-        if minutes < 1 {
-            return "just now"
-        } else if minutes < 60 {
-            return "\(minutes)m ago"
-        } else if hours < 24 {
-            return "\(hours)h ago"
-        } else if days < 7 {
-            return "\(days)d ago"
-        } else if weeks < 4 {
-            return "\(weeks)w ago"
-        } else {
-            let formatter = DateFormatter()
-            formatter.dateStyle = .medium
-            formatter.timeStyle = .none
-            return formatter.string(from: date)
-        }
-    }
-}
-
 // MARK: - TrajectoryRow
 
 struct TrajectoryRow: View {
@@ -50,7 +17,7 @@ struct TrajectoryRow: View {
 
             VStack(alignment: .leading, spacing: Theme.spacingSM) {
                 // Row 1: Task title
-                Text(trajectory.task)
+                Text(trajectory.title)
                     .font(Typography.heading)
                     .foregroundColor(Theme.textPrimary)
                     .lineLimit(1)
@@ -58,22 +25,18 @@ struct TrajectoryRow: View {
 
                 // Row 2: Status, agent count, chapter count
                 HStack(spacing: Theme.spacingSM) {
-                    StatusBadge(status: trajectory.status)
+                    StatusBadge(status: trajectory.status.rawValue)
 
-                    Text("\(trajectory.agentCount) agents")
-                        .font(Typography.caption)
-                        .foregroundColor(Theme.textSecondary)
-
-                    Text("\(trajectory.chapterCount) chapters")
+                    Text("\(trajectory.chapterCount ?? 0) chapters")
                         .font(Typography.caption)
                         .foregroundColor(Theme.textSecondary)
                 }
 
                 // Row 3: Scrollable tags
-                if !trajectory.tags.isEmpty {
+                if let tags = trajectory.tags, !tags.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: Theme.spacingXS) {
-                            ForEach(trajectory.tags, id: \.self) { tag in
+                            ForEach(tags, id: \.self) { tag in
                                 TagPill(tag: tag)
                             }
                         }
@@ -81,7 +44,7 @@ struct TrajectoryRow: View {
                 }
 
                 // Row 4: Relative timestamp
-                Text(RelativeTimeFormatter.string(from: trajectory.updatedAt))
+                Text(RelativeTimeFormatter.format(trajectory.startedAt ?? Date()))
                     .font(Typography.caption)
                     .foregroundColor(Theme.textTertiary)
             }
@@ -102,22 +65,26 @@ struct TrajectoryRow_Previews: PreviewProvider {
     static var previews: some View {
         let mockTrajectory = TrajectorySummary(
             id: "traj-001",
-            task: "Implement authentication flow with OAuth2 and refresh token rotation",
-            status: .complete,
-            agentCount: 3,
+            title: "Implement authentication flow with OAuth2 and refresh token rotation",
+            status: .completed,
             chapterCount: 12,
-            tags: ["auth", "security", "backend", "oauth"],
-            updatedAt: Date().addingTimeInterval(-3600) // 1 hour ago
+            decisionCount: 5,
+            confidence: 0.9,
+            startedAt: Date().addingTimeInterval(-7200),
+            completedAt: Date().addingTimeInterval(-3600),
+            tags: ["auth", "security", "backend", "oauth"]
         )
 
         let recentTrajectory = TrajectorySummary(
             id: "traj-002",
-            task: "Fix memory leak in WebSocket connection handler",
-            status: .running,
-            agentCount: 1,
+            title: "Fix memory leak in WebSocket connection handler",
+            status: .active,
             chapterCount: 4,
-            tags: ["bugfix", "networking"],
-            updatedAt: Date().addingTimeInterval(-120) // 2 minutes ago
+            decisionCount: 1,
+            confidence: nil,
+            startedAt: Date().addingTimeInterval(-600),
+            completedAt: nil,
+            tags: ["bugfix", "networking"]
         )
 
         VStack(spacing: 0) {
@@ -125,7 +92,7 @@ struct TrajectoryRow_Previews: PreviewProvider {
             TrajectoryRow(trajectory: recentTrajectory, isSelected: false)
         }
         .frame(width: 360)
-        .background(Theme.backgroundPrimary)
+        .background(Theme.pageBg)
         .previewDisplayName("TrajectoryRow — Selected & Unselected")
     }
 }

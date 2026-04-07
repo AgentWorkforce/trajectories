@@ -28,14 +28,12 @@ struct ReflectionEventView: View {
 struct ReflectionEventView_Previews: PreviewProvider {
     static var previews: some View {
         let event = TrajectoryEvent(
-            id: "reflection-1",
+            ts: Date().timeIntervalSince1970 * 1000,
             type: .reflection,
-            timestamp: Date(),
-            agent: "Lead",
             content: "In hindsight, we should have audited the token storage mechanism earlier. The localStorage approach was inherited from the initial prototype and never revisited during the security hardening phase.",
-            significance: .medium,
-            metadata: nil,
-            chapterId: "ch-1"
+            agent: "Lead",
+            significance: "medium",
+            metadata: nil
         )
 
         ReflectionEventView(event: event)

@@ -3,7 +3,7 @@ import SwiftUI
 struct ChatPanelView: View {
     @EnvironmentObject var chatStore: ChatStore
     @EnvironmentObject var trajectoryStore: TrajectoryStore
-    @State private var scrollToBottom = false
+    @State private var inputText: String = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -13,9 +13,9 @@ struct ChatPanelView: View {
                     Text("Discuss")
                         .font(Typography.sectionTitle)
                     Spacer()
-                    if chatStore.isSessionActive {
+                    if chatStore.isActive {
                         Button("End Discussion") {
-                            chatStore.endSession()
+                            Task { await chatStore.stopChat() }
                         }
                         .font(Typography.caption)
                         .foregroundColor(Theme.textTertiary)
@@ -34,7 +34,7 @@ struct ChatPanelView: View {
             RuleLine()
 
             // MARK: - Persona Selector
-            if chatStore.isSessionActive {
+            if chatStore.isActive {
                 PersonaSelector()
             }
 
@@ -42,35 +42,39 @@ struct ChatPanelView: View {
             Group {
                 if trajectoryStore.selectedTrajectory == nil {
                     NoTrajectorySelectedState()
-                } else if !chatStore.isSessionActive {
+                } else if !chatStore.isActive {
                     NoSessionStartedState(
                         personaCount: chatStore.personas.count,
-                        onStartSession: { chatStore.startSession() }
+                        onStartSession: {
+                            if let id = trajectoryStore.selectedTrajectory?.id {
+                                Task { await chatStore.startChat(trajectoryId: id) }
+                            }
+                        }
                     )
-                } else if chatStore.messages.isEmpty {
+                } else if chatStore.chatMessages.isEmpty {
                     NoMessagesHint()
                 } else {
                     ScrollViewReader { proxy in
                         ScrollView(.vertical, showsIndicators: true) {
                             LazyVStack(spacing: Theme.spacingSM) {
-                                ForEach(chatStore.messages) { message in
+                                ForEach(chatStore.chatMessages) { message in
                                     ChatBubble(
                                         message: message,
-                                        persona: chatStore.personas.first(where: { $0.id == message.personaId })
+                                        persona: chatStore.personas.first(where: { $0.id == message.persona })
                                     )
                                     .id(message.id)
                                 }
 
-                                if chatStore.isTyping, let typingPersona = chatStore.typingPersona {
-                                    TypingIndicator(
-                                        personaColor: Theme.agentColors[typingPersona.id] ?? Theme.blue
-                                    )
+                                if !chatStore.typingPersonas.isEmpty {
+                                    let typingId = chatStore.typingPersonas.first
+                                    let typingPersona = chatStore.personas.first(where: { $0.id == typingId })
+                                    TypingIndicator(persona: typingPersona)
                                 }
                             }
                             .padding(Theme.spacingMD)
                         }
-                        .onChange(of: chatStore.messages.count) { _ in
-                            if let lastId = chatStore.messages.last?.id {
+                        .onChange(of: chatStore.chatMessages.count) { _, _ in
+                            if let lastId = chatStore.chatMessages.last?.id {
                                 withAnimation {
                                     proxy.scrollTo(lastId, anchor: .bottom)
                                 }
@@ -82,9 +86,14 @@ struct ChatPanelView: View {
             .frame(maxHeight: .infinity)
 
             // MARK: - Input Bar
-            ChatInputBar(onSend: { text in
-                Task { await chatStore.sendMessage(text) }
-            })
+            ChatInputBar(
+                text: $inputText,
+                onSend: { text in
+                    Task { await chatStore.sendMessage(text: text) }
+                    inputText = ""
+                },
+                isConnected: chatStore.isActive
+            )
         }
         .frame(width: 340)
         .background(Theme.pageBg)

@@ -38,14 +38,12 @@ struct ErrorEventView: View {
 struct ErrorEventView_Previews: PreviewProvider {
     static var previews: some View {
         let event = TrajectoryEvent(
-            id: "error-1",
+            ts: Date().timeIntervalSince1970 * 1000,
             type: .error,
-            timestamp: Date(),
-            agent: "Worker",
             content: "Build failed: Type 'SessionManager' has no member 'setHttpOnlyCookie'. The API was renamed in v2.3 - need to use 'setCookieWithOptions' instead.",
-            significance: .high,
-            metadata: nil,
-            chapterId: "ch-1"
+            agent: "Worker",
+            significance: "high",
+            metadata: nil
         )
 
         ErrorEventView(event: event)

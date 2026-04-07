@@ -1,5 +1,16 @@
 import SwiftUI
 
+// MARK: - Typography Font Constants
+
+enum Typography {
+    static let chapterTitle = Font.system(size: 26, weight: .bold, design: .serif)
+    static let sectionTitle = Font.system(size: 18, weight: .semibold, design: .serif)
+    static let heading = Font.system(size: 15, weight: .semibold)
+    static let body = Font.system(size: 13.5)
+    static let caption = Font.system(size: 11, weight: .medium)
+    static let code = Font.system(size: 12, design: .monospaced)
+}
+
 // MARK: - View Modifiers
 
 struct ChapterTitleStyle: ViewModifier {

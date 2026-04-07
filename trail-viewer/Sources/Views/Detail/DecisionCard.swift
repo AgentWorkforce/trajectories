@@ -72,25 +72,16 @@ struct DecisionCard: View {
 
                             if showAlternatives {
                                 VStack(alignment: .leading, spacing: Theme.spacingSM) {
-                                    ForEach(alternatives, id: \.option) { alt in
+                                    ForEach(alternatives, id: \.self) { alt in
                                         HStack(alignment: .top, spacing: Theme.spacingSM) {
                                             Image(systemName: "circle.fill")
                                                 .font(.system(size: 4))
                                                 .foregroundColor(Theme.textTertiary)
                                                 .padding(.top, 6)
 
-                                            VStack(alignment: .leading, spacing: 2) {
-                                                Text(alt.option)
-                                                    .bodyStyle()
-                                                    .foregroundColor(Theme.textTertiary)
-
-                                                if let prosOrCons = alt.prosOrCons {
-                                                    Text(prosOrCons)
-                                                        .bodySmall()
-                                                        .foregroundColor(Theme.textTertiary)
-                                                        .opacity(0.7)
-                                                }
-                                            }
+                                            Text(alt)
+                                                .bodyStyle()
+                                                .foregroundColor(Theme.textTertiary)
                                         }
                                     }
                                 }
@@ -142,33 +133,20 @@ struct DecisionCard: View {
 
 // MARK: - Preview
 
+#if false // Disabled: #Preview requires Xcode
 #Preview("Decision Card") {
     ScrollView {
         DecisionCard(
             decision: Decision(
-                id: "dec-001",
                 question: "Which database should we use for the event store?",
                 chosen: "PostgreSQL with JSONB columns for flexible event payloads",
                 alternatives: [
-                    Alternative(
-                        option: "MongoDB for native document storage",
-                        prosOrCons: "Good for unstructured data but adds operational complexity",
-                        rejected: true
-                    ),
-                    Alternative(
-                        option: "SQLite for simplicity",
-                        prosOrCons: "Lightweight but lacks concurrent write support at scale",
-                        rejected: true
-                    ),
-                    Alternative(
-                        option: "DynamoDB for managed scaling",
-                        prosOrCons: "Fully managed but vendor lock-in and higher cost",
-                        rejected: true
-                    ),
+                    "MongoDB for native document storage",
+                    "SQLite for simplicity",
+                    "DynamoDB for managed scaling",
                 ],
                 confidence: 0.85,
-                reasoning: "PostgreSQL provides the best balance of relational integrity and schema flexibility through JSONB, with a mature ecosystem and strong community support.",
-                timestamp: Date()
+                reasoning: "PostgreSQL provides the best balance of relational integrity and schema flexibility through JSONB, with a mature ecosystem and strong community support."
             )
         )
         .padding(Theme.spacingLG)
@@ -176,3 +154,4 @@ struct DecisionCard: View {
     .frame(width: 600, height: 600)
     .background(Theme.pageBg)
 }
+#endif

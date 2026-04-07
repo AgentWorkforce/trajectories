@@ -22,8 +22,8 @@ final class SpotlightRegistration {
             title: trajectory.title,
             description: trajectory.description ?? trajectory.retrospective?.summary,
             status: trajectory.status.rawValue,
-            keywords: (trajectory.tags ?? []) + (trajectory.agents?.map(\.agentName) ?? []),
-            authors: trajectory.agents?.map(\.agentName) ?? [],
+            keywords: (trajectory.tags ?? []) + (trajectory.agents?.map(\.displayName) ?? []),
+            authors: trajectory.agents?.map(\.displayName) ?? [],
             textContent: buildTextContent(
                 decisionEntries: decisionEntries(from: trajectory),
                 retrospectiveSummary: trajectory.retrospective?.summary,
@@ -122,8 +122,8 @@ final class SpotlightRegistration {
                 title: trajectory.title,
                 description: trajectory.description ?? trajectory.retrospective?.summary,
                 status: trajectory.status.rawValue,
-                keywords: (trajectory.tags ?? []) + (trajectory.agents?.map(\.agentName) ?? []),
-                authors: trajectory.agents?.map(\.agentName) ?? [],
+                keywords: (trajectory.tags ?? []) + (trajectory.agents?.map(\.displayName) ?? []),
+                authors: trajectory.agents?.map(\.displayName) ?? [],
                 textContent: buildTextContent(
                     decisionEntries: decisionEntries(from: trajectory),
                     retrospectiveSummary: trajectory.retrospective?.summary,
@@ -221,23 +221,6 @@ final class SpotlightRegistration {
     }
 
     private static func decisionEntries(from trajectory: Trajectory) -> [String] {
-        let explicitDecisions = (trajectory.decisions ?? []).flatMap { decision -> [String] in
-            [
-                decision.question,
-                decision.chosen,
-                decision.reasoning
-            ].compactMap { value -> String? in
-                guard let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                    return nil
-                }
-                return value
-            }
-        }
-
-        if !explicitDecisions.isEmpty {
-            return explicitDecisions
-        }
-
         return trajectory.chapters
             .flatMap(\.events)
             .filter { $0.type == .decision }

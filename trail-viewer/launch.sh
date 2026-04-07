@@ -105,7 +105,7 @@ if [[ "$USE_MOCK" -eq 1 ]]; then
 fi
 
 cd "$SCRIPT_DIR/server"
-npx tsx src/server.ts &
+npx tsx src/server.ts 2>/dev/null &
 SERVER_PID=$!
 cd "$SCRIPT_DIR"
 
@@ -124,17 +124,24 @@ for i in $(seq 1 10); do
 done
 echo "Server ready at http://localhost:$PORT"
 
-# --- Step 5: Open the app (macOS) ---
-if [[ -d "$SCRIPT_DIR/.build" ]] && find "$SCRIPT_DIR/.build" -type f -perm +111 -name "trail-viewer" -print -quit 2>/dev/null | grep -q .; then
-  echo "Launching Trail Viewer app..."
-  BINARY=$(find "$SCRIPT_DIR/.build" -type f -perm +111 -name "trail-viewer" -print -quit 2>/dev/null)
-  "$BINARY"
-elif command -v swift &> /dev/null; then
-  echo "Building and launching Trail Viewer with Swift..."
+# --- Step 5: Build & launch the app (macOS) ---
+if command -v swift &> /dev/null; then
+  echo "Building Trail Viewer..."
   cd "$SCRIPT_DIR"
-  swift run
+  swift build 2>&1
+
+  BINARY="$SCRIPT_DIR/.build/debug/TrailViewer"
+  if [[ -x "$BINARY" ]]; then
+    echo "Launching Trail Viewer as standalone app..."
+    # Launch detached from terminal so it behaves like a native macOS app
+    nohup "$BINARY" > /dev/null 2>&1 &
+    disown
+    echo "Trail Viewer launched. You can close this terminal."
+  else
+    echo "Build failed — binary not found at $BINARY"
+  fi
 else
-  echo "Swift app not built. Server running at http://localhost:$PORT"
+  echo "Swift not found. Server running at http://localhost:$PORT"
 fi
 
 # --- Wait for server process ---

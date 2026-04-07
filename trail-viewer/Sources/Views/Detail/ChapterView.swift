@@ -18,7 +18,7 @@ struct ChapterView: View {
     private let spacingLG: CGFloat = 24
 
     private var chapterAgentName: String {
-        chapter.agent ?? "Agent"
+        chapter.agentName ?? "Agent"
     }
 
     var body: some View {
@@ -40,7 +40,7 @@ struct ChapterView: View {
         }) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("CHAPTER \(chapter.number)")
+                    Text("CHAPTER")
                         .caption()
                         .foregroundColor(Theme.textTertiary)
                         .kerning(1.5)
@@ -69,7 +69,7 @@ struct ChapterView: View {
                         .caption()
                         .foregroundColor(Theme.textTertiary)
 
-                    if let endTime = chapter.completedAt {
+                    if let endTime = chapter.endedAt {
                         Text("—")
                             .caption()
                             .foregroundColor(Theme.textTertiary)
@@ -108,23 +108,23 @@ struct ChapterView: View {
     private func eventView(for event: TrajectoryEvent) -> some View {
         switch event.type {
         case .note:
-            NoteEventView(event: event, chapterAgent: chapter.agent)
+            NoteEventView(event: event, chapterAgent: chapter.agentName)
         case .finding:
-            FindingEventView(event: event, chapterAgent: chapter.agent)
+            FindingEventView(event: event, chapterAgent: chapter.agentName)
         case .thinking:
-            ThinkingEventView(event: event, chapterAgent: chapter.agent)
+            ThinkingEventView(event: event, chapterAgent: chapter.agentName)
         case .toolCall:
-            ToolCallEventView(event: event, chapterAgent: chapter.agent)
+            ToolCallEventView(event: event, chapterAgent: chapter.agentName)
         case .reflection:
-            ReflectionEventView(event: event, chapterAgent: chapter.agent)
+            ReflectionEventView(event: event, chapterAgent: chapter.agentName)
         case .error:
-            ErrorEventView(event: event, chapterAgent: chapter.agent)
+            ErrorEventView(event: event, chapterAgent: chapter.agentName)
         case .messageSent, .messageReceived:
-            MessageEventView(event: event, chapterAgent: chapter.agent)
+            MessageEventView(event: event, chapterAgent: chapter.agentName)
         case .decision:
             DecisionCard(decision: decision(from: event))
         default:
-            NoteEventView(event: event, chapterAgent: chapter.agent)
+            NoteEventView(event: event, chapterAgent: chapter.agentName)
         }
     }
 
@@ -132,13 +132,11 @@ struct ChapterView: View {
 
     private func decision(from event: TrajectoryEvent) -> Decision {
         Decision(
-            id: event.id,
             question: event.metadata?["question"] ?? "Decision",
             chosen: event.content,
             alternatives: nil,
             confidence: confidence(from: event),
-            reasoning: event.metadata?["reasoning"] ?? event.metadata?["tool_result"] ?? event.metadata?["toolResult"],
-            timestamp: event.timestamp
+            reasoning: event.metadata?["reasoning"] ?? event.metadata?["tool_result"] ?? event.metadata?["toolResult"]
         )
     }
 
@@ -147,7 +145,8 @@ struct ChapterView: View {
         return Double(rawValue)
     }
 
-    private func timeString(_ date: Date) -> String {
+    private func timeString(_ date: Date?) -> String {
+        guard let date else { return "--:-- --" }
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
         return formatter.string(from: date)
@@ -168,56 +167,48 @@ struct ChapterView_Previews: PreviewProvider {
 
     static var mockChapter: Chapter {
         let now = Date()
+        let nowMs = now.timeIntervalSince1970 * 1000
         return Chapter(
             id: UUID().uuidString,
             title: "Investigating the Authentication Flow",
-            number: 1,
-            agent: "Claude",
+            agentName: "Claude",
             startedAt: now,
-            completedAt: now.addingTimeInterval(120),
+            endedAt: now.addingTimeInterval(120),
             events: [
                 TrajectoryEvent(
-                    id: UUID().uuidString,
+                    ts: nowMs,
                     type: .thinking,
-                    timestamp: now,
-                    agent: "Claude",
                     content: "The user wants to understand why login fails intermittently. Let me trace the auth middleware chain to find potential race conditions.",
-                    significance: .medium,
-                    metadata: nil,
-                    chapterId: nil
+                    agent: "Claude",
+                    significance: "medium",
+                    metadata: nil
                 ),
                 TrajectoryEvent(
-                    id: UUID().uuidString,
+                    ts: nowMs + 30000,
                     type: .toolCall,
-                    timestamp: now.addingTimeInterval(30),
-                    agent: "Claude",
                     content: "Found session validation logic with async token refresh that lacks proper locking.",
-                    significance: .low,
-                    metadata: ["tool": "Read"],
-                    chapterId: nil
+                    agent: "Claude",
+                    significance: "low",
+                    metadata: ["tool": "Read"]
                 ),
                 TrajectoryEvent(
-                    id: UUID().uuidString,
+                    ts: nowMs + 90000,
                     type: .finding,
-                    timestamp: now.addingTimeInterval(90),
-                    agent: "Claude",
                     content: "Race condition identified: concurrent requests can trigger simultaneous token refreshes, causing one request to use a stale token.",
-                    significance: .high,
-                    metadata: ["confidence": "0.85"],
-                    chapterId: nil
+                    agent: "Claude",
+                    significance: "high",
+                    metadata: ["confidence": "0.85"]
                 ),
                 TrajectoryEvent(
-                    id: UUID().uuidString,
+                    ts: nowMs + 120000,
                     type: .decision,
-                    timestamp: now.addingTimeInterval(120),
-                    agent: "Claude",
                     content: "Add mutex lock around token refresh logic",
-                    significance: .high,
+                    agent: "Claude",
+                    significance: "high",
                     metadata: [
                         "confidence": "0.9",
                         "reasoning": "A mutex ensures only one request refreshes the token at a time, while others wait for the fresh token."
-                    ],
-                    chapterId: nil
+                    ]
                 ),
             ],
             summary: nil

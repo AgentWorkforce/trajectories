@@ -96,6 +96,13 @@ final class LocalServerManager {
     func start(trajectoryPath: String? = nil) {
         guard state == .stopped || state == .error else { return }
 
+        // Check if an external server is already running on the port
+        if isPortInUse(port) {
+            state = .running
+            errorMessage = nil
+            return
+        }
+
         state = .starting
         errorMessage = nil
 
@@ -115,7 +122,15 @@ final class LocalServerManager {
         var environment = ProcessInfo.processInfo.environment
         environment["PORT"] = String(port)
         if let trajectoryPath {
-            environment["TRAJECTORIES_DATA_DIR"] = trajectoryPath
+            // The SDK's FileStorageProvider uses TRAJECTORIES_DATA_DIR directly
+            // as the .trajectories directory. If the user picked a repo root,
+            // append .trajectories so the SDK finds the data.
+            let trajDir = (trajectoryPath as NSString).appendingPathComponent(".trajectories")
+            if FileManager.default.fileExists(atPath: trajDir) {
+                environment["TRAJECTORIES_DATA_DIR"] = trajDir
+            } else {
+                environment["TRAJECTORIES_DATA_DIR"] = trajectoryPath
+            }
         }
         process.environment = environment
 
@@ -255,6 +270,26 @@ final class LocalServerManager {
         errorPipe?.fileHandleForReading.readabilityHandler = nil
         outputPipe = nil
         errorPipe = nil
+    }
+
+    /// Checks whether a given port is already in use by attempting a TCP connection.
+    private func isPortInUse(_ port: Int) -> Bool {
+        let sock = socket(AF_INET6, SOCK_STREAM, 0)
+        guard sock >= 0 else { return false }
+        defer { close(sock) }
+
+        var addr = sockaddr_in6()
+        addr.sin6_len = UInt8(MemoryLayout<sockaddr_in6>.size)
+        addr.sin6_family = sa_family_t(AF_INET6)
+        addr.sin6_port = UInt16(port).bigEndian
+        addr.sin6_addr = in6addr_loopback
+
+        let result = withUnsafePointer(to: &addr) { ptr in
+            ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockPtr in
+                Darwin.connect(sock, sockPtr, socklen_t(MemoryLayout<sockaddr_in6>.size))
+            }
+        }
+        return result == 0
     }
 
     /// Resolves the server directory path.

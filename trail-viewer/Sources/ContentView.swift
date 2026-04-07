@@ -16,7 +16,7 @@ struct ContentView: View {
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
     var body: some View {
-        ZStack {
+        HStack(spacing: 0) {
             NavigationSplitView(columnVisibility: $columnVisibility) {
                 // --- Sidebar column ---
                 TrajectoryListView()
@@ -25,37 +25,33 @@ struct ContentView: View {
                         ideal: LayoutConstants.sidebarWidth,
                         max: LayoutConstants.sidebarMaxWidth
                     )
-            } content: {
-                // --- Content / Detail column ---
+            } detail: {
+                // --- Detail column ---
                 if trajectoryStore.selectedTrajectory != nil {
                     TrajectoryDetailView()
-                } else {
+                } else if trajectoryStore.trajectories.isEmpty && !trajectoryStore.isLoading {
                     WelcomeView()
+                } else {
+                    EmptyState(
+                        icon: "book.closed.fill",
+                        title: "Select a trajectory",
+                        subtitle: "Choose a trajectory from the sidebar to view its story"
+                    )
                 }
-            } detail: {
-                // Third column intentionally empty — chat is overlay/trailing panel
-                Color.clear
             }
             .navigationSplitViewStyle(.balanced)
 
-            // --- Chat panel (conditional trailing overlay) ---
-            if appStateStore.showChatPanel {
-                HStack(spacing: 0) {
-                    Spacer()
-                    ChatPanelView()
-                        .frame(
-                            minWidth: LayoutConstants.chatPanelMinWidth,
-                            idealWidth: LayoutConstants.chatPanelWidth,
-                            maxWidth: LayoutConstants.chatPanelMaxWidth
-                        )
-                        .background(Theme.cardBg)
-                        .overlay(alignment: .leading) {
-                            Rectangle()
-                                .fill(Theme.border)
-                                .frame(width: 0.5)
-                        }
-                        .transition(.move(edge: .trailing).combined(with: .opacity))
-                }
+            // --- Chat panel (side-by-side, not overlapping) ---
+            if appStateStore.showChatPanel && trajectoryStore.selectedTrajectory != nil {
+                ChatPanelView()
+                    .frame(width: LayoutConstants.chatPanelWidth)
+                    .background(Theme.cardBg)
+                    .overlay(alignment: .leading) {
+                        Rectangle()
+                            .fill(Theme.border)
+                            .frame(width: 0.5)
+                    }
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
             }
         }
         // --- Status bar at bottom ---

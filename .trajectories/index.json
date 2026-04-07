@@ -1,20 +1,621 @@
 {
   "version": 1,
-  "lastUpdated": "2026-02-19T08:47:21.275Z",
+  "lastUpdated": "2026-04-07T21:25:01.585Z",
   "trajectories": {
     "traj_cuuwpd2q5rr4": {
       "title": "Implement Agent Trace integration (PR #8)",
       "status": "completed",
       "startedAt": "2026-01-30T11:11:11.822Z",
       "completedAt": "2026-01-30T11:12:26.359Z",
-      "path": "/Users/khaliqgant/Projects/agent-workforce/trajectories/.trajectories/completed/2026-01/traj_cuuwpd2q5rr4.json"
+      "path": "../../.trajectories/completed/2026-01/traj_cuuwpd2q5rr4.json"
     },
     "traj_gtzye0t83h5a": {
       "title": "agent-trace spec compliance and ecosystem positioning",
       "status": "completed",
       "startedAt": "2026-02-19T08:46:34.162Z",
       "completedAt": "2026-02-19T08:47:21.214Z",
-      "path": "/data/repos/trajectories/.trajectories/completed/2026-02/traj_gtzye0t83h5a.json"
+      "path": "../../.trajectories/completed/2026-02/traj_gtzye0t83h5a.json"
+    },
+    "traj_1775579377702_4f7f9060": {
+      "title": "03-app-config-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:29:37.702Z",
+      "completedAt": "2026-04-07T16:31:53.718Z",
+      "path": "../../.trajectories/completed/traj_1775579377702_4f7f9060.json"
+    },
+    "traj_1775579377702_d7c0960f": {
+      "title": "02-app-entry-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:29:37.702Z",
+      "completedAt": "2026-04-07T16:31:34.378Z",
+      "path": "../../.trajectories/completed/traj_1775579377702_d7c0960f.json"
+    },
+    "traj_1775579377703_10fca7cd": {
+      "title": "01-package-swift-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:29:37.703Z",
+      "completedAt": "2026-04-07T16:31:28.597Z",
+      "path": "../../.trajectories/completed/traj_1775579377703_10fca7cd.json"
+    },
+    "traj_1775579517021_75d423d8": {
+      "title": "06-animations-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:31:57.021Z",
+      "completedAt": "2026-04-07T16:33:48.655Z",
+      "path": "../../.trajectories/completed/traj_1775579517021_75d423d8.json"
+    },
+    "traj_1775579517022_56a8cb51": {
+      "title": "04-theme-colors-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:31:57.022Z",
+      "completedAt": "2026-04-07T16:34:41.205Z",
+      "path": "../../.trajectories/completed/traj_1775579517022_56a8cb51.json"
+    },
+    "traj_1775579517022_f0443bc4": {
+      "title": "05-typography-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:31:57.022Z",
+      "completedAt": "2026-04-07T16:34:41.936Z",
+      "path": "../../.trajectories/completed/traj_1775579517022_f0443bc4.json"
+    },
+    "traj_1775579517024_ea9370c2": {
+      "title": "07-layout-constants-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:31:57.024Z",
+      "completedAt": "2026-04-07T16:34:06.869Z",
+      "path": "../../.trajectories/completed/traj_1775579517024_ea9370c2.json"
+    },
+    "traj_1775579684459_bcfd075c": {
+      "title": "11-empty-state-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:34:44.459Z",
+      "completedAt": "2026-04-07T16:37:13.948Z",
+      "path": "../../.trajectories/completed/traj_1775579684459_bcfd075c.json"
+    },
+    "traj_1775579684464_082ed115": {
+      "title": "13-toast-view-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:34:44.464Z",
+      "completedAt": "2026-04-07T16:38:00.529Z",
+      "path": "../../.trajectories/completed/traj_1775579684464_082ed115.json"
+    },
+    "traj_1775579684464_c956bacd": {
+      "title": "10-section-elements-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:34:44.465Z",
+      "completedAt": "2026-04-07T16:36:38.965Z",
+      "path": "../../.trajectories/completed/traj_1775579684464_c956bacd.json"
+    },
+    "traj_1775579684472_6903a2a5": {
+      "title": "12-skeleton-view-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:34:44.472Z",
+      "completedAt": "2026-04-07T16:36:50.776Z",
+      "path": "../../.trajectories/completed/traj_1775579684472_6903a2a5.json"
+    },
+    "traj_1775579684472_fdc465b2": {
+      "title": "08-book-card-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:34:44.472Z",
+      "completedAt": "2026-04-07T16:37:04.794Z",
+      "path": "../../.trajectories/completed/traj_1775579684472_fdc465b2.json"
+    },
+    "traj_1775579684476_a9b5c6b9": {
+      "title": "09-badges-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:34:44.476Z",
+      "completedAt": "2026-04-07T16:36:39.444Z",
+      "path": "../../.trajectories/completed/traj_1775579684476_a9b5c6b9.json"
+    },
+    "traj_1775579883001_419efbfc": {
+      "title": "14-trajectory-models-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:38:03.001Z",
+      "completedAt": "2026-04-07T16:40:27.253Z",
+      "path": "../../.trajectories/completed/traj_1775579883001_419efbfc.json"
+    },
+    "traj_1775579883001_f31aa87b": {
+      "title": "15-chat-models-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:38:03.001Z",
+      "completedAt": "2026-04-07T16:39:58.618Z",
+      "path": "../../.trajectories/completed/traj_1775579883001_f31aa87b.json"
+    },
+    "traj_1775579883004_197f89a2": {
+      "title": "16-settings-models-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:38:03.004Z",
+      "completedAt": "2026-04-07T16:39:45.145Z",
+      "path": "../../.trajectories/completed/traj_1775579883004_197f89a2.json"
+    },
+    "traj_1775579883005_c0fcdbcb": {
+      "title": "17-api-models-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:38:03.005Z",
+      "completedAt": "2026-04-07T16:40:11.606Z",
+      "path": "../../.trajectories/completed/traj_1775579883005_c0fcdbcb.json"
+    },
+    "traj_1775580030112_0bf91d39": {
+      "title": "21-local-server-manager-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:40:30.112Z",
+      "completedAt": "2026-04-07T16:43:56.277Z",
+      "path": "../../.trajectories/completed/traj_1775580030112_0bf91d39.json"
+    },
+    "traj_1775580030115_38fdd60c": {
+      "title": "18-api-client-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:40:30.115Z",
+      "completedAt": "2026-04-07T16:43:58.597Z",
+      "path": "../../.trajectories/completed/traj_1775580030115_38fdd60c.json"
+    },
+    "traj_1775580030115_6ae8429d": {
+      "title": "19-relay-connection-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:40:30.115Z",
+      "completedAt": "2026-04-07T16:43:37.909Z",
+      "path": "../../.trajectories/completed/traj_1775580030115_6ae8429d.json"
+    },
+    "traj_1775580030115_ec4e7106": {
+      "title": "20-cli-detector-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:40:30.115Z",
+      "completedAt": "2026-04-07T16:42:52.773Z",
+      "path": "../../.trajectories/completed/traj_1775580030115_ec4e7106.json"
+    },
+    "traj_1775580241282_2cf5e535": {
+      "title": "25-app-state-store-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:44:01.282Z",
+      "completedAt": "2026-04-07T16:46:38.266Z",
+      "path": "../../.trajectories/completed/traj_1775580241282_2cf5e535.json"
+    },
+    "traj_1775580241282_2d95f122": {
+      "title": "24-cli-settings-store-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:44:01.282Z",
+      "completedAt": "2026-04-07T16:46:39.569Z",
+      "path": "../../.trajectories/completed/traj_1775580241282_2d95f122.json"
+    },
+    "traj_1775580241282_b0bf263f": {
+      "title": "22-trajectory-store-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:44:01.282Z",
+      "completedAt": "2026-04-07T16:46:00.671Z",
+      "path": "../../.trajectories/completed/traj_1775580241282_b0bf263f.json"
+    },
+    "traj_1775580241287_3c613873": {
+      "title": "23-chat-store-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:44:01.287Z",
+      "completedAt": "2026-04-07T16:46:46.638Z",
+      "path": "../../.trajectories/completed/traj_1775580241287_3c613873.json"
+    },
+    "traj_1775580409392_3bf04f3e": {
+      "title": "26-sidebar-header-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:46:49.392Z",
+      "completedAt": "2026-04-07T16:49:26.196Z",
+      "path": "../../.trajectories/completed/traj_1775580409392_3bf04f3e.json"
+    },
+    "traj_1775580409397_48a4a2ba": {
+      "title": "30-sidebar-skeleton-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:46:49.397Z",
+      "completedAt": "2026-04-07T16:49:44.931Z",
+      "path": "../../.trajectories/completed/traj_1775580409397_48a4a2ba.json"
+    },
+    "traj_1775580409400_2fc46843": {
+      "title": "28-trajectory-row-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:46:49.400Z",
+      "completedAt": "2026-04-07T16:49:31.205Z",
+      "path": "../../.trajectories/completed/traj_1775580409400_2fc46843.json"
+    },
+    "traj_1775580409401_2cfac72a": {
+      "title": "29-trajectory-list-view-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:46:49.401Z",
+      "completedAt": "2026-04-07T16:49:07.605Z",
+      "path": "../../.trajectories/completed/traj_1775580409401_2cfac72a.json"
+    },
+    "traj_1775580409403_e09bc229": {
+      "title": "27-filter-bar-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:46:49.403Z",
+      "completedAt": "2026-04-07T16:49:20.470Z",
+      "path": "../../.trajectories/completed/traj_1775580409403_e09bc229.json"
+    },
+    "traj_1775580587438_bf5ed89a": {
+      "title": "31-trajectory-header-view-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:49:47.438Z",
+      "completedAt": "2026-04-07T16:53:41.915Z",
+      "path": "../../.trajectories/completed/traj_1775580587438_bf5ed89a.json"
+    },
+    "traj_1775580587441_5dac7a03": {
+      "title": "32-chapter-navigation-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:49:47.441Z",
+      "completedAt": "2026-04-07T16:52:57.181Z",
+      "path": "../../.trajectories/completed/traj_1775580587441_5dac7a03.json"
+    },
+    "traj_1775580587441_8253d528": {
+      "title": "33-timeline-rail-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:49:47.441Z",
+      "completedAt": "2026-04-07T16:52:36.646Z",
+      "path": "../../.trajectories/completed/traj_1775580587441_8253d528.json"
+    },
+    "traj_1775580587445_c0a442b5": {
+      "title": "34-detail-skeleton-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:49:47.445Z",
+      "completedAt": "2026-04-07T16:53:19.955Z",
+      "path": "../../.trajectories/completed/traj_1775580587445_c0a442b5.json"
+    },
+    "traj_1775580824527_e441d22f": {
+      "title": "35-event-views-fanout-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:53:44.527Z",
+      "completedAt": "2026-04-07T16:59:35.255Z",
+      "path": "../../.trajectories/completed/traj_1775580824527_e441d22f.json"
+    },
+    "traj_1775581182381_f4b36b94": {
+      "title": "44-retrospective-view-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:59:42.381Z",
+      "completedAt": "2026-04-07T17:05:44.197Z",
+      "path": "../../.trajectories/completed/traj_1775581182381_f4b36b94.json"
+    },
+    "traj_1775581182382_04a32af5": {
+      "title": "43-decision-card-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:59:42.382Z",
+      "completedAt": "2026-04-07T17:04:08.411Z",
+      "path": "../../.trajectories/completed/traj_1775581182382_04a32af5.json"
+    },
+    "traj_1775581182382_b0db75c5": {
+      "title": "45-confidence-meter-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T16:59:42.382Z",
+      "completedAt": "2026-04-07T17:03:26.604Z",
+      "path": "../../.trajectories/completed/traj_1775581182382_b0db75c5.json"
+    },
+    "traj_1775581547975_63b4aab0": {
+      "title": "46-chapter-view-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T17:05:47.975Z",
+      "completedAt": "2026-04-07T17:10:03.490Z",
+      "path": "../../.trajectories/completed/traj_1775581547975_63b4aab0.json"
+    },
+    "traj_1775581806172_0bfbf365": {
+      "title": "47-file-changes-view-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T17:10:06.172Z",
+      "completedAt": "2026-04-07T17:13:21.753Z",
+      "path": "../../.trajectories/completed/traj_1775581806172_0bfbf365.json"
+    },
+    "traj_1775582004453_91203e94": {
+      "title": "48-trajectory-detail-view-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T17:13:24.453Z",
+      "completedAt": "2026-04-07T17:17:18.891Z",
+      "path": "../../.trajectories/completed/traj_1775582004453_91203e94.json"
+    },
+    "traj_1775582241963_3a261e62": {
+      "title": "49-chat-components-fanout-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T17:17:21.963Z",
+      "completedAt": "2026-04-07T17:24:49.471Z",
+      "path": "../../.trajectories/completed/traj_1775582241963_3a261e62.json"
+    },
+    "traj_1775582692229_21d871cb": {
+      "title": "55-persona-selector-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T17:24:52.229Z",
+      "completedAt": "2026-04-07T17:27:26.903Z",
+      "path": "../../.trajectories/completed/traj_1775582692229_21d871cb.json"
+    },
+    "traj_1775582848710_1c41743b": {
+      "title": "56-chat-empty-states-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T17:27:28.710Z",
+      "completedAt": "2026-04-07T17:29:53.938Z",
+      "path": "../../.trajectories/completed/traj_1775582848710_1c41743b.json"
+    },
+    "traj_1775582995462_aa15ac06": {
+      "title": "57-chat-panel-view-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T17:29:55.462Z",
+      "completedAt": "2026-04-07T17:33:05.392Z",
+      "path": "../../.trajectories/completed/traj_1775582995462_aa15ac06.json"
+    },
+    "traj_1775583188684_0f5f6c47": {
+      "title": "59-welcome-view-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T17:33:08.684Z",
+      "completedAt": "2026-04-07T17:35:20.369Z",
+      "path": "../../.trajectories/completed/traj_1775583188684_0f5f6c47.json"
+    },
+    "traj_1775583188688_d4d12d64": {
+      "title": "61-path-settings-view-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T17:33:08.688Z",
+      "completedAt": "2026-04-07T17:35:34.615Z",
+      "path": "../../.trajectories/completed/traj_1775583188688_d4d12d64.json"
+    },
+    "traj_1775583188695_5f6d0186": {
+      "title": "60-cli-settings-view-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T17:33:08.695Z",
+      "completedAt": "2026-04-07T17:37:55.453Z",
+      "path": "../../.trajectories/completed/traj_1775583188695_5f6d0186.json"
+    },
+    "traj_1775583188696_a2babaa9": {
+      "title": "62-settings-view-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T17:33:08.696Z",
+      "completedAt": "2026-04-07T17:35:37.985Z",
+      "path": "../../.trajectories/completed/traj_1775583188696_a2babaa9.json"
+    },
+    "traj_1775583188698_4500ed85": {
+      "title": "58-command-palette-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T17:33:08.698Z",
+      "completedAt": "2026-04-07T17:35:59.563Z",
+      "path": "../../.trajectories/completed/traj_1775583188698_4500ed85.json"
+    },
+    "traj_1775583478300_8b5d0d45": {
+      "title": "63-app-integration-hubspoke-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T17:37:58.300Z",
+      "completedAt": "2026-04-07T18:44:40.983Z",
+      "path": "../../.trajectories/completed/traj_1775583478300_8b5d0d45.json"
+    },
+    "traj_1775587484181_8d5f9706": {
+      "title": "68-file-detail-modal-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T18:44:44.181Z",
+      "completedAt": "2026-04-07T18:49:10.705Z",
+      "path": "../../.trajectories/completed/traj_1775587484181_8d5f9706.json"
+    },
+    "traj_1775587484181_ade8f314": {
+      "title": "69-search-highlight-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T18:44:44.181Z",
+      "completedAt": "2026-04-07T18:47:22.883Z",
+      "path": "../../.trajectories/completed/traj_1775587484181_ade8f314.json"
+    },
+    "traj_1775587484181_f47c4bb8": {
+      "title": "67-export-sheet-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T18:44:44.181Z",
+      "completedAt": "2026-04-07T18:47:56.438Z",
+      "path": "../../.trajectories/completed/traj_1775587484181_f47c4bb8.json"
+    },
+    "traj_1775587754098_777acf8b": {
+      "title": "72-server-entry-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T18:49:14.098Z",
+      "completedAt": "2026-04-07T18:52:19.108Z",
+      "path": "../../.trajectories/completed/traj_1775587754098_777acf8b.json"
+    },
+    "traj_1775587754098_99381421": {
+      "title": "70-server-scaffold-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T18:49:14.099Z",
+      "completedAt": "2026-04-07T18:51:09.846Z",
+      "path": "../../.trajectories/completed/traj_1775587754098_99381421.json"
+    },
+    "traj_1775587754099_2e24aa44": {
+      "title": "71-health-endpoint-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T18:49:14.099Z",
+      "completedAt": "2026-04-07T18:51:11.862Z",
+      "path": "../../.trajectories/completed/traj_1775587754099_2e24aa44.json"
+    },
+    "traj_1775587942028_d7c657ee": {
+      "title": "74-trajectory-formatter-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T18:52:22.028Z",
+      "completedAt": "2026-04-07T18:55:36.175Z",
+      "path": "../../.trajectories/completed/traj_1775587942028_d7c657ee.json"
+    },
+    "traj_1775587942028_edac5455": {
+      "title": "76-routes-exports-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T18:52:22.028Z",
+      "completedAt": "2026-04-07T18:54:41.245Z",
+      "path": "../../.trajectories/completed/traj_1775587942028_edac5455.json"
+    },
+    "traj_1775587942029_ae2b3a94": {
+      "title": "75-routes-trajectories-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T18:52:22.029Z",
+      "completedAt": "2026-04-07T18:56:19.883Z",
+      "path": "../../.trajectories/completed/traj_1775587942029_ae2b3a94.json"
+    },
+    "traj_1775587942032_8e4dc570": {
+      "title": "73-trajectory-service-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T18:52:22.032Z",
+      "completedAt": "2026-04-07T18:56:39.195Z",
+      "path": "../../.trajectories/completed/traj_1775587942032_8e4dc570.json"
+    },
+    "traj_1775588202995_1c36a335": {
+      "title": "77-cli-resolver-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T18:56:42.995Z",
+      "completedAt": "2026-04-07T18:58:38.065Z",
+      "path": "../../.trajectories/completed/traj_1775588202995_1c36a335.json"
+    },
+    "traj_1775588319448_b188885f": {
+      "title": "78-personas-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T18:58:39.448Z",
+      "completedAt": "2026-04-07T19:00:41.730Z",
+      "path": "../../.trajectories/completed/traj_1775588319448_b188885f.json"
+    },
+    "traj_1775588443144_269a6c7b": {
+      "title": "79-chat-session-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:00:43.144Z",
+      "completedAt": "2026-04-07T19:04:15.474Z",
+      "path": "../../.trajectories/completed/traj_1775588443144_269a6c7b.json"
+    },
+    "traj_1775588658881_9013c72e": {
+      "title": "80-chat-service-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:04:18.881Z",
+      "completedAt": "2026-04-07T19:06:34.389Z",
+      "path": "../../.trajectories/completed/traj_1775588658881_9013c72e.json"
+    },
+    "traj_1775588795733_442cdf75": {
+      "title": "81-routes-chat-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:06:35.733Z",
+      "completedAt": "2026-04-07T19:09:39.828Z",
+      "path": "../../.trajectories/completed/traj_1775588795733_442cdf75.json"
+    },
+    "traj_1775588982963_ae82593f": {
+      "title": "82-ws-types-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:09:42.963Z",
+      "completedAt": "2026-04-07T19:12:18.172Z",
+      "path": "../../.trajectories/completed/traj_1775588982963_ae82593f.json"
+    },
+    "traj_1775589139752_34e57999": {
+      "title": "83-relay-bridge-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:12:19.752Z",
+      "completedAt": "2026-04-07T19:15:51.897Z",
+      "path": "../../.trajectories/completed/traj_1775589139752_34e57999.json"
+    },
+    "traj_1775589353412_b854336d": {
+      "title": "84-server-main-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:15:53.412Z",
+      "completedAt": "2026-04-07T19:18:56.573Z",
+      "path": "../../.trajectories/completed/traj_1775589353412_b854336d.json"
+    },
+    "traj_1775589539846_210c5b03": {
+      "title": "85-mock-trajectories-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:18:59.846Z",
+      "completedAt": "2026-04-07T19:24:48.866Z",
+      "path": "../../.trajectories/completed/traj_1775589539846_210c5b03.json"
+    },
+    "traj_1775589539846_468c4604": {
+      "title": "88-test-api-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:18:59.846Z",
+      "completedAt": "2026-04-07T19:21:29.413Z",
+      "path": "../../.trajectories/completed/traj_1775589539846_468c4604.json"
+    },
+    "traj_1775589539847_fcc1e72b": {
+      "title": "86-test-chat-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:18:59.847Z",
+      "completedAt": "2026-04-07T19:21:31.885Z",
+      "path": "../../.trajectories/completed/traj_1775589539847_fcc1e72b.json"
+    },
+    "traj_1775589539853_64dd4d34": {
+      "title": "87-launch-script-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:18:59.853Z",
+      "completedAt": "2026-04-07T19:21:46.970Z",
+      "path": "../../.trajectories/completed/traj_1775589539853_64dd4d34.json"
+    },
+    "traj_1775589892159_2d684c41": {
+      "title": "91-relative-time-formatter-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:24:52.159Z",
+      "completedAt": "2026-04-07T19:27:00.658Z",
+      "path": "../../.trajectories/completed/traj_1775589892159_2d684c41.json"
+    },
+    "traj_1775589892159_7437e0b3": {
+      "title": "89-help-tooltips-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:24:52.159Z",
+      "completedAt": "2026-04-07T19:27:16.268Z",
+      "path": "../../.trajectories/completed/traj_1775589892159_7437e0b3.json"
+    },
+    "traj_1775589892160_65fa5491": {
+      "title": "90-focus-management-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:24:52.160Z",
+      "completedAt": "2026-04-07T19:27:41.846Z",
+      "path": "../../.trajectories/completed/traj_1775589892160_65fa5491.json"
+    },
+    "traj_1775589892162_7ee958ef": {
+      "title": "92-clipboard-service-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:24:52.162Z",
+      "completedAt": "2026-04-07T19:26:54.910Z",
+      "path": "../../.trajectories/completed/traj_1775589892162_7ee958ef.json"
+    },
+    "traj_1775590064833_71520399": {
+      "title": "96-spotlight-importer-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:27:44.833Z",
+      "completedAt": "2026-04-07T19:35:51.001Z",
+      "path": "../../.trajectories/completed/traj_1775590064833_71520399.json"
+    },
+    "traj_1775590064834_91431f8f": {
+      "title": "97-quicklook-preview-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:27:44.834Z",
+      "completedAt": "2026-04-07T19:35:36.758Z",
+      "path": "../../.trajectories/completed/traj_1775590064834_91431f8f.json"
+    },
+    "traj_1775590554286_8f755680": {
+      "title": "93-verify-swift-build-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T19:35:54.286Z",
+      "completedAt": "2026-04-07T19:35:58.850Z",
+      "path": "../../.trajectories/completed/traj_1775590554286_8f755680.json"
+    },
+    "traj_1775590554286_bbbf5e8e": {
+      "title": "95-smoke-test-server-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-07T19:35:54.286Z",
+      "completedAt": "2026-04-07T19:37:02.309Z",
+      "path": "../../.trajectories/completed/traj_1775590554286_bbbf5e8e.json"
+    },
+    "traj_1775590554287_78bfeb4f": {
+      "title": "94-verify-typescript-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T19:35:54.287Z",
+      "completedAt": "2026-04-07T19:35:56.377Z",
+      "path": "../../.trajectories/completed/traj_1775590554287_78bfeb4f.json"
+    },
+    "traj_1775592035208_089f3045": {
+      "title": "93-verify-swift-build-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T20:00:35.208Z",
+      "completedAt": "2026-04-07T20:00:38.840Z",
+      "path": "../../.trajectories/completed/traj_1775592035208_089f3045.json"
+    },
+    "traj_1775592035208_59779aa9": {
+      "title": "95-smoke-test-server-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T20:00:35.208Z",
+      "completedAt": "2026-04-07T20:00:36.998Z",
+      "path": "../../.trajectories/completed/traj_1775592035208_59779aa9.json"
+    },
+    "traj_1775592035208_9e1d2cdd": {
+      "title": "94-verify-typescript-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-07T20:00:35.208Z",
+      "completedAt": "2026-04-07T20:00:37.002Z",
+      "path": "../../.trajectories/completed/traj_1775592035208_9e1d2cdd.json"
+    },
+    "trace_imxymv6f8x4b": {
+      "title": "trace_imxymv6f8x4b",
+      "status": "completed",
+      "startedAt": "2026-04-07T21:25:01.581Z",
+      "path": "../../.trajectories/completed/2026-01/traj_cuuwpd2q5rr4.trace.json"
     }
   }
 }

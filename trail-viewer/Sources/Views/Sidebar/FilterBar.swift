@@ -15,7 +15,7 @@ enum StatusFilter: String, CaseIterable {
     var color: Color {
         switch self {
         case .all:        return Theme.blue
-        case .active:     return Theme.green
+        case .active:     return Theme.statusActive
         case .completed:  return Theme.blue
         case .abandoned:  return Theme.textTertiary
         }
@@ -66,6 +66,7 @@ struct FilterBar: View {
         Text(filter.displayName)
             .font(Typography.caption)
             .foregroundColor(isSelected ? .white : Theme.textSecondary)
+            .fixedSize()
             .padding(.horizontal, Theme.spacingSM)
             .padding(.vertical, 4)
             .background(

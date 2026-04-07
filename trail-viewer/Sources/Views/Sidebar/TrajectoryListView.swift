@@ -3,16 +3,19 @@ import SwiftUI
 struct TrajectoryListView: View {
     @EnvironmentObject var store: TrajectoryStore
 
+    @State private var searchText: String = ""
+    @State private var statusFilter: StatusFilter = .all
+
     var body: some View {
         VStack(spacing: 0) {
             SidebarHeader(
-                totalCount: store.trajectories.count,
+                trajectoryCount: store.trajectories.count,
                 activeCount: store.trajectories.filter { $0.status == .active }.count
             )
 
             FilterBar(
-                searchText: $store.searchText,
-                statusFilter: $store.statusFilter
+                searchText: $searchText,
+                statusFilter: $statusFilter
             )
 
             // Main content area
@@ -23,7 +26,7 @@ struct TrajectoryListView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.caption)
-                        Text(error)
+                        Text(error.localizedDescription)
                             .font(.caption)
                             .lineLimit(2)
                     }
@@ -38,7 +41,8 @@ struct TrajectoryListView: View {
                 } else if store.filteredTrajectories.isEmpty && !store.isLoading {
                     EmptyState(
                         icon: "book.closed",
-                        message: "No trajectories found"
+                        title: "No trajectories",
+                        subtitle: "No trajectories match the current filters."
                     )
                 } else {
                     ScrollView {
@@ -46,11 +50,13 @@ struct TrajectoryListView: View {
                             ForEach(store.filteredTrajectories) { item in
                                 TrajectoryRow(
                                     trajectory: item,
-                                    isSelected: item.id == store.selectedTrajectoryId
+                                    isSelected: item.id == store.selectedTrajectory?.id
                                 )
                                 .contentShape(Rectangle())
                                 .onTapGesture {
-                                    store.selectTrajectory(id: item.id)
+                                    Task {
+                                        await store.selectTrajectory(id: item.id)
+                                    }
                                 }
                             }
                         }
@@ -61,14 +67,27 @@ struct TrajectoryListView: View {
             .frame(maxHeight: .infinity)
         }
         .background(Theme.sidebarBg)
-        .onAppear {
-            store.loadTrajectories()
+        .task {
+            await store.loadTrajectories()
+        }
+        .onChange(of: searchText) { _, newValue in
+            store.searchText = newValue
+        }
+        .onChange(of: statusFilter) { _, newValue in
+            switch newValue {
+            case .all: store.statusFilter = nil
+            case .active: store.statusFilter = .active
+            case .completed: store.statusFilter = .completed
+            case .abandoned: store.statusFilter = .abandoned
+            }
         }
         .frame(minWidth: 280, idealWidth: 320, maxWidth: 380)
     }
 }
 
-#Preview {
-    TrajectoryListView()
-        .environmentObject(TrajectoryStore())
+struct TrajectoryListView_Previews: PreviewProvider {
+    static var previews: some View {
+        TrajectoryListView()
+            .environmentObject(TrajectoryStore())
+    }
 }

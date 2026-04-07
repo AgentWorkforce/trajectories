@@ -1,5 +1,16 @@
 import SwiftUI
 
+// MARK: - CommandPaletteResults
+
+struct CommandPaletteResults {
+    let trajectories: [TrajectorySummary]
+    let tags: [String]
+
+    static let empty = CommandPaletteResults(trajectories: [], tags: [])
+}
+
+// MARK: - CommandPalette
+
 struct CommandPalette: View {
     @Binding var isPresented: Bool
     @EnvironmentObject var trajectoryStore: TrajectoryStore
@@ -8,36 +19,43 @@ struct CommandPalette: View {
     @FocusState private var isSearchFocused: Bool
 
     private var results: CommandPaletteResults {
-        trajectoryStore.searchResults(for: searchText)
+        guard !searchText.isEmpty else { return .empty }
+        let query = searchText.lowercased()
+        let matchingTrajectories = trajectoryStore.trajectories.filter {
+            $0.title.localizedCaseInsensitiveContains(query)
+        }
+        let matchingTags = trajectoryStore.allTags.filter {
+            $0.localizedCaseInsensitiveContains(query)
+        }
+        return CommandPaletteResults(
+            trajectories: Array(matchingTrajectories.prefix(5)),
+            tags: Array(matchingTags.prefix(5))
+        )
     }
 
     private var totalResultCount: Int {
-        min(results.trajectories.count + results.decisions.count + results.tags.count, 8)
+        min(results.trajectories.count + results.tags.count, 8)
     }
 
     private var flatResults: [(kind: String, index: Int)] {
         var items: [(String, Int)] = []
         for i in results.trajectories.indices { items.append(("trajectory", i)) }
-        for i in results.decisions.indices { items.append(("decision", i)) }
         for i in results.tags.indices { items.append(("tag", i)) }
         return Array(items.prefix(8))
     }
 
     var body: some View {
         ZStack {
-            // Backdrop
             Color.black.opacity(0.3)
                 .ignoresSafeArea()
                 .onTapGesture { isPresented = false }
 
-            // Centered panel
             VStack(spacing: 0) {
-                // 1. Search input
                 HStack(spacing: Theme.spacingSM) {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(Theme.textTertiary)
 
-                    TextField("Search trajectories, decisions, tags...", text: $searchText)
+                    TextField("Search trajectories, tags...", text: $searchText)
                         .font(Typography.heading)
                         .textFieldStyle(.plain)
                         .focused($isSearchFocused)
@@ -46,79 +64,41 @@ struct CommandPalette: View {
 
                 RuleLine()
 
-                // 2. Results area
                 if !searchText.isEmpty {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 0) {
-                            let trajectories = results.trajectories
-                            let decisions = results.decisions
-                            let tags = results.tags
-
-                            var currentIndex = 0
-
-                            // Trajectories group
-                            if !trajectories.isEmpty {
+                            if !results.trajectories.isEmpty {
                                 resultGroupHeader("Trajectories")
 
-                                ForEach(Array(trajectories.enumerated()), id: \.offset) { offset, trajectory in
-                                    let itemIndex = offset
-                                    if itemIndex < 8 {
-                                        resultRow(
-                                            icon: "doc.text",
-                                            text: trajectory.title,
-                                            query: searchText,
-                                            isSelected: selectedIndex == itemIndex
-                                        )
-                                        .onTapGesture {
-                                            trajectoryStore.selectTrajectory(id: trajectory.id)
-                                            isPresented = false
+                                ForEach(Array(results.trajectories.enumerated()), id: \.offset) { offset, trajectory in
+                                    resultRow(
+                                        icon: "doc.text",
+                                        text: trajectory.title,
+                                        isSelected: selectedIndex == offset
+                                    )
+                                    .onTapGesture {
+                                        Task {
+                                            await trajectoryStore.selectTrajectory(id: trajectory.id)
                                         }
+                                        isPresented = false
                                     }
                                 }
                             }
 
-                            // Decisions group
-                            if !decisions.isEmpty {
-                                let decisionOffset = trajectories.count
-
-                                resultGroupHeader("Decisions")
-
-                                ForEach(Array(decisions.enumerated()), id: \.offset) { offset, decision in
-                                    let itemIndex = decisionOffset + offset
-                                    if itemIndex < 8 {
-                                        resultRow(
-                                            icon: "lightbulb",
-                                            text: decision.title,
-                                            query: searchText,
-                                            isSelected: selectedIndex == itemIndex
-                                        )
-                                        .onTapGesture {
-                                            // Handle decision selection
-                                            isPresented = false
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Tags group
-                            if !tags.isEmpty {
-                                let tagOffset = trajectories.count + decisions.count
+                            if !results.tags.isEmpty {
+                                let tagOffset = results.trajectories.count
 
                                 resultGroupHeader("Tags")
 
-                                ForEach(Array(tags.enumerated()), id: \.offset) { offset, tag in
-                                    let itemIndex = tagOffset + offset
-                                    if itemIndex < 8 {
-                                        resultRow(
-                                            icon: "tag",
-                                            text: tag,
-                                            query: searchText,
-                                            isSelected: selectedIndex == itemIndex
-                                        )
-                                        .onTapGesture {
-                                            // Handle tag selection
-                                            isPresented = false
-                                        }
+                                ForEach(Array(results.tags.enumerated()), id: \.offset) { offset, tag in
+                                    resultRow(
+                                        icon: "tag",
+                                        text: tag,
+                                        isSelected: selectedIndex == tagOffset + offset
+                                    )
+                                    .onTapGesture {
+                                        trajectoryStore.selectedTags.insert(tag)
+                                        isPresented = false
                                     }
                                 }
                             }
@@ -128,7 +108,6 @@ struct CommandPalette: View {
                     .frame(maxHeight: 280)
                 }
 
-                // 3. Footer
                 RuleLine()
 
                 HStack(spacing: Theme.spacingXS) {
@@ -152,7 +131,8 @@ struct CommandPalette: View {
                 }
                 .padding(Theme.spacingSM)
             }
-            .frame(width: 500, maxHeight: 400)
+            .frame(width: 500)
+            .frame(maxHeight: 400)
             .background(Theme.pageBg)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: .black.opacity(0.15), radius: 20, y: 8)
@@ -162,25 +142,6 @@ struct CommandPalette: View {
         }
         .onAppear {
             isSearchFocused = true
-        }
-        .onChange(of: searchText) { _ in
-            selectedIndex = 0
-        }
-        .onKeyPress(.downArrow) {
-            if totalResultCount > 0 {
-                selectedIndex = (selectedIndex + 1) % totalResultCount
-            }
-            return .handled
-        }
-        .onKeyPress(.upArrow) {
-            if totalResultCount > 0 {
-                selectedIndex = (selectedIndex - 1 + totalResultCount) % totalResultCount
-            }
-            return .handled
-        }
-        .onKeyPress(.return) {
-            selectCurrentItem()
-            return .handled
         }
         .onKeyPress(.escape) {
             isPresented = false
@@ -199,13 +160,15 @@ struct CommandPalette: View {
             .padding(.bottom, Theme.spacingXS)
     }
 
-    private func resultRow(icon: String, text: String, query: String, isSelected: Bool) -> some View {
+    private func resultRow(icon: String, text: String, isSelected: Bool) -> some View {
         HStack(spacing: Theme.spacingSM) {
             Image(systemName: icon)
                 .foregroundColor(Theme.textTertiary)
                 .frame(width: 16)
 
-            highlightedText(text, query: query)
+            Text(text)
+                .font(Typography.body)
+                .foregroundColor(Theme.textPrimary)
 
             Spacer()
         }
@@ -217,62 +180,6 @@ struct CommandPalette: View {
                 : Color.clear
         )
         .contentShape(Rectangle())
-    }
-
-    // MARK: - Helpers
-
-    private func highlightedText(_ text: String, query: String) -> Text {
-        guard !query.isEmpty else {
-            return Text(text)
-                .font(Typography.body)
-                .foregroundColor(Theme.textPrimary)
-        }
-
-        let lowercasedText = text.lowercased()
-        let lowercasedQuery = query.lowercased()
-
-        guard let range = lowercasedText.range(of: lowercasedQuery) else {
-            return Text(text)
-                .font(Typography.body)
-                .foregroundColor(Theme.textPrimary)
-        }
-
-        let before = String(text[text.startIndex..<range.lowerBound])
-        let match = String(text[range.lowerBound..<range.upperBound])
-        let after = String(text[range.upperBound..<text.endIndex])
-
-        return Text(before)
-            .font(Typography.body)
-            .foregroundColor(Theme.textPrimary)
-        + Text(match)
-            .font(Typography.body)
-            .foregroundColor(Theme.textPrimary)
-            .background(Theme.yellow)
-        + Text(after)
-            .font(Typography.body)
-            .foregroundColor(Theme.textPrimary)
-    }
-
-    private func selectCurrentItem() {
-        let items = flatResults
-        guard selectedIndex < items.count else { return }
-
-        let item = items[selectedIndex]
-        switch item.kind {
-        case "trajectory":
-            let trajectory = results.trajectories[item.index]
-            trajectoryStore.selectTrajectory(id: trajectory.id)
-        case "decision":
-            // Handle decision selection
-            break
-        case "tag":
-            // Handle tag selection
-            break
-        default:
-            break
-        }
-
-        isPresented = false
     }
 }
 

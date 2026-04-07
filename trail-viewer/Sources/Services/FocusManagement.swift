@@ -17,7 +17,7 @@ struct FocusCycleModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .focusable()
-            .onKeyPress(.tab) { keyPress in
+            .onKeyPress(.tab, phases: .down) { keyPress in
                 let allCases = AppFocusRegion.allCases
                 let isShift = keyPress.modifiers.contains(.shift)
 

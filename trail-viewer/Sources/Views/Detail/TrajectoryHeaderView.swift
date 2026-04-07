@@ -15,7 +15,10 @@ struct TrajectoryHeaderView: View {
     }()
 
     private var dateRangeText: String {
-        let started = "Started \(Self.dateFormatter.string(from: trajectory.createdAt))"
+        guard let startedAt = trajectory.startedAt else {
+            return "No start date"
+        }
+        let started = "Started \(Self.dateFormatter.string(from: startedAt))"
         if let completed = trajectory.completedAt {
             return "\(started) — Completed \(Self.dateFormatter.string(from: completed))"
         }
@@ -24,7 +27,7 @@ struct TrajectoryHeaderView: View {
 
     private var agentNames: String {
         guard let agents = trajectory.agents, !agents.isEmpty else { return "" }
-        return agents.map(\.agentName).joined(separator: ", ")
+        return agents.map(\.displayName).joined(separator: ", ")
     }
 
     // MARK: - Body
@@ -61,20 +64,6 @@ struct TrajectoryHeaderView: View {
                 }
             }
 
-            if let taskRef = trajectory.taskReference,
-               let urlString = taskRef.source.url,
-               let url = URL(string: urlString) {
-                Link(destination: url) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "link.circle")
-                            .font(.system(size: 12))
-                        Text(taskRef.source.title ?? urlString)
-                            .caption()
-                    }
-                    .foregroundColor(Theme.blue)
-                }
-            }
-
             Rectangle()
                 .fill(Theme.borderLight)
                 .frame(maxWidth: .infinity)
@@ -87,46 +76,37 @@ struct TrajectoryHeaderView: View {
 
 // MARK: - Preview
 
+#if false // Disabled: #Preview requires Xcode
 #Preview("TrajectoryHeaderView") {
     let mockTrajectory = Trajectory(
         id: "traj-001",
-        title: "Implement User Authentication Flow",
-        description: "Build the complete authentication system including login, signup, password reset, and session management with OAuth2 support.",
+        version: nil,
+        task: TrajectoryTask(title: "Implement User Authentication Flow", description: "Build the complete authentication system including login, signup, password reset, and session management with OAuth2 support."),
         status: .completed,
-        taskReference: TaskReference(
-            source: TaskSource(
-                system: .github,
-                identifier: "anthropics/agent-workforce#42",
-                url: "https://github.com/anthropics/agent-workforce/issues/42",
-                title: "anthropics/agent-workforce#42"
-            ),
-            description: "Auth flow implementation"
-        ),
-        chapters: [],
-        decisions: nil,
-        retrospective: nil,
+        startedAt: Date().addingTimeInterval(-7200),
+        completedAt: Date().addingTimeInterval(-600),
         agents: [
             AgentParticipation(
-                agentName: "Lead",
-                role: .lead,
+                name: "Lead",
+                agentName: nil,
+                role: "lead",
                 joinedAt: Date().addingTimeInterval(-7200),
-                leftAt: nil,
-                eventsCount: 45
+                leftAt: nil
             ),
             AgentParticipation(
-                agentName: "Worker-1",
-                role: .worker,
+                name: "Worker-1",
+                agentName: nil,
+                role: "worker",
                 joinedAt: Date().addingTimeInterval(-6000),
-                leftAt: Date().addingTimeInterval(-1800),
-                eventsCount: 32
+                leftAt: Date().addingTimeInterval(-1800)
             ),
         ],
-        tags: ["auth", "security", "oauth2"],
-        createdAt: Date().addingTimeInterval(-7200),
-        updatedAt: Date(),
-        completedAt: Date().addingTimeInterval(-600),
+        chapters: [],
+        retrospective: nil,
+        commits: nil,
         filesChanged: nil,
-        commits: nil
+        projectId: nil,
+        tags: ["auth", "security", "oauth2"]
     )
 
     ScrollView {
@@ -139,28 +119,26 @@ struct TrajectoryHeaderView: View {
 #Preview("TrajectoryHeaderView — Active, No Source") {
     let mockTrajectory = Trajectory(
         id: "traj-002",
-        title: "Refactor Data Pipeline for Real-Time Processing",
-        description: nil,
+        version: nil,
+        task: TrajectoryTask(title: "Refactor Data Pipeline for Real-Time Processing", description: nil),
         status: .active,
-        taskReference: nil,
-        chapters: [],
-        decisions: nil,
-        retrospective: nil,
+        startedAt: Date().addingTimeInterval(-3600),
+        completedAt: nil,
         agents: [
             AgentParticipation(
-                agentName: "Analyst",
-                role: .analyst,
+                name: "Analyst",
+                agentName: nil,
+                role: "analyst",
                 joinedAt: Date().addingTimeInterval(-3600),
-                leftAt: nil,
-                eventsCount: 12
+                leftAt: nil
             ),
         ],
-        tags: ["refactor", "pipeline"],
-        createdAt: Date().addingTimeInterval(-3600),
-        updatedAt: Date(),
-        completedAt: nil,
+        chapters: [],
+        retrospective: nil,
+        commits: nil,
         filesChanged: nil,
-        commits: nil
+        projectId: nil,
+        tags: ["refactor", "pipeline"]
     )
 
     ScrollView {
@@ -169,3 +147,4 @@ struct TrajectoryHeaderView: View {
     .frame(width: 700, height: 300)
     .background(Theme.pageBg)
 }
+#endif

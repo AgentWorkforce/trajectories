@@ -28,7 +28,22 @@ async function main() {
     c.json({ status: "ok", timestamp: new Date().toISOString() }),
   );
 
-  // 5. Mount route groups
+  // 5. Switch data directory endpoint
+  app.post("/api/config/data-dir", async (c) => {
+    const body = await c.req.json<{ path: string }>();
+    if (!body.path) {
+      return c.json({ error: "path is required" }, 400);
+    }
+    try {
+      await trajectoryService.switchDataDir(body.path);
+      const list = await trajectoryService.listTrajectories();
+      return c.json({ ok: true, trajectoryCount: list.length });
+    } catch (error) {
+      return c.json({ error: String(error) }, 500);
+    }
+  });
+
+  // 6. Mount route groups
   app.route("/api", createTrajectoryRoutes(trajectoryService));
   app.route("/api", createExportRoutes(trajectoryService));
   app.route("/api", createChatRoutes(chatService, trajectoryService));

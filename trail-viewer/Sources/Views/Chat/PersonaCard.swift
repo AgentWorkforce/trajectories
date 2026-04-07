@@ -56,6 +56,7 @@ struct PersonaCard: View {
 
 // MARK: - Preview
 
+#if false // Disabled: #Preview requires Xcode
 #Preview("Persona Cards") {
     let personas = [
         ChatPersona(id: "critic", name: "Critic", emoji: "?", description: "", colorHex: "#c87f6b"),
@@ -71,3 +72,4 @@ struct PersonaCard: View {
     .padding(Theme.spacingLG)
     .background(Theme.pageBg)
 }
+#endif

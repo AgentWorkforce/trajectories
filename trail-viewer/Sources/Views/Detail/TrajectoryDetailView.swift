@@ -98,10 +98,10 @@ struct TrajectoryDetailView: View {
                         RetrospectiveView(retrospective: retrospective)
                     }
 
-                    if !trajectory.filesChanged.isEmpty || !trajectory.commits.isEmpty {
+                    if !(trajectory.filesChanged ?? []).isEmpty || !(trajectory.commits ?? []).isEmpty {
                         FileChangesView(
-                            files: trajectory.filesChanged,
-                            commits: trajectory.commits
+                            files: trajectory.filesChanged ?? [],
+                            commits: trajectory.commits ?? []
                         )
                     }
                 }

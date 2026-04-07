@@ -8,25 +8,20 @@ struct WelcomeView: View {
         VStack(spacing: Theme.spacingLG) {
             Spacer()
 
-            // 1. Large icon
             Image(systemName: "book.fill")
                 .font(.system(size: 64))
                 .foregroundColor(Theme.blue)
 
-            // 2. Title
             Text("Trail Viewer")
                 .font(Typography.chapterTitle)
                 .foregroundColor(Theme.textPrimary)
 
-            // 3. Subtitle
             Text("Read the story of your agent's work")
                 .font(Typography.body)
                 .foregroundColor(Theme.textSecondary)
 
-            // 4. Ornament divider
             OrnamentDivider()
 
-            // 5. Open Repository button
             Button(action: openFolderPicker) {
                 HStack {
                     Image(systemName: "folder.badge.plus")
@@ -41,7 +36,6 @@ struct WelcomeView: View {
             }
             .buttonStyle(.plain)
 
-            // 6. Recent paths
             if !appStateStore.recentPaths.isEmpty {
                 VStack(alignment: .leading, spacing: Theme.spacingSM) {
                     Text("RECENT")
@@ -49,20 +43,19 @@ struct WelcomeView: View {
                         .foregroundColor(Theme.textTertiary)
                         .textCase(.uppercase)
 
-                    ForEach(appStateStore.recentPaths.prefix(5)) { recent in
-                        Button(action: { appStateStore.openRepository(at: recent.path) }) {
+                    ForEach(appStateStore.recentPaths.prefix(5), id: \.self) { path in
+                        Button(action: {
+                            appStateStore.currentPath = path
+                        }) {
                             HStack {
                                 Image(systemName: "folder")
                                     .foregroundColor(Theme.textTertiary)
-                                Text(recent.path)
+                                Text(path)
                                     .font(Typography.caption)
                                     .foregroundColor(Theme.textSecondary)
                                     .lineLimit(1)
                                     .truncationMode(.middle)
                                 Spacer()
-                                Text(recent.lastOpened, style: .relative)
-                                    .font(Typography.caption)
-                                    .foregroundColor(Theme.textTertiary)
                             }
                         }
                         .buttonStyle(.plain)
@@ -72,7 +65,6 @@ struct WelcomeView: View {
                 .frame(maxWidth: 400)
             }
 
-            // 7. Getting started hint
             Text("Point to a repository with .trajectories/ data to get started")
                 .font(Typography.caption)
                 .foregroundColor(Theme.textTertiary)
@@ -92,7 +84,8 @@ struct WelcomeView: View {
         panel.message = "Choose a repository with trajectory data"
 
         if panel.runModal() == .OK, let url = panel.url {
-            appStateStore.openRepository(at: url.path)
+            appStateStore.currentPath = url.path
+            appStateStore.addRecentPath(url.path)
         }
     }
 }

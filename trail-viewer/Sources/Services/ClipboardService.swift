@@ -18,20 +18,6 @@ struct DecisionClipboardData {
     let alternatives: [String]
 }
 
-// MARK: - Toast Manager
-
-class ToastManager: ObservableObject {
-    static let shared = ToastManager()
-    @Published var message: String?
-
-    func show(_ text: String) {
-        message = text
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            self.message = nil
-        }
-    }
-}
-
 // MARK: - Clipboard Service
 
 enum ClipboardService {
@@ -63,26 +49,27 @@ enum ClipboardService {
         }
 
         copyToClipboard(markdown)
-        ToastManager.shared.show("Trajectory copied as Markdown")
+        ToastManager.shared.show(message: "Trajectory copied as Markdown")
     }
 
     static func copyDecision(_ decision: DecisionClipboardData) {
         var text = "Question: \(decision.question)\n"
         text += "Decision: \(decision.chosen)\n"
         text += "Reasoning: \(decision.reasoning)\n"
-        text += "Alternatives: \(decision.alternatives.joined(separator: \", \"))\n"
+        let alts = decision.alternatives.joined(separator: ", ")
+        text += "Alternatives: \(alts)\n"
 
         copyToClipboard(text)
-        ToastManager.shared.show("Decision copied")
+        ToastManager.shared.show(message: "Decision copied")
     }
 
     static func copyCodeBlock(_ code: String) {
         copyToClipboard(code)
-        ToastManager.shared.show("Code copied")
+        ToastManager.shared.show(message: "Code copied")
     }
 
     static func copyURL(_ url: String) {
         copyToClipboard(url)
-        ToastManager.shared.show("URL copied")
+        ToastManager.shared.show(message: "URL copied")
     }
 }

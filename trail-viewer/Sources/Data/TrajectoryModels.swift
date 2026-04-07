@@ -23,6 +23,13 @@ enum TrajectoryEventType: String, Codable, Hashable {
     case fileCreate = "file_create"
     case fileModify = "file_modify"
     case checkpoint
+    case unknown
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(String.self)
+        self = TrajectoryEventType(rawValue: rawValue) ?? .unknown
+    }
 }
 
 enum EventSignificance: String, Codable, Hashable {
@@ -31,123 +38,45 @@ enum EventSignificance: String, Codable, Hashable {
     case low
 }
 
-enum AgentRole: String, Codable, Hashable {
-    case lead
-    case worker
-    case reviewer
-    case analyst
-    case coordinator
-}
+// MARK: - Task
 
-enum TaskSourceSystem: String, Codable, Hashable {
-    case github
-    case linear
-    case jira
-    case manual
-    case other
-}
-
-// MARK: - TaskSource
-
-struct TaskSource: Codable, Hashable {
-    let system: TaskSourceSystem
-    let identifier: String
-    let url: String?
-    let title: String?
-}
-
-// MARK: - TaskReference
-
-struct TaskReference: Codable, Hashable {
-    let source: TaskSource
+struct TrajectoryTask: Codable, Hashable {
+    let title: String
     let description: String?
 }
 
 // MARK: - AgentParticipation
 
 struct AgentParticipation: Codable, Hashable {
-    let agentName: String
-    let role: AgentRole
-    let joinedAt: Date
+    let name: String?
+    let agentName: String?
+    let role: String?
+    let joinedAt: Date?
     let leftAt: Date?
-    let eventsCount: Int?
 
-    enum CodingKeys: String, CodingKey {
-        case agentName = "agent_name"
-        case role
-        case joinedAt = "joined_at"
-        case leftAt = "left_at"
-        case eventsCount = "events_count"
-    }
-}
-
-// MARK: - Alternative
-
-struct Alternative: Codable, Hashable {
-    let option: String
-    let prosOrCons: String?
-    let rejected: Bool?
-
-    enum CodingKeys: String, CodingKey {
-        case option
-        case prosOrCons = "pros_cons"
-        case rejected
-    }
-}
-
-// MARK: - Decision
-
-struct Decision: Codable, Hashable, Identifiable {
-    let id: String
-    let question: String
-    let chosen: String
-    let alternatives: [Alternative]?
-    let confidence: Double?
-    let reasoning: String?
-    let timestamp: Date
-}
-
-// MARK: - Retrospective
-
-struct Retrospective: Codable, Hashable {
-    let summary: String
-    let whatWentWell: [String]?
-    let whatCouldImprove: [String]?
-    let approach: String?
-    let learnings: [String]?
-    let timestamp: Date?
-
-    enum CodingKeys: String, CodingKey {
-        case summary
-        case whatWentWell = "what_went_well"
-        case whatCouldImprove = "what_could_improve"
-        case approach
-        case learnings
-        case timestamp
+    var displayName: String {
+        name ?? agentName ?? "Unknown"
     }
 }
 
 // MARK: - TrajectoryEvent
 
 struct TrajectoryEvent: Codable, Hashable, Identifiable {
-    let id: String
+    var id: String { "\(ts ?? 0)-\(type.rawValue)-\(content.prefix(20))" }
+    let ts: Double?
     let type: TrajectoryEventType
-    let timestamp: Date
-    let agent: String?
     let content: String
-    let significance: EventSignificance?
+    let agent: String?
+    let significance: String?
     let metadata: [String: String]?
-    let chapterId: String?
+
+    var timestamp: Date? {
+        guard let ts else { return nil }
+        return Date(timeIntervalSince1970: ts / 1000)
+    }
 
     enum CodingKeys: String, CodingKey {
-        case id
-        case type
-        case timestamp
-        case agent
-        case content
-        case significance
-        case metadata
-        case chapterId = "chapter_id"
+        case ts, type, content, agent, significance, metadata
     }
 }
 
@@ -156,61 +85,57 @@ struct TrajectoryEvent: Codable, Hashable, Identifiable {
 struct Chapter: Codable, Hashable, Identifiable {
     let id: String
     let title: String
-    let number: Int
-    let agent: String?
-    let startedAt: Date
-    let completedAt: Date?
+    let agentName: String?
+    let startedAt: Date?
+    let endedAt: Date?
     let events: [TrajectoryEvent]
     let summary: String?
 
-    enum CodingKeys: String, CodingKey {
-        case id
-        case title
-        case number
-        case agent
-        case startedAt = "started_at"
-        case completedAt = "completed_at"
-        case events
-        case summary
-    }
+    // Accept both "number" and "agentName" / "agent" variants
+    var number: Int? { nil }
+}
+
+// MARK: - Decision
+
+struct Decision: Codable, Hashable, Identifiable {
+    var id: String { "\(question.prefix(30))" }
+    let question: String
+    let chosen: String
+    let alternatives: [String]?
+    let confidence: Double?
+    let reasoning: String?
+}
+
+// MARK: - Retrospective
+
+struct Retrospective: Codable, Hashable {
+    let summary: String
+    let approach: String?
+    let confidence: Double?
+    let whatWentWell: [String]?
+    let whatCouldImprove: [String]?
+    let learnings: [String]?
 }
 
 // MARK: - Trajectory
 
 struct Trajectory: Codable, Hashable, Identifiable {
     let id: String
-    let title: String
-    let description: String?
+    let version: Int?
+    let task: TrajectoryTask
     let status: TrajectoryStatus
-    let taskReference: TaskReference?
-    let chapters: [Chapter]
-    let decisions: [Decision]?
-    let retrospective: Retrospective?
-    let agents: [AgentParticipation]?
-    let tags: [String]?
-    let createdAt: Date
-    let updatedAt: Date
+    let startedAt: Date?
     let completedAt: Date?
-    let filesChanged: [String]?
+    let agents: [AgentParticipation]?
+    let chapters: [Chapter]
+    let retrospective: Retrospective?
     let commits: [String]?
+    let filesChanged: [String]?
+    let projectId: String?
+    let tags: [String]?
 
-    enum CodingKeys: String, CodingKey {
-        case id
-        case title
-        case description
-        case status
-        case taskReference = "task_reference"
-        case chapters
-        case decisions
-        case retrospective
-        case agents
-        case tags
-        case createdAt = "created_at"
-        case updatedAt = "updated_at"
-        case completedAt = "completed_at"
-        case filesChanged = "files_changed"
-        case commits
-    }
+    var title: String { task.title }
+    var description: String? { task.description }
 }
 
 // MARK: - TrajectorySummary
@@ -219,22 +144,10 @@ struct TrajectorySummary: Codable, Hashable, Identifiable {
     let id: String
     let title: String
     let status: TrajectoryStatus
-    let chapterCount: Int
-    let eventCount: Int
-    let agents: [String]
+    let chapterCount: Int?
+    let decisionCount: Int?
+    let confidence: Double?
+    let startedAt: Date?
+    let completedAt: Date?
     let tags: [String]?
-    let createdAt: Date
-    let updatedAt: Date
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case title
-        case status
-        case chapterCount = "chapter_count"
-        case eventCount = "event_count"
-        case agents
-        case tags
-        case createdAt = "created_at"
-        case updatedAt = "updated_at"
-    }
 }

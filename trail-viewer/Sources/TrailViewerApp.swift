@@ -39,6 +39,18 @@ struct TrailViewerApp: App {
                 .task {
                     await onAppear()
                 }
+                .onChange(of: appStateStore.currentPath) { _, newPath in
+                    guard let newPath else { return }
+                    // Clear current selection
+                    trajectoryStore.clearSelection()
+                    Task {
+                        // Tell the server to switch data directories
+                        try? await apiClient.switchDataDir(path: newPath)
+                        // Reload data from the new directory
+                        await trajectoryStore.loadTrajectories()
+                        await trajectoryStore.refreshStats()
+                    }
+                }
         }
         .defaultSize(
             width: LayoutConstants.defaultWindowWidth,

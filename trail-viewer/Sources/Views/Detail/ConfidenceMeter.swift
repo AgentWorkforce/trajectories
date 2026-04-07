@@ -94,6 +94,7 @@ struct ConfidenceMeter: View {
 
 // MARK: - Preview
 
+#if false // Disabled: #Preview requires Xcode
 #Preview("Expanded") {
     VStack(alignment: .leading, spacing: 24) {
         ConfidenceMeter(value: 0.30, label: "Low Confidence")
@@ -115,3 +116,4 @@ struct ConfidenceMeter: View {
     .padding(32)
     .background(Theme.pageBg)
 }
+#endif

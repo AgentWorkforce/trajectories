@@ -3,11 +3,6 @@ import SwiftUI
 struct PersonaSelector: View {
     @EnvironmentObject var chatStore: ChatStore
 
-    private var selectedPersona: ChatPersona? {
-        guard let id = chatStore.selectedPersonaId else { return nil }
-        return chatStore.personas.first { $0.id == id }
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingSM) {
             ScrollView(.horizontal, showsIndicators: false) {
@@ -15,12 +10,20 @@ struct PersonaSelector: View {
                     ForEach(chatStore.personas) { persona in
                         PersonaCard(
                             persona: persona,
-                            isActive: chatStore.activePersonaIds.contains(persona.id),
-                            onToggle: { chatStore.togglePersona(id: persona.id) }
+                            isActive: chatStore.activePersonas.contains(persona.id)
                         )
+                        .onTapGesture {
+                            chatStore.togglePersona(persona.id)
+                        }
                     }
 
-                    Button(action: { chatStore.activateAllPersonas() }) {
+                    Button(action: {
+                        for persona in chatStore.personas {
+                            if !chatStore.activePersonas.contains(persona.id) {
+                                chatStore.togglePersona(persona.id)
+                            }
+                        }
+                    }) {
                         Text("Ask all")
                             .font(Typography.caption)
                             .foregroundColor(Theme.blue)
@@ -31,15 +34,6 @@ struct PersonaSelector: View {
                     .buttonStyle(.plain)
                 }
                 .padding(.horizontal, Theme.spacingMD)
-            }
-
-            if let persona = selectedPersona {
-                Text(persona.description)
-                    .font(Typography.caption.italic())
-                    .foregroundColor(Theme.textTertiary)
-                    .padding(.horizontal, Theme.spacingMD)
-                    .transition(.opacity)
-                    .animation(.easeInOut(duration: 0.2), value: chatStore.selectedPersonaId)
             }
 
             RuleLine()
@@ -53,7 +47,7 @@ struct PersonaSelector: View {
 struct PersonaSelector_Previews: PreviewProvider {
     static var previews: some View {
         PersonaSelector()
-            .environmentObject(ChatStore.preview)
+            .environmentObject(ChatStore())
             .previewLayout(.sizeThatFits)
     }
 }

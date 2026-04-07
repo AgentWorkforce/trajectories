@@ -63,7 +63,7 @@ func highlightedText(_ text: String, query: String) -> Text {
         let match = String(text[range])
         result = result + Text(match)
             .foregroundColor(Theme.textPrimary)
-            .background(Theme.yellow)
+            .underline(color: Theme.yellow)
 
         currentIndex = range.upperBound
     }

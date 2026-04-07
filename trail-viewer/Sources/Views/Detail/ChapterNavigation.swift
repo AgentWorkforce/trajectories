@@ -45,7 +45,7 @@ private struct ChapterPill: View {
     let isSelected: Bool
 
     var body: some View {
-        Text("Chapter \(chapter.number): \(chapter.title)")
+        Text(chapter.title)
             .font(Typography.caption)
             .foregroundColor(isSelected ? .white : Theme.textSecondary)
             .padding(.horizontal, 12)
@@ -64,9 +64,7 @@ private extension Theme {
     static var rule: Color { borderLight }
 }
 
-private enum Typography {
-    static let caption = Font.system(size: 11, weight: .medium)
-}
+// Typography is now defined globally in Design/Typography.swift
 
 // MARK: - Preview
 
@@ -77,50 +75,45 @@ struct ChapterNavigation_Previews: PreviewProvider {
         Chapter(
             id: "ch-1",
             title: "Introduction",
-            number: 1,
-            agent: nil,
+            agentName: nil,
             startedAt: .now,
-            completedAt: nil,
+            endedAt: nil,
             events: [],
             summary: nil
         ),
         Chapter(
             id: "ch-2",
             title: "Planning",
-            number: 2,
-            agent: nil,
+            agentName: nil,
             startedAt: .now,
-            completedAt: nil,
+            endedAt: nil,
             events: [],
             summary: nil
         ),
         Chapter(
             id: "ch-3",
             title: "Implementation",
-            number: 3,
-            agent: nil,
+            agentName: nil,
             startedAt: .now,
-            completedAt: nil,
+            endedAt: nil,
             events: [],
             summary: nil
         ),
         Chapter(
             id: "ch-4",
             title: "Testing & QA",
-            number: 4,
-            agent: nil,
+            agentName: nil,
             startedAt: .now,
-            completedAt: nil,
+            endedAt: nil,
             events: [],
             summary: nil
         ),
         Chapter(
             id: "ch-5",
             title: "Deployment",
-            number: 5,
-            agent: nil,
+            agentName: nil,
             startedAt: .now,
-            completedAt: nil,
+            endedAt: nil,
             events: [],
             summary: nil
         ),

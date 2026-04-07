@@ -121,6 +121,7 @@ struct ToastContainer: View {
 
 // MARK: - Preview
 
+#if false // Disabled: #Preview requires Xcode
 #Preview("Toast Styles") {
     ZStack {
         Color(Theme.pageBg).ignoresSafeArea()
@@ -134,3 +135,4 @@ struct ToastContainer: View {
     }
     .frame(width: 400, height: 300)
 }
+#endif

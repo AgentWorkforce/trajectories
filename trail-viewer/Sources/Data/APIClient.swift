@@ -12,7 +12,21 @@ actor APIClient {
 
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
-        decoder.dateDecodingStrategy = .iso8601
+
+        // The API returns ISO 8601 dates with fractional seconds (e.g. "2026-02-19T08:46:34.162Z")
+        // which the default .iso8601 strategy doesn't handle.
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let isoFallback = ISO8601DateFormatter()
+        isoFallback.formatOptions = [.withInternetDateTime]
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let dateString = try container.decode(String.self)
+            if let date = isoFormatter.date(from: dateString) { return date }
+            if let date = isoFallback.date(from: dateString) { return date }
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode date: \(dateString)")
+        }
+
         self.decoder = decoder
     }
 
@@ -25,7 +39,7 @@ actor APIClient {
         queryItems: [URLQueryItem]? = nil
     ) async throws -> T {
         guard var components = URLComponents(url: baseURL.appendingPathComponent(endpoint), resolvingAgainstBaseURL: false) else {
-            throw APIError.invalidURL
+            throw APIError.invalidURL(endpoint)
         }
 
         if let queryItems, !queryItems.isEmpty {
@@ -33,7 +47,7 @@ actor APIClient {
         }
 
         guard let url = components.url else {
-            throw APIError.invalidURL
+            throw APIError.invalidURL(endpoint)
         }
 
         var urlRequest = URLRequest(url: url)
@@ -55,7 +69,7 @@ actor APIClient {
         }
 
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.unknown
+            throw APIError.unknown(nil)
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
@@ -63,7 +77,7 @@ actor APIClient {
             case 401:
                 throw APIError.unauthorized
             case 404:
-                throw APIError.notFound
+                throw APIError.notFound(endpoint)
             default:
                 let message = String(data: data, encoding: .utf8) ?? "Unknown error"
                 throw APIError.serverError(httpResponse.statusCode, message)
@@ -82,7 +96,7 @@ actor APIClient {
         queryItems: [URLQueryItem]? = nil
     ) async throws -> String {
         guard var components = URLComponents(url: baseURL.appendingPathComponent(endpoint), resolvingAgainstBaseURL: false) else {
-            throw APIError.invalidURL
+            throw APIError.invalidURL(endpoint)
         }
 
         if let queryItems, !queryItems.isEmpty {
@@ -90,7 +104,7 @@ actor APIClient {
         }
 
         guard let url = components.url else {
-            throw APIError.invalidURL
+            throw APIError.invalidURL(endpoint)
         }
 
         var urlRequest = URLRequest(url: url)
@@ -105,7 +119,7 @@ actor APIClient {
         }
 
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.unknown
+            throw APIError.unknown(nil)
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
@@ -113,7 +127,7 @@ actor APIClient {
             case 401:
                 throw APIError.unauthorized
             case 404:
-                throw APIError.notFound
+                throw APIError.notFound(endpoint)
             default:
                 let message = String(data: data, encoding: .utf8) ?? "Unknown error"
                 throw APIError.serverError(httpResponse.statusCode, message)
@@ -164,6 +178,18 @@ actor APIClient {
 
     func getTrajectoryTimeline(id: String) async throws -> String {
         try await requestRawText("/api/trajectories/\(id)/timeline")
+    }
+
+    // MARK: - Config
+
+    func switchDataDir(path: String) async throws {
+        struct SwitchRequest: Encodable { let path: String }
+        struct SwitchResponse: Decodable { let ok: Bool?; let trajectoryCount: Int? }
+        let _: SwitchResponse = try await request(
+            "/api/config/data-dir",
+            method: "POST",
+            body: SwitchRequest(path: path)
+        )
     }
 
     // MARK: - Stats

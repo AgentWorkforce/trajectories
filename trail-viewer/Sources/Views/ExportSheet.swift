@@ -127,7 +127,7 @@ struct ExportSheet: View {
             }
             .padding(Theme.spacingMD)
         }
-        .frame(width: 550, minHeight: 450)
+        .frame(width: 550, height: 450)
         .background(Theme.pageBg)
     }
 
@@ -160,34 +160,20 @@ struct ExportSheet: View {
         lines.append("---")
         lines.append("")
 
-        if let chapters = trajectory.chapters {
-            for chapter in chapters {
-                lines.append("## \(chapter.title)")
+        for chapter in trajectory.chapters {
+            lines.append("## \(chapter.title)")
+            lines.append("")
+
+            if let summary = chapter.summary {
+                lines.append(summary)
                 lines.append("")
+            }
 
-                if let summary = chapter.summary {
-                    lines.append(summary)
-                    lines.append("")
-                }
-
-                for event in chapter.events {
-                    switch event.type {
-                    case .tool:
-                        lines.append("### Tool: \(event.tool ?? "unknown")")
-                    case .thought:
-                        lines.append("### Thought")
-                    case .result:
-                        lines.append("### Result")
-                    default:
-                        lines.append("### \(event.type.rawValue.capitalized)")
-                    }
-
-                    if let content = event.content {
-                        lines.append("")
-                        lines.append(content)
-                    }
-                    lines.append("")
-                }
+            for event in chapter.events {
+                lines.append("### \(event.type.rawValue.capitalized)")
+                lines.append("")
+                lines.append(event.content)
+                lines.append("")
             }
         }
 
@@ -196,7 +182,7 @@ struct ExportSheet: View {
             lines.append("")
             lines.append("## Retrospective")
             lines.append("")
-            lines.append(retrospective)
+            lines.append(retrospective.summary)
             lines.append("")
         }
 
@@ -226,20 +212,18 @@ struct ExportSheet: View {
         lines.append("=".padding(toLength: 60, withPad: "=", startingAt: 0))
         lines.append("")
 
-        if let chapters = trajectory.chapters {
-            for chapter in chapters {
-                lines.append("[\(chapter.title)]")
+        for chapter in trajectory.chapters {
+            lines.append("[\(chapter.title)]")
 
-                for event in chapter.events {
-                    let timestamp = event.timestamp.map { formatTimestamp($0) } ?? "--:--"
-                    let typeLabel = event.type.rawValue.uppercased()
-                    let detail = event.tool ?? event.content?.prefix(80).description ?? ""
+            for event in chapter.events {
+                let timestamp = event.timestamp.map { formatTimestamp($0) } ?? "--:--:--"
+                let typeLabel = event.type.rawValue.uppercased()
+                let detail = event.content.prefix(80).description
 
-                    lines.append("  \(timestamp)  \(typeLabel)  \(detail)")
-                }
-
-                lines.append("")
+                lines.append("  \(timestamp)  \(typeLabel)  \(detail)")
             }
+
+            lines.append("")
         }
 
         return lines.joined(separator: "\n")
@@ -286,7 +270,21 @@ struct ExportSheet: View {
 struct ExportSheet_Previews: PreviewProvider {
     static var previews: some View {
         ExportSheet(
-            trajectory: .preview,
+            trajectory: Trajectory(
+                id: "preview-1",
+                version: nil,
+                task: TrajectoryTask(title: "Preview Trajectory", description: "A sample trajectory for preview."),
+                status: .completed,
+                startedAt: Date(),
+                completedAt: nil,
+                agents: nil,
+                chapters: [],
+                retrospective: nil,
+                commits: nil,
+                filesChanged: nil,
+                projectId: nil,
+                tags: nil
+            ),
             isPresented: .constant(true)
         )
     }

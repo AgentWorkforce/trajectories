@@ -72,25 +72,21 @@ struct MessageEventView: View {
 struct MessageEventView_Previews: PreviewProvider {
     static var previews: some View {
         let sentEvent = TrajectoryEvent(
-            id: "msg-sent-1",
+            ts: Date().timeIntervalSince1970 * 1000,
             type: .messageSent,
-            timestamp: Date(),
-            agent: "Lead",
             content: "Please audit the session token storage in src/auth/ and report back on any security concerns.",
-            significance: .medium,
-            metadata: nil,
-            chapterId: "ch-1"
+            agent: "Lead",
+            significance: "medium",
+            metadata: nil
         )
 
         let receivedEvent = TrajectoryEvent(
-            id: "msg-recv-1",
+            ts: Date().timeIntervalSince1970 * 1000,
             type: .messageReceived,
-            timestamp: Date(),
-            agent: "Worker",
             content: "Found three instances of localStorage usage for sensitive tokens. Will prepare a migration plan to HTTP-only cookies.",
-            significance: .medium,
-            metadata: nil,
-            chapterId: "ch-1"
+            agent: "Worker",
+            significance: "medium",
+            metadata: nil
         )
 
         VStack(spacing: Theme.spacingLG) {
