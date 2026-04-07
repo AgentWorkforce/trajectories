@@ -1,0 +1,1 @@
+Created [SkeletonView.swift](/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/SkeletonView.swift) with the exact provided contents. No other files were created or modified.
