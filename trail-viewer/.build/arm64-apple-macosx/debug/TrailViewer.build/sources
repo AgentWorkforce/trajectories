@@ -15,6 +15,7 @@
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/BookCard.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/EmptyState.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/LayoutConstants.swift
+/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/SearchHighlight.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/SectionElements.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/SkeletonView.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Design/Theme.swift
@@ -52,6 +53,8 @@
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TimelineRail.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TrajectoryDetailView.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Detail/TrajectoryHeaderView.swift
+/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/ExportSheet.swift
+/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/FileDetailModal.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Settings/CLISettingsView.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Settings/PathSettingsView.swift
 /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Views/Settings/SettingsView.swift
