@@ -70,6 +70,8 @@ enum APIError: Error, LocalizedError, Equatable {
 
 struct StartChatResponse: Codable {
     let sessionId: String
+    /// Broker channel returned by the chat session API.
+    let channel: String
 }
 
 // MARK: - APIResponse

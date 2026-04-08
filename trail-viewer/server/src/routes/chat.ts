@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import type { ChatService } from "../chat-service";
+import type { ChatSession } from "../chat-session";
 import { formatTrajectoryForAgent } from "../trajectory-formatter";
 import type { TrajectoryService } from "../trajectory-service";
 
@@ -32,7 +33,21 @@ export function createChatRoutes(
         preferredCLI,
       );
 
-      return c.json({ session_id: sessionId }, 200);
+      const chatSession = (
+        chatService as unknown as { sessions?: Map<string, ChatSession> }
+      ).sessions?.get(sessionId);
+
+      if (!chatSession) {
+        throw new Error(`Chat session not found after start: ${sessionId}`);
+      }
+
+      return c.json(
+        {
+          session_id: sessionId,
+          channel: chatSession.channel,
+        },
+        200,
+      );
     } catch (err) {
       console.error("[chat/start] Error:", err);
       const message =

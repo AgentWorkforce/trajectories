@@ -41,6 +41,10 @@ class ChatStore {
         startObservingRelay()
     }
 
+    deinit {
+        observationTask?.cancel()
+    }
+
     // MARK: - Public Methods
 
     func loadPersonas() async {
@@ -66,9 +70,8 @@ class ChatStore {
                 personas: Array(activePersonas)
             )
             chatSessionId = response.sessionId
-            relayConnection.connect()
+            relayConnection.connect(channel: response.channel)
             sessionState = .active
-            startObservingRelay()
         } catch let apiError as APIError {
             sessionState = .error
             error = apiError
