@@ -12,6 +12,14 @@ import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Command } from "commander";
+import { compactWithCLI } from "../../compact/cli-provider.js";
+import { generateMarkdownSummary } from "../../compact/markdown.js";
+import { parseCompactionResponse } from "../../compact/parser.js";
+import {
+  COMPACTION_SYSTEM_PROMPT,
+  buildCompactionUserPrompt,
+} from "../../compact/prompts.js";
+import { serializeTrajectories } from "../../compact/serializer.js";
 import { generateRandomId } from "../../core/id.js";
 import type { Decision, Trajectory } from "../../core/types.js";
 import { FileStorage, getSearchPaths } from "../../storage/file.js";
@@ -91,6 +99,13 @@ export function registerCompactCommand(program: Command): void {
       "Comma-separated commit SHAs to match trajectories against",
     )
     .option("--all", "Include all trajectories, even previously compacted ones")
+    .option("--llm", "Use LLM-powered compaction via local CLI (claude -p)")
+    .option(
+      "--focus <areas>",
+      "Focus areas for LLM compaction (comma-separated)",
+    )
+    .option("--markdown", "Also generate a markdown summary")
+    .option("--cli <name>", "CLI to use for LLM compaction (default: claude)")
     .option("--dry-run", "Preview what would be compacted without saving")
     .option("--output <path>", "Output path for compacted trajectory")
     .action(async (options) => {
@@ -116,7 +131,32 @@ export function registerCompactCommand(program: Command): void {
 
       console.log(`Compacting ${trajectories.length} trajectories...\n`);
 
-      const compacted = compactTrajectories(trajectories);
+      let compacted: CompactedTrajectory;
+      let markdownSummary: string | null = null;
+
+      if (options.llm) {
+        const serialized = serializeTrajectories(trajectories);
+        const userPrompt = buildCompactionUserPrompt(serialized, {
+          focus: options.focus,
+        });
+        const fullPrompt = [
+          "System instructions:",
+          COMPACTION_SYSTEM_PROMPT,
+          "User request:",
+          userPrompt,
+        ].join("\n\n");
+        const rawResponse = await compactWithCLI(fullPrompt, {
+          cli: options.cli,
+        });
+
+        compacted = parseCompactionResponse(rawResponse);
+
+        if (options.markdown) {
+          markdownSummary = generateMarkdownSummary(compacted);
+        }
+      } else {
+        compacted = compactTrajectories(trajectories);
+      }
 
       if (options.dryRun) {
         console.log("=== DRY RUN - Preview ===\n");
@@ -127,6 +167,12 @@ export function registerCompactCommand(program: Command): void {
       // Save the compacted trajectory
       const outputPath = options.output || getDefaultOutputPath(compacted);
       saveCompactedTrajectory(compacted, outputPath);
+
+      if (markdownSummary) {
+        const markdownPath = getMarkdownOutputPath(outputPath);
+        saveMarkdownSummaryFile(markdownSummary, markdownPath);
+        console.log(`Markdown summary saved to: ${markdownPath}`);
+      }
 
       // Mark source trajectories as compacted
       await markTrajectoriesAsCompacted(trajectories, compacted.id);
@@ -572,6 +618,14 @@ function getDefaultOutputPath(compacted: CompactedTrajectory): string {
   return join(compactedDir, `${compacted.id}_${dateStr}.json`);
 }
 
+function getMarkdownOutputPath(outputPath: string): string {
+  if (outputPath.toLowerCase().endsWith(".json")) {
+    return `${outputPath.slice(0, -5)}.md`;
+  }
+
+  return `${outputPath}.md`;
+}
+
 function saveCompactedTrajectory(
   compacted: CompactedTrajectory,
   outputPath: string,
@@ -582,6 +636,15 @@ function saveCompactedTrajectory(
   }
 
   writeFileSync(outputPath, JSON.stringify(compacted, null, 2));
+}
+
+function saveMarkdownSummaryFile(markdown: string, outputPath: string): void {
+  const dir = join(outputPath, "..");
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+
+  writeFileSync(outputPath, markdown);
 }
 
 function printCompactedSummary(compacted: CompactedTrajectory): void {

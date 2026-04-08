@@ -79,23 +79,18 @@ class ChatStore {
 
     func sendMessage(text: String) async {
         guard isActive,
-              let sessionId = chatSessionId,
-              !text.isEmpty else { return }
+              let sessionId = chatSessionId else { return }
 
-        let userMessage = ChatMessage(from: "user", content: text)
+        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedText.isEmpty else { return }
+
+        let userMessage = ChatMessage(from: "user", content: trimmedText)
         chatMessages.append(userMessage)
-
-        do {
-            try await apiClient.sendChatMessage(
-                sessionId: sessionId,
-                message: text,
-                personas: Array(activePersonas)
-            )
-        } catch let apiError as APIError {
-            error = apiError
-        } catch {
-            self.error = .networkError(error)
-        }
+        relayConnection.send(
+            sessionId: sessionId,
+            text: trimmedText,
+            personas: Array(activePersonas)
+        )
     }
 
     func stopChat() async {
@@ -136,8 +131,12 @@ class ChatStore {
 
             while !Task.isCancelled {
                 let currentMessages = relayConnection.messages
+                if currentMessages.count < lastMessageCount {
+                    lastMessageCount = currentMessages.count
+                }
+
                 if currentMessages.count > lastMessageCount {
-                    let newMessages = Array(currentMessages[lastMessageCount...])
+                    let newMessages = Array(currentMessages.dropFirst(lastMessageCount))
                     for message in newMessages {
                         chatMessages.append(message)
                     }

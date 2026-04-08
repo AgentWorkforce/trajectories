@@ -130,15 +130,20 @@ if command -v swift &> /dev/null; then
   cd "$SCRIPT_DIR"
   swift build 2>&1
 
-  BINARY="$SCRIPT_DIR/.build/debug/TrailViewer"
-  if [[ -x "$BINARY" ]]; then
-    echo "Launching Trail Viewer as standalone app..."
-    # Launch detached from terminal so it behaves like a native macOS app
-    nohup "$BINARY" > /dev/null 2>&1 &
-    disown
-    echo "Trail Viewer launched. You can close this terminal."
+  echo "Packaging Trail Viewer app bundle..."
+  bash "$SCRIPT_DIR/scripts/package.sh" --mode local --skip-dmg
+
+  APP_BUNDLE="$SCRIPT_DIR/build/local/Trail Viewer Local.app"
+  if [[ -d "$APP_BUNDLE" ]]; then
+    PLIST_PATH="$APP_BUNDLE/Contents/Resources/LocalLaunchConfig.plist"
+    rm -f "$PLIST_PATH"
+    /usr/libexec/PlistBuddy -c "Add :ServerURL string http://localhost:$PORT" "$PLIST_PATH"
+
+    echo "Launching Trail Viewer app bundle..."
+    open -n "$APP_BUNDLE" --env "TRAIL_VIEWER_API_URL=http://localhost:$PORT"
+    echo "Trail Viewer launched from $APP_BUNDLE"
   else
-    echo "Build failed — binary not found at $BINARY"
+    echo "Build failed — app bundle not found at $APP_BUNDLE"
   fi
 else
   echo "Swift not found. Server running at http://localhost:$PORT"
