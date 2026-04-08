@@ -45,6 +45,8 @@ struct ChatPanelView: View {
                 } else if !chatStore.isActive {
                     NoSessionStartedState(
                         personaCount: chatStore.personas.count,
+                        isConnecting: chatStore.sessionState == .connecting,
+                        error: chatStore.error,
                         onStartSession: {
                             if let id = trajectoryStore.selectedTrajectory?.id {
                                 Task { await chatStore.startChat(trajectoryId: id) }

@@ -17,6 +17,8 @@ struct NoTrajectorySelectedState: View {
 
 struct NoSessionStartedState: View {
     let personaCount: Int
+    var isConnecting: Bool = false
+    var error: APIError? = nil
     let onStartSession: () -> Void
 
     var body: some View {
@@ -35,16 +37,31 @@ struct NoSessionStartedState: View {
                     Text("\(personaCount) AI personas available to discuss")
                         .caption()
 
+                    if let error {
+                        Text(error.localizedDescription)
+                            .font(.system(size: 12))
+                            .foregroundColor(Theme.error)
+                            .multilineTextAlignment(.center)
+                    }
+
                     Button(action: onStartSession) {
-                        Text("Start Discussion")
-                            .font(.system(size: 13.5, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, Theme.spacingLG)
-                            .padding(.vertical, Theme.spacingSM)
-                            .background(Theme.blue)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        if isConnecting {
+                            ProgressView()
+                                .controlSize(.small)
+                                .padding(.horizontal, Theme.spacingLG)
+                                .padding(.vertical, Theme.spacingSM)
+                        } else {
+                            Text(error != nil ? "Retry" : "Start Discussion")
+                                .font(.system(size: 13.5, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, Theme.spacingLG)
+                                .padding(.vertical, Theme.spacingSM)
+                                .background(Theme.blue)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
                     }
                     .buttonStyle(.plain)
+                    .disabled(isConnecting)
                 }
                 .padding(Theme.spacingLG)
                 .frame(maxWidth: .infinity)

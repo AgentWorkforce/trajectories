@@ -55,8 +55,9 @@ class ChatStore {
     }
 
     func startChat(trajectoryId: String) async {
-        guard sessionState == .idle || sessionState == .disconnected else { return }
+        guard sessionState == .idle || sessionState == .disconnected || sessionState == .error else { return }
 
+        error = nil
         sessionState = .connecting
 
         do {

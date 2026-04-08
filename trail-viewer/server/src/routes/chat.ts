@@ -12,11 +12,12 @@ export function createChatRoutes(
   // POST /chat/start
   app.post("/chat/start", async (c) => {
     try {
-      const { trajectoryId, personas, preferredCLI } = await c.req.json<{
-        trajectoryId: string;
-        personas: string[];
-        preferredCLI?: string;
-      }>();
+      const body = await c.req.json();
+      // Accept both camelCase and snake_case (Swift client uses convertToSnakeCase)
+      const trajectoryId = body.trajectoryId ?? body.trajectory_id;
+      const personas: string[] = body.personas ?? [];
+      const preferredCLI: string | undefined =
+        body.preferredCLI ?? body.preferred_cli;
 
       const trajectory = await trajectoryService.getTrajectory(trajectoryId);
       if (!trajectory) {
@@ -31,20 +32,22 @@ export function createChatRoutes(
         preferredCLI,
       );
 
-      return c.json({ sessionId }, 200);
+      return c.json({ session_id: sessionId }, 200);
     } catch (err) {
-      return c.json({ error: "Internal server error" }, 500);
+      console.error("[chat/start] Error:", err);
+      const message =
+        err instanceof Error ? err.message : "Internal server error";
+      return c.json({ error: message }, 500);
     }
   });
 
   // POST /chat/message
   app.post("/chat/message", async (c) => {
     try {
-      const { sessionId, message, personas } = await c.req.json<{
-        sessionId: string;
-        message: string;
-        personas: string[];
-      }>();
+      const body = await c.req.json();
+      const sessionId = body.sessionId ?? body.session_id;
+      const message = body.message;
+      const personas: string[] = body.personas ?? [];
 
       await chatService.sendMessage(sessionId, message, personas);
       return c.json({ ok: true }, 200);
@@ -59,7 +62,8 @@ export function createChatRoutes(
   // POST /chat/stop
   app.post("/chat/stop", async (c) => {
     try {
-      const { sessionId } = await c.req.json<{ sessionId: string }>();
+      const body = await c.req.json();
+      const sessionId = body.sessionId ?? body.session_id;
 
       await chatService.stopSession(sessionId);
       return c.json({ ok: true }, 200);
@@ -74,10 +78,9 @@ export function createChatRoutes(
   // POST /chat/persona/add
   app.post("/chat/persona/add", async (c) => {
     try {
-      const { sessionId, personaId } = await c.req.json<{
-        sessionId: string;
-        personaId: string;
-      }>();
+      const body = await c.req.json();
+      const sessionId = body.sessionId ?? body.session_id;
+      const personaId = body.personaId ?? body.persona_id;
 
       await chatService.addPersona(sessionId, personaId);
       return c.json({ ok: true }, 200);
@@ -89,10 +92,9 @@ export function createChatRoutes(
   // POST /chat/persona/remove
   app.post("/chat/persona/remove", async (c) => {
     try {
-      const { sessionId, personaId } = await c.req.json<{
-        sessionId: string;
-        personaId: string;
-      }>();
+      const body = await c.req.json();
+      const sessionId = body.sessionId ?? body.session_id;
+      const personaId = body.personaId ?? body.persona_id;
 
       await chatService.removePersona(sessionId, personaId);
       return c.json({ ok: true }, 200);
@@ -101,8 +103,8 @@ export function createChatRoutes(
     }
   });
 
-  // GET /personas
-  app.get("/personas", async (c) => {
+  // GET /chat/personas
+  app.get("/chat/personas", async (c) => {
     try {
       const personas = chatService.getPersonas();
       return c.json(personas, 200);

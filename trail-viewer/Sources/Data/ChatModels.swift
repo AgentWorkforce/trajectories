@@ -33,7 +33,7 @@ struct ChatPersona: Codable, Identifiable, Hashable {
         case name
         case emoji
         case description
-        case colorHex = "color_hex"
+        case colorHex = "color"
     }
 
     var color: Color {
@@ -78,23 +78,5 @@ struct ChatMessage: Codable, Identifiable, Hashable {
 
     var isSystem: Bool {
         from == "system"
-    }
-}
-
-// MARK: - ChatWebSocketMessage
-
-struct ChatWebSocketMessage: Codable {
-    let type: String
-    let sessionId: String?
-    let from: String?
-    let content: String?
-    let persona: String?
-
-    enum CodingKeys: String, CodingKey {
-        case type
-        case sessionId = "session_id"
-        case from
-        case content
-        case persona
     }
 }

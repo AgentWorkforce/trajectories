@@ -72,20 +72,21 @@ export class ChatSession {
   // -----------------------------------------------------------------------
 
   async startSession(personaIds: string[]): Promise<void> {
+    // Listen for messages from spawned agents
+    this.relay.onMessageReceived = (msg: any) => {
+      this.handleChannelMessage({
+        from: msg.from,
+        content: msg.text,
+        channel: this.channel,
+      });
+    };
+
     for (const personaId of personaIds) {
       const persona = PERSONAS[personaId];
       if (!persona) continue;
 
       await this.spawnPersonaAgent(persona);
     }
-
-    await this.relay.subscribe(this.channel);
-
-    this.relay.on("message", (envelope: any) => {
-      if (envelope.channel === this.channel) {
-        this.handleChannelMessage(envelope);
-      }
-    });
   }
 
   // -----------------------------------------------------------------------
@@ -186,8 +187,6 @@ export class ChatSession {
     await Promise.all(releasePromises);
 
     this.agents.clear();
-
-    await this.relay.unsubscribe(this.channel);
   }
 
   // -----------------------------------------------------------------------
@@ -199,12 +198,9 @@ export class ChatSession {
     const spawnConfig = resolveSpawnConfig(this.preferredCLI);
     const agentName = `persona-${persona.id}-${this.sessionId.slice(0, 8)}`;
 
-    await this.relay.spawn(agentName, {
-      command: spawnConfig.command,
+    await this.relay.spawn(agentName, spawnConfig.command, prompt, {
       args: spawnConfig.args,
-      env: spawnConfig.env,
-      task: prompt,
-      channel: this.channel,
+      channels: [this.channel],
     });
 
     this.agents.set(agentName, {
