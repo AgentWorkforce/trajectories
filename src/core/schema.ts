@@ -49,21 +49,20 @@ export const TrajectoryStatusSchema = z.enum([
   "abandoned",
 ]);
 
-/**
- * Event type schema
- */
-export const TrajectoryEventTypeSchema = z.enum([
-  "prompt",
-  "thinking",
-  "tool_call",
-  "tool_result",
-  "message_sent",
-  "message_received",
-  "decision",
-  "finding",
-  "reflection",
-  "note",
-  "error",
+/** Permissive on read so trajectories from other tools can load even with unknown event types. */
+export const TrajectoryEventTypeSchema = z.union([
+  z.literal("prompt"),
+  z.literal("thinking"),
+  z.literal("tool_call"),
+  z.literal("tool_result"),
+  z.literal("message_sent"),
+  z.literal("message_received"),
+  z.literal("decision"),
+  z.literal("finding"),
+  z.literal("reflection"),
+  z.literal("note"),
+  z.literal("error"),
+  z.string(), // Allow event types emitted by other tools (e.g. agent-relay's completion-evidence / completion-marker). Downstream code filters to known types.
 ]);
 
 /**
@@ -244,6 +243,7 @@ export const TrajectorySchema = z.object({
   commits: z.array(z.string()),
   filesChanged: z.array(z.string()),
   projectId: z.string(),
+  workflowId: z.string().optional(),
   tags: z.array(z.string()),
   _trace: TrajectoryTraceRefSchema.optional(),
 });

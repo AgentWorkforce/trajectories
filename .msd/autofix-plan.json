@@ -1,0 +1,57 @@
+{
+  "groups": [
+    {
+      "id": "group-1",
+      "label": "compact.ts command fixes — shell injection, env mutation, type dedup, jsonMode",
+      "domain": "security",
+      "findings": [
+        "src/cli/commands/compact.ts-Shell injection in getBranchCommits (line 403)-security-review, developer-review, historian-review-high",
+        "src/cli/commands/compact.ts-Global process.env mutation in storage loop (lines 313-314)-developer-review-high",
+        "src/cli/commands/compact.ts-Duplicate/conflicting CompactedTrajectory types (lines 52-77)-developer-review-medium",
+        "src/cli/commands/compact.ts-jsonMode inconsistency across providers (line 234)-historian-review-medium"
+      ],
+      "files": ["src/cli/commands/compact.ts"],
+      "rationale": "All 4 findings in the same file; includes both HIGH severity issues (shell injection, env mutation)"
+    },
+    {
+      "id": "group-2",
+      "label": "compact provider fixes — SSRF, API keys, timeouts, env passthrough, error leaks, types",
+      "domain": "security",
+      "findings": [
+        "src/compact/provider.ts-SSRF via configurable base URLs (lines 72, 128)-security-review-medium",
+        "src/compact/provider.ts-Empty/whitespace API key handling (lines 66, 121)-developer-review-medium",
+        "src/compact/provider.ts-Anthropic fallback prompt fabrication (lines 152-168)-developer-review-medium",
+        "src/compact/provider.ts-Missing fetch timeouts (lines 83-96)-historian-review-medium",
+        "src/compact/provider.ts-Hardcoded Anthropic API version (line 152)-historian-review-medium",
+        "src/compact/provider.ts-Duplicate Message interface (lines 7-10)-developer-review-medium",
+        "src/compact/provider.ts-CLI arg length limits (lines 269-273)-historian-review-medium",
+        "src/compact/provider.ts-Full env passthrough to CLI subprocesses (lines 229-233)-security-review-medium",
+        "src/compact/provider.ts-Error message data leak in parseJson (line 348)-security-review-low"
+      ],
+      "files": ["src/compact/provider.ts"],
+      "rationale": "All 9 findings are in src/compact/provider.ts — cannot split across workers due to file-conflict rule"
+    },
+    {
+      "id": "group-3",
+      "label": "supporting files — parser, config, workflow, package.json, tests",
+      "domain": "code-quality",
+      "findings": [
+        "workflows/llm-compaction.ts-Hardcoded absolute path (line 26)-historian-review, security-review, developer-review-medium",
+        "src/compact/parser.ts-Incomplete escape sequence handling in extractBalancedJsonObject (lines 91-134)-developer-review, historian-review-medium",
+        "src/compact/config.ts-Implicit config merge precedence (lines 61-68)-developer-review, historian-review-medium",
+        "package.json-@agent-relay/sdk as regular dependency-historian-review-medium",
+        "tests/compact/llm-compact.test.ts-No mocked LLM provider integration test (lines 152-201)-developer-review-low"
+      ],
+      "files": [
+        "workflows/llm-compaction.ts",
+        "src/compact/parser.ts",
+        "src/compact/config.ts",
+        "package.json",
+        "tests/compact/llm-compact.test.ts"
+      ],
+      "rationale": "Remaining files grouped together; all in compact domain but distinct files from groups 1-2"
+    }
+  ],
+  "totalGroups": 3,
+  "conflictCheck": "no file appears in multiple groups"
+}

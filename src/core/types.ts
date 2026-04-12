@@ -225,6 +225,8 @@ export interface Trajectory {
   filesChanged: string[];
   /** Project identifier */
   projectId: string;
+  /** Opaque id set by the workflow runner via TRAJECTORIES_WORKFLOW_ID env var. Lets trail compact --workflow <id> collate all trajectories from a single workflow run. */
+  workflowId?: string;
   /** User-defined tags */
   tags: string[];
   /** Trace information for code attribution */
@@ -257,6 +259,8 @@ export interface CreateTrajectoryInput {
   source?: TaskSource;
   /** Optional project ID (defaults to cwd) */
   projectId?: string;
+  /** Opaque id set by the workflow runner via TRAJECTORIES_WORKFLOW_ID env var. Lets trail compact --workflow <id> collate all trajectories from a single workflow run. */
+  workflowId?: string;
   /** Optional initial tags */
   tags?: string[];
 }

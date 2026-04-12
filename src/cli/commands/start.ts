@@ -20,6 +20,10 @@ export function registerStartCommand(program: Command): void {
     .option("--url <url>", "URL to external task")
     .option("-a, --agent <name>", "Agent name (or set TRAJECTORIES_AGENT)")
     .option("-p, --project <id>", "Project ID (or set TRAJECTORIES_PROJECT)")
+    .option(
+      "-w, --workflow <id>",
+      "Workflow run id (or set TRAJECTORIES_WORKFLOW_ID). Stamped onto the trajectory so `trail compact --workflow <id>` can collate a run.",
+    )
     .option("-q, --quiet", "Only output trajectory ID (for scripting)")
     .action(async (title: string, options) => {
       const storage = new FileStorage();
@@ -55,6 +59,15 @@ export function registerStartCommand(program: Command): void {
       const projectId =
         options.project ?? process.env.TRAJECTORIES_PROJECT ?? undefined;
 
+      // Resolve workflow id from CLI flag or env var. When set, the trajectory
+      // is stamped so `trail compact --workflow <id>` can collate an entire
+      // relay workflow run into one tight artifact.
+      const workflowId =
+        (typeof options.workflow === "string" && options.workflow.trim()) ||
+        (typeof process.env.TRAJECTORIES_WORKFLOW_ID === "string" &&
+          process.env.TRAJECTORIES_WORKFLOW_ID.trim()) ||
+        undefined;
+
       // Capture git state for trace tracking
       const startRef = captureGitState();
 
@@ -64,6 +77,10 @@ export function registerStartCommand(program: Command): void {
         source,
         projectId,
       });
+
+      if (workflowId) {
+        trajectory = { ...trajectory, workflowId };
+      }
 
       // Add trace reference if in a git repo
       if (startRef) {
