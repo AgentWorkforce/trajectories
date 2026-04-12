@@ -52,6 +52,23 @@ function normalizeOptionalString(value?: string): string | undefined {
   return normalized ? normalized : undefined;
 }
 
+function normalizeAutoCompactOptions(
+  autoCompact?: boolean | { mechanical?: boolean; markdown?: boolean },
+): false | { mechanical: boolean; markdown: boolean } {
+  if (!autoCompact) {
+    return false;
+  }
+
+  if (autoCompact === true) {
+    return { mechanical: false, markdown: true };
+  }
+
+  return {
+    mechanical: autoCompact.mechanical ?? false,
+    markdown: autoCompact.markdown ?? true,
+  };
+}
+
 function resolveStartWorkflowId(
   options?: Omit<CreateTrajectoryInput, "title">,
 ): string | undefined {
@@ -203,6 +220,10 @@ export interface TrajectoryClientOptions {
   projectId?: string;
   /** Whether to auto-save after each operation. Defaults to true */
   autoSave?: boolean;
+  /**
+   * When set, session.complete() and session.done() automatically run compactWorkflow() against the trajectory's workflowId. Default false. Pass an object to control the flags passed to the CLI — e.g. { mechanical: true } skips the LLM for deterministic compaction, { markdown: false } skips the .md companion.
+   */
+  autoCompact?: boolean | { mechanical?: boolean; markdown?: boolean };
 }
 
 /**
@@ -235,6 +256,25 @@ export class TrajectorySession {
    */
   get id(): string {
     return this.trajectory.id;
+  }
+
+  private async autoCompactIfConfigured(): Promise<void> {
+    const autoCompact = this.client.getAutoCompactOptions();
+    if (!autoCompact || !this.trajectory.workflowId) {
+      return;
+    }
+
+    try {
+      await compactWorkflow(this.trajectory.workflowId, {
+        ...autoCompact,
+        cwd: this.client.getAutoCompactCwd(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(
+        `Warning: autoCompact failed for workflow ${this.trajectory.workflowId}: ${message}`,
+      );
+    }
   }
 
   /**
@@ -379,6 +419,7 @@ export class TrajectorySession {
   async complete(input: CompleteTrajectoryInput): Promise<Trajectory> {
     this.trajectory = completeTrajectory(this.trajectory, input);
     await this.client.save(this.trajectory);
+    await this.autoCompactIfConfigured();
     return this.trajectory;
   }
 
@@ -479,12 +520,26 @@ export class TrajectoryClient {
   readonly defaultAgent?: string;
   private projectId?: string;
   private autoSave: boolean;
+  private readonly autoCompactCwd?: string;
+  private readonly autoCompact:
+    | false
+    | { mechanical: boolean; markdown: boolean };
 
   constructor(options: TrajectoryClientOptions = {}) {
     this.storage = options.storage ?? new FileStorage(options.dataDir);
     this.defaultAgent = options.defaultAgent ?? process.env.TRAJECTORIES_AGENT;
     this.projectId = options.projectId ?? process.env.TRAJECTORIES_PROJECT;
     this.autoSave = options.autoSave ?? true;
+    this.autoCompact = normalizeAutoCompactOptions(options.autoCompact);
+    this.autoCompactCwd = options.storage ? undefined : options.dataDir;
+  }
+
+  getAutoCompactOptions(): false | { mechanical: boolean; markdown: boolean } {
+    return this.autoCompact;
+  }
+
+  getAutoCompactCwd(): string | undefined {
+    return this.autoCompactCwd;
   }
 
   /**

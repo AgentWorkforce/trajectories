@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdtemp, readFile, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve as resolvePath } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -43,6 +43,55 @@ function restoreEnv(snapshot: EnvSnapshot): void {
       process.env[key] = value;
     }
   }
+}
+
+interface CompactCliInvocationRecord {
+  argv: string[];
+  cwd: string;
+}
+
+function writeRecordingCompactCli(
+  wrapperPath: string,
+  realCliPath: string,
+  recordPath: string,
+): void {
+  writeFileSync(
+    wrapperPath,
+    `import { spawnSync } from "node:child_process";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
+
+const recordPath = ${JSON.stringify(recordPath)};
+const realCliPath = ${JSON.stringify(realCliPath)};
+
+mkdirSync(dirname(recordPath), { recursive: true });
+writeFileSync(
+  recordPath,
+  JSON.stringify(
+    {
+      argv: process.argv.slice(2),
+      cwd: process.cwd(),
+    },
+    null,
+    2,
+  ),
+  "utf-8",
+);
+
+const result = spawnSync(process.execPath, [realCliPath, ...process.argv.slice(2)], {
+  cwd: process.cwd(),
+  env: process.env,
+  stdio: "inherit",
+});
+
+if (result.error) {
+  throw result.error;
+}
+
+process.exit(result.status ?? 1);
+`,
+    "utf-8",
+  );
 }
 
 describe("workflow compaction", () => {
@@ -366,4 +415,147 @@ describe("workflow compaction", () => {
     // to be silently dropped at load time.
     expect(compacted.sourceTrajectories).toContain(trajId);
   }, 60_000);
+
+  describe("autoCompact option", () => {
+    it("autoCompact: true + workflowId set => complete() compacts from the configured dataDir with the expected CLI flags", async () => {
+      if (!existsSync(cliDistEntry)) {
+        throw new Error(
+          `dist CLI missing at ${cliDistEntry}. Run \`npm run build\` before executing this test.`,
+        );
+      }
+      const workspaceDir = join(tempDir, "sdk-workspace");
+      const recordingCliPath = join(tempDir, "recording-compact-cli.mjs");
+      const recordPath = join(tempDir, "recorded-compact-invocation.json");
+      writeRecordingCompactCli(recordingCliPath, cliDistEntry, recordPath);
+
+      process.env.TRAJECTORIES_CLI = recordingCliPath;
+      process.env.TRAJECTORIES_WORKFLOW_ID = "wf-auto-on";
+
+      const { TrajectoryClient } = await import("../../src/sdk/client.js");
+      const client = new TrajectoryClient({
+        dataDir: workspaceDir,
+        autoCompact: { mechanical: true, markdown: true },
+      });
+      await client.init();
+
+      const session = await client.start("Auto-compact task");
+      const sessionId = session.id;
+      const result = await session.complete({
+        summary: "auto-compact done",
+        approach: "Exercise complete() directly",
+        confidence: 0.9,
+      });
+
+      await client.close();
+
+      expect(result.status).toBe("completed");
+      expect(result.id).toBe(sessionId);
+
+      const recordedInvocation = JSON.parse(
+        await readFile(recordPath, "utf-8"),
+      ) as CompactCliInvocationRecord;
+      expect(await realpath(recordedInvocation.cwd)).toBe(
+        await realpath(workspaceDir),
+      );
+      expect(recordedInvocation.argv).toEqual([
+        "compact",
+        "--workflow",
+        "wf-auto-on",
+        "--all",
+        "--markdown",
+        "--mechanical",
+      ]);
+
+      const compactedPath = join(
+        workspaceDir,
+        ".trajectories/compacted/workflow-wf-auto-on.json",
+      );
+      expect(existsSync(compactedPath)).toBe(true);
+
+      const compacted = JSON.parse(await readFile(compactedPath, "utf-8")) as {
+        sourceTrajectories: string[];
+        workflowId?: string;
+      };
+      expect(compacted.sourceTrajectories).toContain(sessionId);
+      expect(compacted.workflowId).toBe("wf-auto-on");
+    }, 60_000);
+
+    it("autoCompact: true + no workflowId => complete() succeeds without compacting", async () => {
+      expect(process.env.TRAJECTORIES_WORKFLOW_ID).toBeUndefined();
+
+      const { TrajectoryClient } = await import("../../src/sdk/client.js");
+      const client = new TrajectoryClient({
+        autoCompact: { mechanical: true },
+      });
+      await client.init();
+
+      const session = await client.start("No-workflow auto-compact task");
+      const result = await session.done("completed without workflow", 0.85);
+
+      await client.close();
+
+      expect(result.status).toBe("completed");
+
+      const compactedDir = join(tempDir, ".trajectories", "compacted");
+      if (existsSync(compactedDir)) {
+        const files = readdirSync(compactedDir);
+        const workflowFiles = files.filter((f) => f.startsWith("workflow-"));
+        expect(workflowFiles).toHaveLength(0);
+      }
+    }, 60_000);
+
+    it("autoCompact: false (default) + workflowId set => complete() does NOT compact", async () => {
+      process.env.TRAJECTORIES_WORKFLOW_ID = "wf-default-off";
+
+      const { TrajectoryClient } = await import("../../src/sdk/client.js");
+      const client = new TrajectoryClient();
+      await client.init();
+
+      const session = await client.start("Default no-compact task");
+      await session.done("done without compaction", 0.9);
+
+      await client.close();
+
+      const compactedPath = join(
+        tempDir,
+        ".trajectories/compacted/workflow-wf-default-off.json",
+      );
+      expect(existsSync(compactedPath)).toBe(false);
+    }, 60_000);
+
+    it("autoCompact degrades gracefully if compaction fails", async () => {
+      process.env.TRAJECTORIES_CLI = "/nonexistent/trail";
+      process.env.TRAJECTORIES_WORKFLOW_ID = "wf-fail";
+
+      const { TrajectoryClient } = await import("../../src/sdk/client.js");
+      const client = new TrajectoryClient({
+        autoCompact: { mechanical: true },
+      });
+      await client.init();
+
+      const session = await client.start("Graceful degradation task");
+      const sessionId = session.id;
+      const result = await session.done("should still complete", 0.8);
+
+      await client.close();
+
+      expect(result.status).toBe("completed");
+      expect(result.id).toBe(sessionId);
+
+      const completedDir = join(tempDir, ".trajectories", "completed");
+      expect(existsSync(completedDir)).toBe(true);
+      const monthDirs = readdirSync(completedDir);
+      expect(monthDirs.length).toBeGreaterThan(0);
+
+      let found = false;
+      for (const monthDir of monthDirs) {
+        const files = readdirSync(join(completedDir, monthDir));
+        if (files.some((f) => f.includes(sessionId))) {
+          found = true;
+          break;
+        }
+      }
+      expect(found).toBe(true);
+    }, 60_000);
+  });
 });
