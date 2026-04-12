@@ -32,6 +32,9 @@ export class RelayBridge {
     this.wss = new WebSocketServer({ server: httpServer, path: "/ws" });
 
     this.wss.on("connection", (ws: WebSocket) => {
+      console.log(
+        `[relay-bridge] WebSocket client connected (total: ${this.clients.size + 1})`,
+      );
       this.clients.add(ws);
 
       ws.on("message", (data: Buffer | string) => {
@@ -229,6 +232,9 @@ export class RelayBridge {
   }
 
   private broadcast(data: ServerToClientMessage): void {
+    console.log(
+      `[relay-bridge] broadcasting type=${data.type} to ${this.clients.size} clients`,
+    );
     const json = JSON.stringify(data);
     for (const client of this.clients) {
       if (client.readyState === WebSocket.OPEN) {

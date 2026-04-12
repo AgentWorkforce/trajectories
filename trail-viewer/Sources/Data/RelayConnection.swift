@@ -2,12 +2,11 @@
 //  RelayConnection.swift
 //  Trail Viewer
 //
-//  Native @Observable wrapper around AgentRelaySDK's RelayCast client.
-//  Connects directly to a broker channel, appends chat messages from channel
-//  events, and posts outbound user messages back to that channel.
+//  Plain WebSocket connection to the local trail-viewer server's /ws endpoint.
+//  Receives agent_message and typing events, populates @Observable properties
+//  that ChatStore reads.
 //
 
-import AgentRelaySDK
 import Foundation
 import Observation
 
@@ -28,612 +27,237 @@ final class RelayConnection {
 
     // MARK: - Public Properties
 
-    private(set) var state: ConnectionState {
-        get {
-            access(keyPath: \.state)
-            return stateSnapshot()
-        }
-        set {
-            setStateValue(newValue)
-        }
-    }
-
-    private(set) var messages: [ChatMessage] {
-        get {
-            access(keyPath: \.messages)
-            return messagesSnapshot()
-        }
-        set {
-            replaceMessages(with: newValue)
-        }
-    }
-
-    private(set) var typingPersonas: Set<String> {
-        get {
-            access(keyPath: \.typingPersonas)
-            return typingPersonasSnapshot()
-        }
-        set {
-            replaceTypingPersonas(with: newValue)
-        }
-    }
+    private(set) var state: ConnectionState = .disconnected
+    private(set) var messages: [ChatMessage] = []
+    private(set) var typingPersonas: Set<String> = []
 
     // MARK: - Private Properties
 
-    private let relayAPIKey: String?
-    private let relayBaseURL: URL?
+    private let wsBaseURL: URL
+    private var webSocketTask: URLSessionWebSocketTask?
+    private var reconnectAttempts = 0
+    private let maxReconnectAttempts = 8
+    private let baseReconnectDelay: TimeInterval = 1.0
+    private var isIntentionalDisconnect = false
 
-    @ObservationIgnored private let stateLock = NSLock()
-    @ObservationIgnored private let iso8601Formatter: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter
+    // MARK: - Debug Logging
+
+    private static let logFile: FileHandle? = {
+        let path = "/tmp/trail-viewer-relay.log"
+        FileManager.default.createFile(atPath: path, contents: nil)
+        return FileHandle(forWritingAtPath: path)
     }()
-    @ObservationIgnored private let fractionalSecondsFormatter: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter
-    }()
 
-    @ObservationIgnored private var _state: ConnectionState = .disconnected
-    @ObservationIgnored private var _messages: [ChatMessage] = []
-    @ObservationIgnored private var _typingPersonas: Set<String> = []
-
-    @ObservationIgnored private var relayCast: RelayCast?
-    @ObservationIgnored private var relayChannel: Channel?
-    @ObservationIgnored private var currentChannelName: String?
-    @ObservationIgnored private var connectionToken = UUID()
-    @ObservationIgnored private var connectTask: Task<Void, Never>?
-    @ObservationIgnored private var eventTask: Task<Void, Never>?
-    @ObservationIgnored private var connectionStateTask: Task<Void, Never>?
-    @ObservationIgnored private var pendingOutboundMessages: [String] = []
-    @ObservationIgnored private var isFlushingOutboundMessages = false
-    @ObservationIgnored private var isIntentionalDisconnect = false
+    private func log(_ message: String) {
+        let line = "[RelayConnection] \(message)\n"
+        NSLog("%@", line)
+        if let data = line.data(using: .utf8) {
+            Self.logFile?.seekToEndOfFile()
+            Self.logFile?.write(data)
+        }
+    }
 
     // MARK: - Init
 
-    init(
-        relayAPIKey: String? = ProcessInfo.processInfo.environment["RELAY_API_KEY"],
-        relayBaseURL: URL? = ProcessInfo.processInfo.environment["RELAY_BASE_URL"].flatMap(URL.init(string:))
-    ) {
-        self.relayAPIKey = relayAPIKey?.trimmingCharacters(in: .whitespacesAndNewlines)
-        self.relayBaseURL = relayBaseURL
-    }
-
-    deinit {
-        connectTask?.cancel()
-        eventTask?.cancel()
-        connectionStateTask?.cancel()
-
-        if let relay = relaySnapshot() {
-            Task {
-                await relay.disconnect()
-            }
-        }
+    init(wsBaseURL: URL = AppConfiguration.wsBaseURL) {
+        self.wsBaseURL = wsBaseURL
     }
 
     // MARK: - Connect
 
-    func connect(channel channelName: String) {
-        let trimmedChannel = channelName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedChannel.isEmpty else {
-            setStateValue(.failed)
-            return
-        }
+    func connect() {
+        isIntentionalDisconnect = false
+        reconnectAttempts = 0
+        openWebSocket()
+    }
 
-        guard let relayAPIKey, !relayAPIKey.isEmpty else {
-            print("[RelayConnection] Missing RELAY_API_KEY; cannot connect to relay broker.")
-            setStateValue(.failed)
-            return
-        }
-
-        if shouldReuseConnection(for: trimmedChannel) {
-            return
-        }
-
-        let token = UUID()
-        let previousRelay = replaceConnectionStateForNewChannel(trimmedChannel, token: token)
-        replaceTypingPersonas(with: [])
-        setStateValue(.connecting)
-
-        if let previousRelay {
-            Task {
-                await previousRelay.disconnect()
-            }
-        }
-
-        let relay = RelayCast(apiKey: relayAPIKey, baseURL: relayBaseURL)
-        let channel = relay.channel(trimmedChannel)
-        storeRelay(relay, channel: channel, token: token)
-
-        let connectionStateTask = Task { [weak self] in
-            for await change in relay.connectionState {
-                self?.handleConnectionStateChange(change, token: token)
-            }
-        }
-
-        let eventTask = Task { [weak self] in
-            for await event in channel.events {
-                self?.handleChannelEvent(event, token: token)
-            }
-        }
-
-        storeTasks(eventTask: eventTask, connectionStateTask: connectionStateTask, token: token)
-
-        let connectTask = Task { [weak self] in
-            do {
-                try await channel.subscribe()
-                self?.handleConnectionEstablished(token: token)
-            } catch {
-                self?.handleConnectionFailure(error, token: token)
-                await relay.disconnect()
-            }
-        }
-
-        storeConnectTask(connectTask, token: token)
+    /// Connect with channel/apiKey parameters (ignored — kept for ChatStore compat).
+    /// The plain WebSocket to /ws receives ALL broadcasts regardless of channel.
+    func connect(channel: String, apiKey: String? = nil) {
+        log("connect(channel=\(channel))")
+        connect()
     }
 
     // MARK: - Disconnect
 
     func disconnect() {
-        let relay = clearConnectionState(intentionalDisconnect: true)
-        replaceTypingPersonas(with: [])
-        setStateValue(.disconnected)
-
-        if let relay {
-            Task {
-                await relay.disconnect()
-            }
-        }
+        isIntentionalDisconnect = true
+        webSocketTask?.cancel(with: .goingAway, reason: nil)
+        webSocketTask = nil
+        state = .disconnected
+        typingPersonas = []
     }
 
     // MARK: - Send
 
     func send(sessionId: String, text: String, personas: [String]) {
-        _ = sessionId
-        _ = personas
+        let payload: [String: Any] = [
+            "type": "send_message",
+            "sessionId": sessionId,
+            "message": text,
+            "personas": personas,
+        ]
+        guard let data = try? JSONSerialization.data(withJSONObject: payload),
+              let json = String(data: data, encoding: .utf8) else { return }
 
-        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedText.isEmpty else { return }
-
-        let channelName = enqueueMessage(trimmedText)
-        guard let channelName else {
-            print("[RelayConnection] Ignoring outbound chat message because no relay channel is active.")
-            return
+        webSocketTask?.send(.string(json)) { [weak self] error in
+            if let error {
+                self?.log("Send error: \(error.localizedDescription)")
+            }
         }
-
-        let state = stateSnapshot()
-        if relayChannelSnapshot() == nil || state == .disconnected || state == .failed {
-            connect(channel: channelName)
-            return
-        }
-
-        flushPendingMessagesIfPossible()
     }
 
     // MARK: - Clear
 
     func clearMessages() {
-        replaceMessages(with: [])
-        replaceTypingPersonas(with: [])
+        messages = []
+        typingPersonas = []
     }
 
-    // MARK: - Connection Helpers
+    // MARK: - WebSocket Lifecycle
 
-    private func shouldReuseConnection(for channelName: String) -> Bool {
-        withStateLock {
-            currentChannelName == channelName &&
-            relayCast != nil &&
-            (_state == .connecting || _state == .connected || _state == .reconnecting)
+    private func openWebSocket() {
+        state = .connecting
+
+        var components = URLComponents(url: wsBaseURL, resolvingAgainstBaseURL: false)!
+        switch components.scheme {
+        case "http": components.scheme = "ws"
+        case "https": components.scheme = "wss"
+        default: break
         }
-    }
+        components.path = "/ws"
 
-    private func replaceConnectionStateForNewChannel(_ channelName: String, token: UUID) -> RelayCast? {
-        withStateLock {
-            let previousRelay = relayCast
-            connectTask?.cancel()
-            eventTask?.cancel()
-            connectionStateTask?.cancel()
-            connectTask = nil
-            eventTask = nil
-            connectionStateTask = nil
-            relayCast = nil
-            relayChannel = nil
-            currentChannelName = channelName
-            connectionToken = token
-            isFlushingOutboundMessages = false
-            isIntentionalDisconnect = false
-            return previousRelay
-        }
-    }
-
-    private func clearConnectionState(intentionalDisconnect: Bool) -> RelayCast? {
-        withStateLock {
-            let relay = relayCast
-            connectTask?.cancel()
-            eventTask?.cancel()
-            connectionStateTask?.cancel()
-            connectTask = nil
-            eventTask = nil
-            connectionStateTask = nil
-            relayCast = nil
-            relayChannel = nil
-            currentChannelName = nil
-            connectionToken = UUID()
-            pendingOutboundMessages = []
-            isFlushingOutboundMessages = false
-            isIntentionalDisconnect = intentionalDisconnect
-            return relay
-        }
-    }
-
-    private func storeRelay(_ relay: RelayCast, channel: Channel, token: UUID) {
-        withStateLock {
-            guard connectionToken == token else { return }
-            relayCast = relay
-            relayChannel = channel
-        }
-    }
-
-    private func storeTasks(eventTask: Task<Void, Never>, connectionStateTask: Task<Void, Never>, token: UUID) {
-        let shouldStore = withStateLock {
-            guard connectionToken == token else { return false }
-            self.eventTask = eventTask
-            self.connectionStateTask = connectionStateTask
-            return true
-        }
-
-        guard shouldStore else {
-            eventTask.cancel()
-            connectionStateTask.cancel()
-            return
-        }
-    }
-
-    private func storeConnectTask(_ connectTask: Task<Void, Never>, token: UUID) {
-        let shouldStore = withStateLock {
-            guard connectionToken == token else { return false }
-            self.connectTask = connectTask
-            return true
-        }
-
-        guard shouldStore else {
-            connectTask.cancel()
-            return
-        }
-    }
-
-    private func handleConnectionEstablished(token: UUID) {
-        guard isCurrentConnection(token) else { return }
-
-        withStateLock {
-            connectTask = nil
-        }
-
-        setStateValue(.connected)
-        flushPendingMessagesIfPossible()
-    }
-
-    private func handleConnectionFailure(_ error: Error, token: UUID) {
-        guard isCurrentConnection(token) else { return }
-
-        print("[RelayConnection] Failed to subscribe to relay channel: \(error.localizedDescription)")
-
-        withStateLock {
-            connectTask = nil
-            eventTask?.cancel()
-            connectionStateTask?.cancel()
-            eventTask = nil
-            connectionStateTask = nil
-            relayCast = nil
-            relayChannel = nil
-            isFlushingOutboundMessages = false
-        }
-
-        if !isIntentionalDisconnectSnapshot() {
-            setStateValue(.failed)
-        }
-    }
-
-    private func handleConnectionStateChange(_ change: ConnectionStateChange, token: UUID) {
-        guard isCurrentConnection(token) else { return }
-
-        switch change {
-        case .connected:
-            setStateValue(.connected)
-            flushPendingMessagesIfPossible()
-        case .disconnected:
-            if isIntentionalDisconnectSnapshot() {
-                setStateValue(.disconnected)
-            } else {
-                setStateValue(.reconnecting)
-            }
-        case .reconnecting(attempt: _):
-            setStateValue(.reconnecting)
-        }
-    }
-
-    private func relaySnapshot() -> RelayCast? {
-        withStateLock { relayCast }
-    }
-
-    private func relayChannelSnapshot() -> Channel? {
-        withStateLock { relayChannel }
-    }
-
-    private func isCurrentConnection(_ token: UUID) -> Bool {
-        withStateLock { connectionToken == token }
-    }
-
-    private func isIntentionalDisconnectSnapshot() -> Bool {
-        withStateLock { isIntentionalDisconnect }
-    }
-
-    // MARK: - Outbound Queue
-
-    private func enqueueMessage(_ message: String) -> String? {
-        withStateLock {
-            pendingOutboundMessages.append(message)
-            return currentChannelName
-        }
-    }
-
-    private func flushPendingMessagesIfPossible() {
-        let outbound: (message: String, channel: Channel)? = withStateLock {
-            guard !isFlushingOutboundMessages,
-                  _state == .connected,
-                  let relayChannel,
-                  !pendingOutboundMessages.isEmpty else {
-                return nil
-            }
-
-            isFlushingOutboundMessages = true
-            return (pendingOutboundMessages.removeFirst(), relayChannel)
-        }
-
-        guard let outbound else { return }
-
-        Task { [weak self] in
-            do {
-                try await outbound.channel.post(outbound.message)
-                self?.handleOutboundDeliverySuccess()
-            } catch {
-                self?.handleOutboundDeliveryFailure(outbound.message, error: error)
-            }
-        }
-    }
-
-    private func handleOutboundDeliverySuccess() {
-        withStateLock {
-            isFlushingOutboundMessages = false
-        }
-
-        flushPendingMessagesIfPossible()
-    }
-
-    private func handleOutboundDeliveryFailure(_ message: String, error: Error) {
-        print("[RelayConnection] Failed to post channel message: \(error.localizedDescription)")
-
-        let channelName = withStateLock {
-            pendingOutboundMessages.insert(message, at: 0)
-            isFlushingOutboundMessages = false
-            return currentChannelName
-        }
-
-        guard let channelName else {
-            setStateValue(.failed)
+        guard let url = components.url else {
+            log("Invalid WebSocket URL")
+            state = .failed
             return
         }
 
-        setStateValue(.reconnecting)
-        connect(channel: channelName)
+        log("Opening WebSocket to \(url)")
+        let task = URLSession.shared.webSocketTask(with: url)
+        self.webSocketTask = task
+        task.resume()
+        state = .connected
+        reconnectAttempts = 0
+        log("Connected")
+        receiveNextMessage()
     }
 
-    // MARK: - Event Parsing
-
-    private func handleChannelEvent(_ event: RelayChannelEvent, token: UUID) {
-        guard isCurrentConnection(token) else { return }
-
-        switch parseChannelEventBody(event.body) {
-        case .typing(let persona, let isTyping):
-            updateTypingPersona(persona, isTyping: isTyping)
-        case .agentMessage(let from, let content, let persona, let timestamp):
-            let sender = from ?? event.from
-            appendMessage(
-                from: sender,
-                content: content,
-                persona: persona,
-                timestamp: timestamp ?? event.timestamp
-            )
-            updateTypingPersona(persona ?? sender, isTyping: false)
-        case .ignore:
-            break
-        case .none:
-            appendMessage(from: event.from, content: event.body, persona: nil, timestamp: event.timestamp)
-            updateTypingPersona(event.from, isTyping: false)
-        }
-    }
-
-    private func parseChannelEventBody(_ body: String) -> ParsedChannelEventBody? {
-        guard let data = body.data(using: .utf8),
-              let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            return nil
-        }
-
-        let type = stringValue(payload["type"])
-        let content = stringValue(payload["content"])
-            ?? stringValue(payload["message"])
-            ?? stringValue(payload["text"])
-            ?? stringValue(payload["body"])
-        let timestamp = stringValue(payload["timestamp"]).flatMap(parsedDate(from:))
-
-        switch type {
-        case "typing":
-            guard let persona = personaID(from: payload["persona"]) ?? stringValue(payload["from"]) else {
-                return .ignore
+    private func receiveNextMessage() {
+        webSocketTask?.receive { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success(let message):
+                switch message {
+                case .string(let text):
+                    self.handleTextMessage(text)
+                case .data(let data):
+                    if let text = String(data: data, encoding: .utf8) {
+                        self.handleTextMessage(text)
+                    }
+                @unknown default:
+                    break
+                }
+                self.receiveNextMessage()
+            case .failure(let error):
+                if !self.isIntentionalDisconnect {
+                    self.log("WebSocket error: \(error.localizedDescription)")
+                    self.scheduleReconnect()
+                }
             }
-
-            let isTyping = boolValue(payload["isTyping"]) ?? boolValue(payload["is_typing"]) ?? true
-            return .typing(persona: persona, isTyping: isTyping)
-
-        case "agent_message":
-            guard let content else { return .ignore }
-            let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmedContent.isEmpty else { return .ignore }
-
-            return .agentMessage(
-                from: stringValue(payload["from"]),
-                content: trimmedContent,
-                persona: personaID(from: payload["persona"]),
-                timestamp: timestamp
-            )
-
-        case .none:
-            guard let content else { return .ignore }
-            let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmedContent.isEmpty else { return .ignore }
-
-            return .agentMessage(
-                from: stringValue(payload["from"]),
-                content: trimmedContent,
-                persona: personaID(from: payload["persona"]),
-                timestamp: timestamp
-            )
-
-        default:
-            return .ignore
         }
     }
 
-    private func stringValue(_ value: Any?) -> String? {
-        if let string = value as? String {
-            return string
+    private func scheduleReconnect() {
+        guard !isIntentionalDisconnect else { return }
+        guard reconnectAttempts < maxReconnectAttempts else {
+            log("Max reconnect attempts reached")
+            state = .failed
+            return
         }
 
-        if let dictionary = value as? [String: Any] {
-            return dictionary["id"] as? String
-        }
+        state = .reconnecting
+        reconnectAttempts += 1
+        let delay = min(baseReconnectDelay * pow(2.0, Double(reconnectAttempts - 1)), 30.0)
+        log("Reconnecting in \(delay)s (attempt \(reconnectAttempts))")
 
-        return nil
+        Task {
+            try? await Task.sleep(for: .seconds(delay))
+            guard !self.isIntentionalDisconnect else { return }
+            self.openWebSocket()
+        }
     }
 
-    private func boolValue(_ value: Any?) -> Bool? {
-        if let bool = value as? Bool {
-            return bool
+    // MARK: - Message Parsing
+
+    private func handleTextMessage(_ text: String) {
+        guard let data = text.data(using: .utf8),
+              let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let type = payload["type"] as? String else {
+            return
         }
 
-        if let number = value as? NSNumber {
-            return number.boolValue
+        Task { @MainActor in
+            switch type {
+            case "agent_message":
+                self.handleAgentMessage(payload)
+            case "typing":
+                self.handleTypingEvent(payload)
+            case "error":
+                let message = payload["message"] as? String ?? "Unknown error"
+                self.log("Server error: \(message)")
+            default:
+                break
+            }
         }
-
-        return nil
     }
 
-    private func personaID(from value: Any?) -> String? {
-        if let string = value as? String {
-            return string
-        }
+    private func handleAgentMessage(_ payload: [String: Any]) {
+        let from = payload["from"] as? String ?? "agent"
+        guard let content = payload["content"] as? String,
+              !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
-        if let dictionary = value as? [String: Any] {
-            return dictionary["id"] as? String
-        }
-
-        return nil
-    }
-
-    // MARK: - Message Helpers
-
-    private func appendMessage(
-        from sender: String,
-        content: String,
-        persona: String?,
-        timestamp: Date
-    ) {
-        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedContent.isEmpty else { return }
-
-        var updatedMessages = messagesSnapshot()
-        updatedMessages.append(
-            ChatMessage(
-                from: sender,
-                content: trimmedContent,
-                persona: persona,
-                timestamp: timestamp
-            )
-        )
-        replaceMessages(with: updatedMessages)
-    }
-
-    private func updateTypingPersona(_ personaID: String, isTyping: Bool) {
-        let trimmedPersonaID = personaID.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedPersonaID.isEmpty else { return }
-
-        var updatedTypingPersonas = typingPersonasSnapshot()
-        if isTyping {
-            updatedTypingPersonas.insert(trimmedPersonaID)
+        // Extract persona ID from persona object or from field
+        let personaID: String?
+        if let personaObj = payload["persona"] as? [String: Any] {
+            personaID = personaObj["id"] as? String
         } else {
-            updatedTypingPersonas.remove(trimmedPersonaID)
+            personaID = nil
         }
-        replaceTypingPersonas(with: updatedTypingPersonas)
-    }
 
-    private func parsedDate(from timestamp: String?) -> Date? {
-        guard let timestamp else { return nil }
-        if let date = fractionalSecondsFormatter.date(from: timestamp) {
-            return date
+        let timestamp: Date
+        if let ts = payload["timestamp"] as? String {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            timestamp = formatter.date(from: ts) ?? Date()
+        } else {
+            timestamp = Date()
         }
-        return iso8601Formatter.date(from: timestamp)
-    }
 
-    // MARK: - Snapshot Helpers
+        log("Agent message from=\(from) persona=\(personaID ?? "nil") content=\(content.prefix(60))")
 
-    private func stateSnapshot() -> ConnectionState {
-        withStateLock { _state }
-    }
+        messages.append(ChatMessage(
+            from: from,
+            content: content,
+            persona: personaID,
+            timestamp: timestamp
+        ))
 
-    private func messagesSnapshot() -> [ChatMessage] {
-        withStateLock { _messages }
-    }
-
-    private func typingPersonasSnapshot() -> Set<String> {
-        withStateLock { _typingPersonas }
-    }
-
-    private func setStateValue(_ newValue: ConnectionState) {
-        withMutation(keyPath: \.state) {
-            withStateLock {
-                _state = newValue
-            }
+        // Clear typing for this persona
+        if let pid = personaID {
+            typingPersonas.remove(pid)
         }
+        typingPersonas.remove(from)
     }
 
-    private func replaceMessages(with newValue: [ChatMessage]) {
-        withMutation(keyPath: \.messages) {
-            withStateLock {
-                _messages = newValue
-            }
+    private func handleTypingEvent(_ payload: [String: Any]) {
+        guard let persona = payload["persona"] as? String else { return }
+        let isTyping = payload["isTyping"] as? Bool ?? true
+
+        if isTyping {
+            typingPersonas.insert(persona)
+        } else {
+            typingPersonas.remove(persona)
         }
     }
-
-    private func replaceTypingPersonas(with newValue: Set<String>) {
-        withMutation(keyPath: \.typingPersonas) {
-            withStateLock {
-                _typingPersonas = newValue
-            }
-        }
-    }
-
-    private func withStateLock<T>(_ work: () -> T) -> T {
-        stateLock.lock()
-        defer { stateLock.unlock() }
-        return work()
-    }
-}
-
-// MARK: - Event Payloads
-
-private enum ParsedChannelEventBody {
-    case agentMessage(from: String?, content: String, persona: String?, timestamp: Date?)
-    case typing(persona: String, isTyping: Bool)
-    case ignore
 }

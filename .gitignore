@@ -30,4 +30,5 @@ npm-debug.log*
 
 # Trajectories - don't commit active work
 .agent-relay
+.relay
 trail-viewer/.build

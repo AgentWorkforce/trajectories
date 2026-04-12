@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "lastUpdated": "2026-04-07T21:25:01.585Z",
+  "lastUpdated": "2026-04-08T18:28:50.855Z",
   "trajectories": {
     "traj_cuuwpd2q5rr4": {
       "title": "Implement Agent Trace integration (PR #8)",
@@ -611,11 +611,60 @@
       "completedAt": "2026-04-07T20:00:37.002Z",
       "path": "../../.trajectories/completed/traj_1775592035208_9e1d2cdd.json"
     },
-    "trace_imxymv6f8x4b": {
-      "title": "trace_imxymv6f8x4b",
+    "traj_1775647089663_47b8475f": {
+      "title": "98-trail-viewer-improvements-workflow",
       "status": "completed",
-      "startedAt": "2026-04-07T21:25:01.581Z",
-      "path": "../../.trajectories/completed/2026-01/traj_cuuwpd2q5rr4.trace.json"
+      "startedAt": "2026-04-08T11:18:09.663Z",
+      "completedAt": "2026-04-08T11:41:45.850Z",
+      "path": "../../.trajectories/completed/traj_1775647089663_47b8475f.json"
+    },
+    "traj_1775654935435_4c3e7705": {
+      "title": "99-chat-feature-fix-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-08T13:28:55.435Z",
+      "completedAt": "2026-04-08T13:35:09.924Z",
+      "path": "../../.trajectories/completed/traj_1775654935435_4c3e7705.json"
+    },
+    "traj_1775656221707_fbafbb4c": {
+      "title": "99-chat-feature-fix-workflow",
+      "status": "active",
+      "startedAt": "2026-04-08T13:50:21.707Z",
+      "path": "../../.trajectories/active/traj_1775656221707_fbafbb4c.json"
+    },
+    "traj_1775656444666_4554590c": {
+      "title": "99-chat-feature-fix-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-08T13:54:04.666Z",
+      "completedAt": "2026-04-08T13:54:28.664Z",
+      "path": "../../.trajectories/completed/traj_1775656444666_4554590c.json"
+    },
+    "traj_1775656574638_d09f8bad": {
+      "title": "99-chat-feature-fix-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-08T13:56:14.638Z",
+      "completedAt": "2026-04-08T13:56:19.784Z",
+      "path": "../../.trajectories/completed/traj_1775656574638_d09f8bad.json"
+    },
+    "traj_1775660026655_968f3c47": {
+      "title": "100-chat-websocket-fix-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-08T14:53:46.655Z",
+      "completedAt": "2026-04-08T15:02:38.542Z",
+      "path": "../../.trajectories/completed/traj_1775660026655_968f3c47.json"
+    },
+    "traj_1775661295787_9aa27b54": {
+      "title": "101-chat-end-to-end-fix-workflow",
+      "status": "abandoned",
+      "startedAt": "2026-04-08T15:14:55.787Z",
+      "completedAt": "2026-04-08T15:23:16.963Z",
+      "path": "../../.trajectories/completed/traj_1775661295787_9aa27b54.json"
+    },
+    "traj_1775662772237_c9a1c6cf": {
+      "title": "101-chat-end-to-end-fix-workflow",
+      "status": "completed",
+      "startedAt": "2026-04-08T15:39:32.237Z",
+      "completedAt": "2026-04-08T15:44:51.006Z",
+      "path": "../../.trajectories/completed/traj_1775662772237_c9a1c6cf.json"
     }
   }
 }

@@ -51,7 +51,7 @@ export function generateChapterId(): string {
  * @returns True if valid format
  */
 export function isValidTrajectoryId(id: string): boolean {
-  return /^traj_[a-z0-9]{12}$/.test(id);
+  return /^traj_[a-z0-9_]+$/.test(id);
 }
 
 /**

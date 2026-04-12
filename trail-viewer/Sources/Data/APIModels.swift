@@ -72,6 +72,8 @@ struct StartChatResponse: Codable {
     let sessionId: String
     /// Broker channel returned by the chat session API.
     let channel: String
+    /// Relay API key for connecting to the broker channel.
+    let relayApiKey: String?
 }
 
 // MARK: - APIResponse

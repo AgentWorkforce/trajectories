@@ -15,15 +15,15 @@ actor APIClient {
 
         // The API returns ISO 8601 dates with fractional seconds (e.g. "2026-02-19T08:46:34.162Z")
         // which the default .iso8601 strategy doesn't handle.
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let isoFallback = ISO8601DateFormatter()
-        isoFallback.formatOptions = [.withInternetDateTime]
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             let dateString = try container.decode(String.self)
-            if let date = isoFormatter.date(from: dateString) { return date }
-            if let date = isoFallback.date(from: dateString) { return date }
+            let primary = ISO8601DateFormatter()
+            primary.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = primary.date(from: dateString) { return date }
+            let fallback = ISO8601DateFormatter()
+            fallback.formatOptions = [.withInternetDateTime]
+            if let date = fallback.date(from: dateString) { return date }
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode date: \(dateString)")
         }
 

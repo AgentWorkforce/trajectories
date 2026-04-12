@@ -1,0 +1,40 @@
+{
+  "id": "traj_1775656221707_fbafbb4c",
+  "version": 1,
+  "task": {
+    "title": "99-chat-feature-fix-workflow",
+    "source": {
+      "system": "workflow-runner",
+      "id": "ae7d551012de55d399df2fe4"
+    }
+  },
+  "status": "active",
+  "startedAt": "2026-04-08T13:50:21.707Z",
+  "agents": [
+    {
+      "name": "orchestrator",
+      "role": "workflow-runner",
+      "joinedAt": "2026-04-08T13:50:21.707Z"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "ch_171c7c8a",
+      "title": "Planning",
+      "agentName": "orchestrator",
+      "startedAt": "2026-04-08T13:50:21.707Z",
+      "events": [
+        {
+          "ts": 1775656221707,
+          "type": "note",
+          "content": "Purpose: Fix chat feature end-to-end: server routes, Swift models, relay SDK integration"
+        },
+        {
+          "ts": 1775656221707,
+          "type": "note",
+          "content": "Approach: 10-step dag workflow — Parsed 10 steps, 3 parallel tracks, 7 dependent steps, DAG validated, no cycles"
+        }
+      ]
+    }
+  ]
+}

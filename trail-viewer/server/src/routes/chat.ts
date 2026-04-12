@@ -45,6 +45,7 @@ export function createChatRoutes(
         {
           session_id: sessionId,
           channel: chatSession.channel,
+          relay_api_key: chatSession.relayApiKey ?? "",
         },
         200,
       );

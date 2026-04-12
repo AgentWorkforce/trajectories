@@ -70,7 +70,9 @@ class ChatStore {
                 personas: Array(activePersonas)
             )
             chatSessionId = response.sessionId
-            relayConnection.connect(channel: response.channel)
+            NSLog("[ChatStore] start response: sessionId=%@ channel=%@ apiKey=%@",
+                  response.sessionId, response.channel, response.relayApiKey ?? "NIL")
+            relayConnection.connect(channel: response.channel, apiKey: response.relayApiKey)
             sessionState = .active
         } catch let apiError as APIError {
             sessionState = .error

@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "relay",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/AgentWorkforce/relay.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "65ad5431af04b5b2859cc4497748ac6809c9632a"
+      }
+    }
+  ],
+  "version" : 2
+}

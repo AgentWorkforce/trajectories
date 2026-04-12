@@ -104,31 +104,33 @@ export class TrajectoryService {
       Object.assign(allNewEntries, result.entries);
     }
 
-    if (discovered > 0) {
-      // Read existing index and merge
-      let index: {
-        version: number;
-        lastUpdated: string;
-        trajectories: Record<string, unknown>;
+    // Read existing index
+    let index: {
+      version: number;
+      lastUpdated: string;
+      trajectories: Record<string, unknown>;
+    };
+    try {
+      const content = await readFile(indexPath, "utf-8");
+      index = JSON.parse(content);
+    } catch {
+      index = {
+        version: 1,
+        lastUpdated: new Date().toISOString(),
+        trajectories: {},
       };
-      try {
-        const content = await readFile(indexPath, "utf-8");
-        index = JSON.parse(content);
-      } catch {
-        index = {
-          version: 1,
-          lastUpdated: new Date().toISOString(),
-          trajectories: {},
-        };
-      }
+    }
 
-      // Remove any trace_ entries that shouldn't be in the index
-      for (const key of Object.keys(index.trajectories)) {
-        if (key.startsWith("trace_")) {
-          delete index.trajectories[key];
-        }
+    // Remove any trace_ entries that shouldn't be in the index
+    let cleaned = false;
+    for (const key of Object.keys(index.trajectories)) {
+      if (key.startsWith("trace_")) {
+        delete index.trajectories[key];
+        cleaned = true;
       }
+    }
 
+    if (discovered > 0 || cleaned) {
       Object.assign(index.trajectories, allNewEntries);
       index.lastUpdated = new Date().toISOString();
       const { writeFile: writeFileAsync } = await import("node:fs/promises");
@@ -192,6 +194,7 @@ export class TrajectoryService {
         Object.assign(newEntries, sub.entries);
       } else if (
         entry.name.endsWith(".json") &&
+        !entry.name.includes(".trace.json") &&
         entry.name.startsWith("traj_") &&
         !entry.name.startsWith("trace_")
       ) {
