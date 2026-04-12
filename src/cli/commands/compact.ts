@@ -55,6 +55,7 @@ interface CompactedTrajectory extends CompactedTrajectoryMetadata {
   decisionGroups: DecisionGroup[];
   keyLearnings: string[];
   keyFindings: string[];
+  workflowId?: string;
   narrative?: string;
   decisions?: LLMCompactedOutput["decisions"];
   conventions?: LLMCompactedOutput["conventions"];
@@ -78,6 +79,7 @@ interface CompactCommandOptions {
   since?: string;
   until?: string;
   ids?: string;
+  workflow?: string;
   pr?: string;
   branch?: string;
   commits?: string;
@@ -112,6 +114,10 @@ export function registerCompactCommand(program: Command): void {
       "Include trajectories until this date (ISO format)",
     )
     .option("--ids <ids>", "Comma-separated list of trajectory IDs to compact")
+    .option(
+      "--workflow <id>",
+      "Compact trajectories with the specified workflow ID",
+    )
     .option("--pr <number>", "Compact trajectories associated with a PR number")
     .option(
       "--branch <name>",
@@ -141,6 +147,7 @@ export function registerCompactCommand(program: Command): void {
           options.all ||
           options.since ||
           options.ids ||
+          options.workflow ||
           options.pr ||
           options.branch ||
           options.commits
@@ -160,7 +167,10 @@ export function registerCompactCommand(program: Command): void {
       const provider = await resolveProvider(config);
       const useLLM = shouldUseLLM(options, provider !== null);
       const markdownEnabled = options.markdown !== false;
-      const mechanicalCompacted = compactTrajectories(trajectories);
+      const mechanicalCompacted = compactTrajectories(
+        trajectories,
+        options.workflow,
+      );
 
       if (!useLLM || provider === null) {
         if (options.llm && provider === null && !options.mechanical) {
@@ -176,7 +186,8 @@ export function registerCompactCommand(program: Command): void {
         }
 
         const outputPath =
-          options.output || getDefaultOutputPath(mechanicalCompacted);
+          options.output ||
+          getDefaultOutputPath(mechanicalCompacted, options.workflow);
         saveCompactionArtifacts(
           mechanicalCompacted,
           outputPath,
@@ -209,7 +220,7 @@ export function registerCompactCommand(program: Command): void {
       );
 
       if (options.dryRun) {
-        printLLMDryRun(llmPlan, config.model);
+        printLLMDryRun(llmPlan, config.model, options.workflow);
         return;
       }
 
@@ -238,7 +249,8 @@ export function registerCompactCommand(program: Command): void {
         ...mergedCompaction,
       };
 
-      const outputPath = options.output || getDefaultOutputPath(compacted);
+      const outputPath =
+        options.output || getDefaultOutputPath(compacted, options.workflow);
       saveCompactionArtifacts(compacted, outputPath, markdownEnabled);
       await markTrajectoriesAsCompacted(trajectories, compacted.id);
 
@@ -256,6 +268,7 @@ async function loadTrajectories(options: {
   since?: string;
   until?: string;
   ids?: string;
+  workflow?: string;
   pr?: string;
   branch?: string;
   commits?: string;
@@ -334,6 +347,11 @@ async function loadTrajectories(options: {
       const trajectory = await storage.get(summary.id);
       if (trajectory) {
         seenIds.add(summary.id);
+
+        // Filter by workflow if specified
+        if (options.workflow && trajectory.workflowId !== options.workflow) {
+          continue;
+        }
 
         // Filter by PR if specified
         if (options.pr) {
@@ -503,7 +521,10 @@ function parseRelativeDate(input: string): Date {
   return new Date(input);
 }
 
-function compactTrajectories(trajectories: Trajectory[]): CompactedTrajectory {
+function compactTrajectories(
+  trajectories: Trajectory[],
+  workflowId?: string,
+): CompactedTrajectory {
   const allDecisions: Array<{
     decision: Decision;
     fromTrajectory: string;
@@ -590,6 +611,7 @@ function compactTrajectories(trajectories: Trajectory[]): CompactedTrajectory {
     version: 1,
     type: "compacted",
     compactedAt: new Date().toISOString(),
+    workflowId,
     sourceTrajectories: trajectories.map((t) => t.id),
     dateRange: {
       start: minDate.toISOString(),
@@ -735,6 +757,7 @@ function estimateTokens(text: string): number {
 function printLLMDryRun(
   plan: LLMCompactionPlan,
   model: string | undefined,
+  workflowId?: string,
 ): void {
   console.log("=== DRY RUN - LLM Prompt Preview ===\n");
   console.log(
@@ -742,6 +765,9 @@ function printLLMDryRun(
   );
   if (model) {
     console.log(`Configured model: ${model}`);
+  }
+  if (workflowId) {
+    console.log(`Workflow: ${workflowId}`);
   }
   if (plan.focusAreas.length > 0) {
     console.log(`Focus: ${plan.focusAreas.join(", ")}`);
@@ -771,12 +797,19 @@ function getProviderLabel(provider: CompactionLLM): string {
   return "LLM";
 }
 
-function getDefaultOutputPath(compacted: CompactedTrajectory): string {
+function getDefaultOutputPath(
+  compacted: CompactedTrajectory,
+  workflowId?: string,
+): string {
   const trajDir = process.env.TRAJECTORIES_DATA_DIR || ".trajectories";
   const compactedDir = join(trajDir, "compacted");
 
   if (!existsSync(compactedDir)) {
     mkdirSync(compactedDir, { recursive: true });
+  }
+
+  if (workflowId) {
+    return join(compactedDir, `workflow-${workflowId}.json`);
   }
 
   const dateStr = new Date().toISOString().slice(0, 10);
@@ -847,6 +880,7 @@ function renderCompactionMarkdown(compacted: CompactedTrajectory): string {
     "",
     "## Summary",
     `- Sessions: ${compacted.sourceTrajectories.length}`,
+    ...(compacted.workflowId ? [`- Workflow: ${compacted.workflowId}`] : []),
     `- Decisions: ${compacted.summary.totalDecisions}`,
     `- Events: ${compacted.summary.totalEvents}`,
     `- Agents: ${compacted.summary.uniqueAgents.join(", ") || "None"}`,
@@ -866,6 +900,9 @@ function renderCompactionMarkdown(compacted: CompactedTrajectory): string {
 function printCompactedSummary(compacted: CompactedTrajectory): void {
   console.log("=== Compacted Trajectory Summary ===\n");
   console.log(`ID: ${compacted.id}`);
+  if (compacted.workflowId) {
+    console.log(`Workflow: ${compacted.workflowId}`);
+  }
   console.log(`Source trajectories: ${compacted.sourceTrajectories.length}`);
   console.log(
     `Date range: ${formatDate(compacted.dateRange.start)} - ${formatDate(compacted.dateRange.end)}`,

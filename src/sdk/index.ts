@@ -31,7 +31,11 @@
  */
 
 // Client (with storage)
-export { TrajectoryClient, TrajectorySession } from "./client.js";
+export {
+  TrajectoryClient,
+  TrajectorySession,
+  compactWorkflow,
+} from "./client.js";
 export type { TrajectoryClientOptions } from "./client.js";
 
 // Builder (in-memory)

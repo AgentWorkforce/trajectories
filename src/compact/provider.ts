@@ -238,7 +238,10 @@ export class AnthropicProvider implements CompactionLLM {
   }
 }
 
-const SUPPORTED_CLIS = ["claude", "codex"] as const;
+/**
+ * Kept inline (not imported from @agent-relay/sdk) because that dep was removed in 7e9783c. When agent-relay ships new compaction-capable CLIs, add them here manually.
+ */
+const SUPPORTED_CLIS = ["claude", "codex", "gemini", "opencode"] as const;
 type SupportedCli = (typeof SUPPORTED_CLIS)[number];
 
 export class CLIProvider implements CompactionLLM {
@@ -300,6 +303,10 @@ function buildCliArgs(cli: SupportedCli): string[] {
       return ["-p", "--output-format", "text"];
     case "codex":
       return ["exec", "-q"];
+    case "gemini":
+      return ["-p"];
+    case "opencode":
+      return ["run", "--no-color"];
   }
 }
 
@@ -364,6 +371,11 @@ export async function resolveProvider(
     return null;
   }
 
+  const cliProvider = await resolveCLIProvider();
+  if (cliProvider) {
+    return cliProvider;
+  }
+
   if (process.env.OPENAI_API_KEY) {
     return new OpenAIProvider({ model });
   }
@@ -372,7 +384,7 @@ export async function resolveProvider(
     return new AnthropicProvider({ model });
   }
 
-  return resolveCLIProvider();
+  return null;
 }
 
 const CLI_SEARCH_PATHS = [
@@ -383,7 +395,23 @@ const CLI_SEARCH_PATHS = [
 ];
 
 async function resolveCLIProvider(): Promise<CLIProvider | null> {
-  for (const cli of SUPPORTED_CLIS) {
+  const requestedCli = process.env.TRAJECTORIES_LLM_CLI?.trim().toLowerCase();
+  const clisToTry = (() => {
+    if (!requestedCli) {
+      return SUPPORTED_CLIS;
+    }
+
+    if ((SUPPORTED_CLIS as readonly string[]).includes(requestedCli)) {
+      return [requestedCli as SupportedCli];
+    }
+
+    console.warn(
+      `[trajectories] Unsupported TRAJECTORIES_LLM_CLI value "${requestedCli}", falling back to auto-detect`,
+    );
+    return SUPPORTED_CLIS;
+  })();
+
+  for (const cli of clisToTry) {
     const path = await findBinary(cli);
     if (path) {
       return new CLIProvider(cli, path);
