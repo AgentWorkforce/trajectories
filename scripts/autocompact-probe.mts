@@ -39,7 +39,7 @@ async function main() {
   await session.done("autocompact probe complete", 0.95);
   await client.close();
 
-  console.log("PROBE_OK id=" + session.id);
+  console.log(`PROBE_OK id=${session.id}`);
 }
 
 main().catch((err) => {

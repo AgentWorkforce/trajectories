@@ -117,7 +117,17 @@ function readNumber(value: unknown): number | undefined {
     return undefined;
   }
 
-  const parsed = Number(value);
+  // Treat empty / whitespace-only strings as unset, matching readString's
+  // behavior. Otherwise `Number("") === 0` would silently override the
+  // default maxInputTokens / maxOutputTokens (nullish coalescing does NOT
+  // fall back for 0), truncating serialized trajectories to an empty
+  // string or sending max_tokens: 0 to the LLM API.
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+
+  const parsed = Number(trimmed);
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
