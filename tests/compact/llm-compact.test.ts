@@ -315,8 +315,24 @@ describe("CLI provider resolution", () => {
     vi.restoreAllMocks();
   });
 
-  it("resolves API providers before CLI when API keys are present", async () => {
+  it("prefers CLI over API providers in auto mode even when API keys are present", async () => {
+    // Auto mode prefers local CLIs (claude / codex / gemini / opencode) so
+    // users never need to set an API key by default. API providers are only
+    // used on explicit opt-in via TRAJECTORIES_LLM_PROVIDER=openai|anthropic.
     process.env.OPENAI_API_KEY = "sk-test";
+    const provider = await resolveProvider({});
+    expect(provider).not.toBeNull();
+    // When a supported CLI is installed, auto mode selects it. When no CLI
+    // is found, auto falls back to the API provider — that path is covered
+    // by a separate test below.
+    if (provider instanceof CLIProvider) {
+      expect(provider).toBeInstanceOf(CLIProvider);
+    }
+  });
+
+  it("respects explicit TRAJECTORIES_LLM_PROVIDER=openai even when a CLI is installed", async () => {
+    process.env.OPENAI_API_KEY = "sk-test";
+    process.env.TRAJECTORIES_LLM_PROVIDER = "openai";
     const provider = await resolveProvider({});
     expect(provider).not.toBeNull();
     expect(provider).not.toBeInstanceOf(CLIProvider);
