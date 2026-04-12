@@ -83,6 +83,61 @@ describe("workflow compaction", () => {
     await client.close();
   });
 
+  it("trail start CLI stamps workflowId from TRAJECTORIES_WORKFLOW_ID env var", async () => {
+    const envForCli = {
+      ...process.env,
+      TRAJECTORIES_WORKFLOW_ID: "wf-cli-env",
+    };
+    const startResult = spawnSync(
+      "npx",
+      ["tsx", cliSourceEntry, "start", "CLI env stamped task", "--quiet"],
+      { cwd: tempDir, encoding: "utf-8", env: envForCli },
+    );
+    expect(startResult.status).toBe(0);
+    const trajectoryId = startResult.stdout.trim();
+    expect(trajectoryId).toMatch(/^traj_/);
+
+    const activePath = join(
+      tempDir,
+      ".trajectories",
+      "active",
+      `${trajectoryId}.json`,
+    );
+    expect(existsSync(activePath)).toBe(true);
+    const raw = JSON.parse(await readFile(activePath, "utf-8")) as {
+      workflowId?: string;
+    };
+    expect(raw.workflowId).toBe("wf-cli-env");
+  });
+
+  it("trail start CLI honors --workflow flag even when env var is unset", async () => {
+    const startResult = spawnSync(
+      "npx",
+      [
+        "tsx",
+        cliSourceEntry,
+        "start",
+        "CLI flag stamped task",
+        "--workflow",
+        "wf-cli-flag",
+        "--quiet",
+      ],
+      { cwd: tempDir, encoding: "utf-8", env: process.env },
+    );
+    expect(startResult.status).toBe(0);
+    const trajectoryId = startResult.stdout.trim();
+    const activePath = join(
+      tempDir,
+      ".trajectories",
+      "active",
+      `${trajectoryId}.json`,
+    );
+    const raw = JSON.parse(await readFile(activePath, "utf-8")) as {
+      workflowId?: string;
+    };
+    expect(raw.workflowId).toBe("wf-cli-flag");
+  });
+
   it("leaves workflowId undefined when TRAJECTORIES_WORKFLOW_ID is unset", async () => {
     const { TrajectoryClient } = await import("../../src/sdk/client.js");
     expect(process.env.TRAJECTORIES_WORKFLOW_ID).toBeUndefined();
