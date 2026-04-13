@@ -92,6 +92,26 @@ Signed-off-by: Dev <dev@example.com>`;
       const message = "Trajectory: traj_simple123456";
       expect(parseTrajectoryFromMessage(message)).toBe("traj_simple123456");
     });
+
+    it("should parse legacy timestamp-hex ids with internal underscores", () => {
+      // Legacy `traj_<timestamp>_<hex>` format emitted by the workforce
+      // workflow runner via @agent-relay/sdk. The parser must return the
+      // FULL id, not a truncated prefix.
+      const message = "Commit\n\nTrajectory: traj_1775734701264_ba65c69b";
+      expect(parseTrajectoryFromMessage(message)).toBe(
+        "traj_1775734701264_ba65c69b",
+      );
+    });
+
+    it("should parse legacy id even when other trailers follow", () => {
+      const message = `Fix thing
+
+Trajectory: traj_1775832005024_c2cf5052
+Co-authored-by: Someone <x@y.z>`;
+      expect(parseTrajectoryFromMessage(message)).toBe(
+        "traj_1775832005024_c2cf5052",
+      );
+    });
   });
 
   describe("getTrajectoryFromCommit", () => {
@@ -276,6 +296,50 @@ Signed-off-by: Dev <dev@example.com>`;
     it("should use TRAJECTORIES_DATA_DIR env var", () => {
       const script = generateHookScript();
       expect(script).toContain("TRAJECTORIES_DATA_DIR");
+    });
+
+    it("should use an id character class that accepts legacy underscores", () => {
+      // Regression lock: if someone relaxes the id regex in schema.ts/id.ts
+      // but forgets to propagate here, `grep -o` silently truncates legacy
+      // `traj_<timestamp>_<hex>` ids at the first internal underscore. This
+      // keeps the hook script's character class aligned with the schema.
+      const script = generateHookScript();
+      expect(script).toContain("traj_[a-z0-9_]*");
+      expect(script).not.toMatch(/traj_\[a-z0-9\]\*/);
+    });
+
+    it("should extract the full legacy id from a trajectory file via real grep", async () => {
+      // Behavioral regression test: runs the exact extraction command from
+      // the hook script against a fixture file and asserts it returns the
+      // full legacy id, not a truncated prefix.
+      const { spawnSync } =
+        await vi.importActual<typeof import("node:child_process")>(
+          "node:child_process",
+        );
+      const { mkdtempSync, writeFileSync, rmSync } =
+        await vi.importActual<typeof import("node:fs")>("node:fs");
+      const { join } =
+        await vi.importActual<typeof import("node:path")>("node:path");
+      const { tmpdir } =
+        await vi.importActual<typeof import("node:os")>("node:os");
+
+      const dir = mkdtempSync(join(tmpdir(), "trail-hook-legacy-"));
+      const fixtureFile = join(dir, "traj_1775734701264_ba65c69b.json");
+      writeFileSync(
+        fixtureFile,
+        '{\n  "id": "traj_1775734701264_ba65c69b",\n  "version": 1\n}\n',
+        "utf-8",
+      );
+
+      try {
+        // Mirrors the hook's extraction pipeline exactly.
+        const cmd = `grep -o '"id"[[:space:]]*:[[:space:]]*"traj_[a-z0-9_]*"' "${fixtureFile}" | head -1 | grep -o 'traj_[a-z0-9_]*'`;
+        const result = spawnSync("sh", ["-c", cmd], { encoding: "utf-8" });
+        expect(result.status).toBe(0);
+        expect(result.stdout.trim()).toBe("traj_1775734701264_ba65c69b");
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
     });
   });
 

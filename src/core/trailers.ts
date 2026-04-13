@@ -34,8 +34,12 @@ export function parseTrajectoryFromMessage(
 ): string | null {
   const lines = commitMessage.split("\n");
   for (const line of lines) {
+    // Character class must include `_` to match legacy
+    // `traj_<timestamp>_<hex>` ids produced by the workforce workflow runner
+    // in addition to the canonical `traj_<12hex>` shape. This must stay in
+    // sync with the regex in src/core/schema.ts and src/core/id.ts.
     const match = line.match(
-      new RegExp(`^${TRAJECTORY_TRAILER_KEY}:\\s*(traj_[a-z0-9]+)$`),
+      new RegExp(`^${TRAJECTORY_TRAILER_KEY}:\\s*(traj_[a-z0-9_]+)$`),
     );
     if (match) {
       return match[1];
@@ -196,8 +200,11 @@ if [ -z "$ACTIVE_FILE" ]; then
   exit 0
 fi
 
-# Extract trajectory ID (grep for the "id" field)
-TRAJ_ID=$(grep -o '"id"[[:space:]]*:[[:space:]]*"traj_[a-z0-9]*"' "$ACTIVE_FILE" | head -1 | grep -o 'traj_[a-z0-9]*')
+# Extract trajectory ID (grep for the "id" field). Character class must
+# include underscore to match legacy traj_<timestamp>_<hex> ids -- without
+# it, grep -o silently truncates at the first internal underscore and
+# emits a wrong (shorter) id into the commit trailer.
+TRAJ_ID=$(grep -o '"id"[[:space:]]*:[[:space:]]*"traj_[a-z0-9_]*"' "$ACTIVE_FILE" | head -1 | grep -o 'traj_[a-z0-9_]*')
 if [ -z "$TRAJ_ID" ]; then
   exit 0
 fi

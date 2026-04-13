@@ -397,6 +397,88 @@ describe("FileStorage", () => {
       expect(index.trajectories[trajectory.id]).toBeDefined();
     });
   });
+
+  describe("reconcileIndex", () => {
+    it("picks up completed trajectories dropped in the flat completed/ root", async () => {
+      // Arrange: write a trajectory file directly into completed/ without
+      // touching index.json — mimics a stale index produced by an older
+      // writer or an out-of-band process.
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const { createTrajectory } = await import("../../src/core/trajectory.js");
+      const { mkdir, writeFile } = await import("node:fs/promises");
+
+      const bootstrap = new FileStorage(tempDir);
+      await bootstrap.initialize();
+
+      const completedDir = join(tempDir, ".trajectories", "completed");
+      await mkdir(completedDir, { recursive: true });
+      const trajectory = {
+        ...createTrajectory({ title: "Stale flat file" }),
+        status: "completed" as const,
+        completedAt: new Date().toISOString(),
+      };
+      await writeFile(
+        join(completedDir, `${trajectory.id}.json`),
+        JSON.stringify(trajectory, null, 2),
+        "utf-8",
+      );
+
+      // Act: initialize a fresh FileStorage; reconcile runs inside initialize().
+      const storage = new FileStorage(tempDir);
+      await storage.initialize();
+      const summaries = await storage.list({ status: "completed" });
+
+      // Assert
+      expect(summaries.map((s) => s.id)).toContain(trajectory.id);
+    });
+
+    it("picks up completed trajectories inside YYYY-MM subdirectories", async () => {
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const { createTrajectory } = await import("../../src/core/trajectory.js");
+      const { mkdir, writeFile } = await import("node:fs/promises");
+
+      const bootstrap = new FileStorage(tempDir);
+      await bootstrap.initialize();
+
+      const monthDir = join(tempDir, ".trajectories", "completed", "2026-04");
+      await mkdir(monthDir, { recursive: true });
+      const trajectory = {
+        ...createTrajectory({ title: "Stale month file" }),
+        status: "completed" as const,
+        completedAt: "2026-04-01T00:00:00.000Z",
+      };
+      await writeFile(
+        join(monthDir, `${trajectory.id}.json`),
+        JSON.stringify(trajectory, null, 2),
+        "utf-8",
+      );
+
+      const storage = new FileStorage(tempDir);
+      await storage.initialize();
+      const summaries = await storage.list({ status: "completed" });
+
+      expect(summaries.map((s) => s.id)).toContain(trajectory.id);
+    });
+
+    it("does not overwrite existing index entries", async () => {
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const { createTrajectory } = await import("../../src/core/trajectory.js");
+
+      const storage = new FileStorage(tempDir);
+      await storage.initialize();
+      const trajectory = createTrajectory({ title: "Originally saved" });
+      await storage.save(trajectory);
+
+      // Running reconcile again should be a no-op for this entry.
+      await storage.reconcileIndex();
+
+      const { readFileSync } = await import("node:fs");
+      const index = JSON.parse(
+        readFileSync(join(tempDir, ".trajectories", "index.json"), "utf-8"),
+      );
+      expect(index.trajectories[trajectory.id].title).toBe("Originally saved");
+    });
+  });
 });
 
 describe("StorageAdapter Interface", () => {
