@@ -1,3 +1,17 @@
+## [0.5.4](https://github.com/AgentWorkforce/trajectories/compare/v0.5.3...v0.5.4) (2026-04-13)
+
+
+### Bug Fixes
+
+* **cli:** resolve version from package.json instead of hardcoding ([87aee2b](https://github.com/AgentWorkforce/trajectories/commit/87aee2ba417ac8898bf4883e8448aa3c7533abf7))
+* **trailers:** propagate legacy id regex to parser + git hook (devin) ([0afcd74](https://github.com/AgentWorkforce/trajectories/commit/0afcd7417d14407b08742732bed9848f2256dc99)), closes [#22](https://github.com/AgentWorkforce/trajectories/issues/22)
+* **workflows:** use file_exists verification for lead PR step ([7c892a1](https://github.com/AgentWorkforce/trajectories/commit/7c892a121c93946fa3dda2da3de738e41113cf31))
+
+
+### Features
+
+* **storage:** reconcile index from disk on FileStorage.initialize ([a387b5c](https://github.com/AgentWorkforce/trajectories/commit/a387b5ccfab942c4f82eb58cd35b610f8c417b65))
+* **storage:** tolerate legacy trajectory shapes + harden reconcile ([eee1a44](https://github.com/AgentWorkforce/trajectories/commit/eee1a4494b251b41adbfb10e47e59e5cfdbb877c))
 ## [0.5.3](https://github.com/AgentWorkforce/trajectories/compare/v0.5.2...v0.5.3) (2026-04-13)
 
 
