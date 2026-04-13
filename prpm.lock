@@ -70,9 +70,9 @@
       }
     },
     "@agent-relay/agent-relay-snippet#claude.md:AGENTS.md": {
-      "version": "1.0.2",
-      "resolved": "https://registry.prpm.dev/api/v1/packages/%40agent-relay%2Fagent-relay-snippet/1.0.2.tar.gz",
-      "integrity": "sha256-d62856dc5535e7dfa9e730d0b665720ec162e578b115d1e57847bd84fb06c1f8",
+      "version": "1.1.7",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40agent-relay%2Fagent-relay-snippet/1.1.7.tar.gz",
+      "integrity": "sha256-7ef5aaea90ecd65540c9c963cb87a058ea998df29104f53484d36cce8cc0e854",
       "format": "claude.md",
       "subtype": "snippet",
       "sourceFormat": "generic",
@@ -238,9 +238,43 @@
         "name_slug": "agent-relay-starter",
         "version": "1.0.3"
       }
+    },
+    "@agent-relay/agent-relay-snippet#claude:AGENTS.md": {
+      "version": "1.1.7",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40agent-relay%2Fagent-relay-snippet/1.1.7.tar.gz",
+      "integrity": "sha256-7ef5aaea90ecd65540c9c963cb87a058ea998df29104f53484d36cce8cc0e854",
+      "format": "claude",
+      "subtype": "snippet",
+      "sourceFormat": "generic",
+      "sourceSubtype": "snippet",
+      "installedPath": "AGENTS.md",
+      "snippetMetadata": {
+        "targetPath": "AGENTS.md",
+        "config": {
+          "target": "AGENTS.md",
+          "position": "append"
+        }
+      }
+    },
+    "@agent-relay/agent-relay-snippet#agents.md:AGENTS.md": {
+      "version": "1.1.7",
+      "resolved": "https://registry.prpm.dev/api/v1/packages/%40agent-relay%2Fagent-relay-snippet/1.1.7.tar.gz",
+      "integrity": "sha256-7ef5aaea90ecd65540c9c963cb87a058ea998df29104f53484d36cce8cc0e854",
+      "format": "agents.md",
+      "subtype": "snippet",
+      "sourceFormat": "generic",
+      "sourceSubtype": "snippet",
+      "installedPath": "AGENTS.md",
+      "snippetMetadata": {
+        "targetPath": "AGENTS.md",
+        "config": {
+          "target": "AGENTS.md",
+          "position": "append"
+        }
+      }
     }
   },
-  "generated": "2026-04-12T07:15:45.434Z",
+  "generated": "2026-04-13T19:46:24.916Z",
   "collections": {
     "agent-relay-starter": {
       "name_slug": "agent-relay-starter",

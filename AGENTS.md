@@ -1,146 +1,3 @@
-<!-- prpm:snippet:start @agent-relay/agent-relay-snippet@1.0.2 -->
-# Agent Relay
-
-Real-time agent-to-agent messaging. Output `->relay:` patterns to communicate.
-
-## Sending Messages
-
-**Always use the fenced format** for reliable message delivery:
-
-```
-->relay:AgentName <<<
-Your message here.>>>
-```
-
-```
-->relay:* <<<
-Broadcast to all agents.>>>
-```
-
-**CRITICAL:** Always close multi-line messages with `>>>` on its own line!
-
-## Communication Protocol
-
-**ACK immediately** - When you receive a task, acknowledge it before starting work:
-
-```
-->relay:Sender <<<
-ACK: Brief description of task received>>>
-```
-
-Then proceed with your work. This confirms message delivery and lets the sender know you're on it.
-
-**Report completion** - When done, send a completion message:
-
-```
-->relay:Sender <<<
-DONE: Brief summary of what was completed>>>
-```
-
-## Receiving Messages
-
-Messages appear as:
-```
-Relay message from Alice [abc123]: Message content here
-```
-
-### Channel Routing (Important!)
-
-Messages from #general (broadcast channel) include a `[#general]` indicator:
-```
-Relay message from Alice [abc123] [#general]: Hello everyone!
-```
-
-**When you see `[#general]`**: Reply to `*` (broadcast), NOT to the sender directly.
-
-```
-# Correct - responds to #general channel
-->relay:* <<<
-Response to the group message.>>>
-
-# Wrong - sends as DM to sender instead of to the channel
-->relay:Alice <<<
-Response to the group message.>>>
-```
-
-This ensures your response appears in the same channel as the original message.
-
-If truncated, read full message:
-```bash
-agent-relay read abc123
-```
-
-## Spawning Agents
-
-Spawn workers to delegate tasks:
-
-```
-->relay:spawn WorkerName claude "task description"
-->relay:release WorkerName
-```
-
-## Threads
-
-Use threads to group related messages together. Thread syntax:
-
-```
-->relay:AgentName [thread:topic-name] <<<
-Your message here.>>>
-```
-
-**When to use threads:**
-- Working on a specific issue (e.g., `[thread:agent-relay-299]`)
-- Back-and-forth discussions with another agent
-- Code review conversations
-- Any multi-message topic you want grouped
-
-**Examples:**
-
-```
-->relay:Protocol [thread:auth-feature] <<<
-How should we handle token refresh?>>>
-
-->relay:Frontend [thread:auth-feature] <<<
-Use a 401 interceptor that auto-refreshes.>>>
-
-->relay:Reviewer [thread:pr-123] <<<
-Please review src/auth/*.ts>>>
-
-->relay:Developer [thread:pr-123] <<<
-LGTM, approved!>>>
-```
-
-Thread messages appear grouped in the dashboard with reply counts.
-
-## Common Patterns
-
-```
-->relay:Lead <<<
-ACK: Starting /api/register implementation>>>
-
-->relay:* <<<
-STATUS: Working on auth module>>>
-
-->relay:Lead <<<
-DONE: Auth module complete>>>
-
-->relay:Developer <<<
-TASK: Implement /api/register>>>
-
-->relay:Reviewer [thread:code-review-auth] <<<
-REVIEW: Please check src/auth/*.ts>>>
-
-->relay:Architect <<<
-QUESTION: JWT or sessions?>>>
-```
-
-## Rules
-
-- Pattern must be at line start (whitespace OK)
-- Escape with `\->relay:` to output literally
-- Check daemon status: `agent-relay status`
-<!-- prpm:snippet:end @agent-relay/agent-relay-snippet@1.0.2 -->
-
 <!-- prpm:snippet:start @agent-workforce/trail-snippet@1.1.0 -->
 # Trail
 
@@ -293,3 +150,123 @@ Your trajectory helps others understand:
 
 Future agents can query past trajectories to learn from your decisions.
 <!-- prpm:snippet:end @agent-workforce/trail-snippet@1.1.0 -->
+
+<!-- prpm:snippet:start @agent-relay/agent-relay-snippet@1.1.7 -->
+# Agent Relay
+
+Real-time agent-to-agent messaging via MCP tools.
+
+## MCP Tools
+
+All agent communication uses MCP tools provided by the Relaycast MCP server:
+
+| Tool                           | Description                           |
+| ------------------------------ | ------------------------------------- |
+| `relay_send(to, message)`      | Send a message to an agent or channel |
+| `relay_inbox()`                | Check your inbox for new messages     |
+| `relay_who()`                  | List online agents                    |
+| `relay_spawn(name, cli, task)` | Spawn a new worker agent              |
+| `relay_release(name)`          | Release/stop a worker agent           |
+| `relay_status()`               | Check relay connection status         |
+
+## Sending Messages
+
+Use the `relay_send` MCP tool:
+
+```
+relay_send(to: "AgentName", message: "Your message here")
+```
+
+### Direct Messages
+
+```
+relay_send(to: "Bob", message: "Can you review my code changes?")
+```
+
+### Broadcast to All
+
+```
+relay_send(to: "*", message: "I've finished the auth module")
+```
+
+### Channel Messages
+
+```
+relay_send(to: "#frontend", message: "The API endpoints are ready")
+```
+
+## Spawning & Releasing Agents
+
+### Spawn a Worker
+
+```
+relay_spawn(name: "WorkerName", cli: "claude", task: "Task description here")
+```
+
+### CLI Options
+
+| CLI Value | Description             |
+| --------- | ----------------------- |
+| `claude`  | Claude Code (Anthropic) |
+| `codex`   | Codex CLI (OpenAI)      |
+| `gemini`  | Gemini CLI (Google)     |
+| `aider`   | Aider coding assistant  |
+| `goose`   | Goose AI assistant      |
+
+### Release a Worker
+
+```
+relay_release(name: "WorkerName")
+```
+
+## Receiving Messages
+
+Messages appear as:
+
+```
+Relay message from Alice [abc123]: Content here
+```
+
+Channel messages include `[#channel]`:
+
+```
+Relay message from Alice [abc123] [#general]: Hello!
+```
+
+Reply to the channel shown, not the sender.
+
+## When You Are Spawned
+
+If you were spawned by another agent:
+
+1. Your first message is your task from your spawner
+2. Use `relay_send` to reply to your spawner
+3. Report status to your spawner (your lead), not broadcast
+
+```
+relay_send(to: "Lead", message: "ACK: Starting on the task.")
+```
+
+## Protocol
+
+- **ACK** when you receive a task: `ACK: Brief description`
+- **DONE** when complete: `DONE: What was accomplished`
+- Send status to your **lead**, not broadcast
+
+## Agent Naming (Local vs Bridge)
+
+**Local communication** uses plain agent names. The `project:` prefix is **ONLY** for cross-project bridge mode.
+
+| Context                | Correct                                    | Incorrect                             |
+| ---------------------- | ------------------------------------------ | ------------------------------------- |
+| Local (same project)   | `relay_send(to: "Lead", ...)`              | `relay_send(to: "project:lead", ...)` |
+| Bridge (cross-project) | `relay_send(to: "frontend:Designer", ...)` | N/A                                   |
+
+## Checking Status
+
+```
+relay_who()      # List online agents
+relay_inbox()    # Check for unread messages
+relay_status()   # Check connection status
+```
+<!-- prpm:snippet:end @agent-relay/agent-relay-snippet@1.1.7 -->
