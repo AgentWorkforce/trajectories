@@ -11,11 +11,12 @@
 
 import { program } from "commander";
 import { registerCommands } from "./commands/index.js";
+import { VERSION } from "./version.js";
 
 program
   .name("trail")
   .description("Leave a trail of your work for others to follow")
-  .version("0.1.0")
+  .version(VERSION)
   .option(
     "--data-dir <path>",
     "Override trajectory storage directory (or set TRAJECTORIES_DATA_DIR)",

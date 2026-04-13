@@ -6,6 +6,7 @@
 
 import { Command } from "commander";
 import { registerCommands } from "./commands/index.js";
+import { VERSION } from "./version.js";
 
 export interface CommandResult {
   success: boolean;
@@ -37,7 +38,7 @@ export async function runCommand(args: string[]): Promise<CommandResult> {
     program
       .name("traj")
       .description("Capture the complete train of thought of agent work")
-      .version("0.1.0")
+      .version(VERSION)
       .exitOverride() // Don't exit process on error
       .configureOutput({
         writeOut: (str) => {
