@@ -65,6 +65,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # A subset of tests spawn the built trail CLI via child_process and
+      # require dist/cli/index.js to exist on disk (e.g. the compactWorkflow
+      # SDK helper + autoCompact E2E cases). Build before running tests.
+      - name: Build
+        run: npm run build
+
       - name: Run tests
         run: npm run test:run
 

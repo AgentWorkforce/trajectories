@@ -49,23 +49,22 @@ export const TrajectoryStatusSchema = z.enum([
   "abandoned",
 ]);
 
-/**
- * Event type schema
- */
-export const TrajectoryEventTypeSchema = z.enum([
-  "prompt",
-  "thinking",
-  "tool_call",
-  "tool_result",
-  "message_sent",
-  "message_received",
-  "decision",
-  "finding",
-  "reflection",
-  "note",
-  "error",
-  "completion-evidence",
-  "completion-marker",
+/** Permissive on read so trajectories from other tools can load even with unknown event types. */
+export const TrajectoryEventTypeSchema = z.union([
+  z.literal("prompt"),
+  z.literal("thinking"),
+  z.literal("tool_call"),
+  z.literal("tool_result"),
+  z.literal("message_sent"),
+  z.literal("message_received"),
+  z.literal("decision"),
+  z.literal("finding"),
+  z.literal("reflection"),
+  z.literal("note"),
+  z.literal("error"),
+  z.literal("completion-evidence"),
+  z.literal("completion-marker"),
+  z.string(), // Allow event types emitted by other tools. Downstream code filters to known types.
 ]);
 
 /**
@@ -243,10 +242,11 @@ export const TrajectorySchema = z.object({
   agents: z.array(AgentParticipationSchema),
   chapters: z.array(ChapterSchema),
   retrospective: RetrospectiveSchema.optional(),
-  commits: z.array(z.string()).optional().default([]),
-  filesChanged: z.array(z.string()).optional().default([]),
-  projectId: z.string().optional().default(""),
-  tags: z.array(z.string()).optional().default([]),
+  commits: z.array(z.string()).default([]),
+  filesChanged: z.array(z.string()).default([]),
+  projectId: z.string().optional(),
+  workflowId: z.string().optional(),
+  tags: z.array(z.string()).default([]),
   _trace: TrajectoryTraceRefSchema.optional(),
 });
 

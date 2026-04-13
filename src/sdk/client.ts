@@ -5,6 +5,10 @@
  * Provides a clean, developer-friendly API with automatic storage management.
  */
 
+import { spawn } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, resolve as resolvePath } from "node:path";
 import {
   TrajectoryError,
   abandonTrajectory,
@@ -31,6 +35,177 @@ import { exportToTimeline } from "../export/timeline.js";
 import { FileStorage } from "../storage/file.js";
 import type { StorageAdapter } from "../storage/interface.js";
 
+const require = createRequire(import.meta.url);
+
+interface TrajectoryCliPackage {
+  name?: string;
+  bin?: string | Record<string, string>;
+}
+
+interface TrajectoryCliInvocation {
+  command: string;
+  args: string[];
+}
+
+function normalizeOptionalString(value?: string): string | undefined {
+  const normalized = value?.trim();
+  return normalized ? normalized : undefined;
+}
+
+function normalizeAutoCompactOptions(
+  autoCompact?: boolean | { mechanical?: boolean; markdown?: boolean },
+): false | { mechanical: boolean; markdown: boolean } {
+  if (!autoCompact) {
+    return false;
+  }
+
+  if (autoCompact === true) {
+    return { mechanical: false, markdown: true };
+  }
+
+  return {
+    mechanical: autoCompact.mechanical ?? false,
+    markdown: autoCompact.markdown ?? true,
+  };
+}
+
+function resolveStartWorkflowId(
+  options?: Omit<CreateTrajectoryInput, "title">,
+): string | undefined {
+  if (
+    options !== undefined &&
+    Object.prototype.hasOwnProperty.call(options, "workflowId")
+  ) {
+    return normalizeOptionalString(options.workflowId);
+  }
+
+  return normalizeOptionalString(process.env.TRAJECTORIES_WORKFLOW_ID);
+}
+
+function resolveTrajectoryCliInvocation(): TrajectoryCliInvocation {
+  const explicitCli = normalizeOptionalString(process.env.TRAJECTORIES_CLI);
+  if (explicitCli) {
+    if (/\.(?:cjs|mjs|js)$/i.test(explicitCli)) {
+      return { command: process.execPath, args: [explicitCli] };
+    }
+    return { command: explicitCli, args: [] };
+  }
+
+  try {
+    const packageJsonPath = require.resolve("agent-trajectories/package.json");
+    const pkg = JSON.parse(
+      readFileSync(packageJsonPath, "utf-8"),
+    ) as TrajectoryCliPackage;
+    const binEntry =
+      typeof pkg.bin === "string"
+        ? pkg.bin
+        : (pkg.bin?.trail ?? (pkg.name ? pkg.bin?.[pkg.name] : undefined));
+
+    if (binEntry) {
+      const cliPath = resolvePath(dirname(packageJsonPath), binEntry);
+      if (existsSync(cliPath)) {
+        return { command: process.execPath, args: [cliPath] };
+      }
+    }
+  } catch {
+    // Fall back to the CLI on PATH when package resolution is unavailable.
+  }
+
+  return { command: "trail", args: [] };
+}
+
+function parseCompactWorkflowOutput(stdout: string): {
+  compactedPath: string;
+  markdownPath?: string;
+} {
+  const compactedPath = stdout.match(
+    /^\s*Compacted trajectory saved to:\s*(.+)$/m,
+  )?.[1];
+  const markdownPath = stdout.match(
+    /^\s*Markdown summary saved to:\s*(.+)$/m,
+  )?.[1];
+
+  if (!compactedPath) {
+    throw new Error("compactWorkflow failed: unable to parse compacted path");
+  }
+
+  return {
+    compactedPath: compactedPath.trim(),
+    ...(markdownPath ? { markdownPath: markdownPath.trim() } : {}),
+  };
+}
+
+export async function compactWorkflow(
+  workflowId: string,
+  options?: { markdown?: boolean; mechanical?: boolean; cwd?: string },
+): Promise<{ compactedPath: string; markdownPath?: string }> {
+  const normalizedWorkflowId = normalizeOptionalString(workflowId);
+  if (!normalizedWorkflowId) {
+    throw new Error("compactWorkflow failed: workflowId is required");
+  }
+
+  const cli = resolveTrajectoryCliInvocation();
+  const args = [
+    ...cli.args,
+    "compact",
+    "--workflow",
+    normalizedWorkflowId,
+    "--all",
+  ];
+
+  if (options?.markdown) {
+    args.push("--markdown");
+  }
+  if (options?.mechanical) {
+    args.push("--mechanical");
+  }
+
+  return new Promise((resolve, reject) => {
+    const child = spawn(cli.command, args, {
+      cwd: options?.cwd,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    const stdoutChunks: Buffer[] = [];
+    let stderr = "";
+
+    child.stdout.on("data", (chunk: Buffer) => {
+      stdoutChunks.push(Buffer.from(chunk));
+    });
+
+    child.stderr.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString();
+      process.stderr.write(chunk);
+    });
+
+    child.on("error", (error) => {
+      reject(new Error(`compactWorkflow failed: ${error.message}`));
+    });
+
+    child.on("close", (code) => {
+      if (code !== 0) {
+        reject(
+          new Error(
+            `compactWorkflow failed: ${stderr.trim() || `exit code ${code}`}`,
+          ),
+        );
+        return;
+      }
+
+      try {
+        const stdout = Buffer.concat(stdoutChunks).toString("utf-8");
+        resolve(parseCompactWorkflowOutput(stdout));
+      } catch (error) {
+        reject(
+          error instanceof Error
+            ? error
+            : new Error("compactWorkflow failed: unable to parse CLI output"),
+        );
+      }
+    });
+  });
+}
+
 /**
  * Options for configuring the TrajectoryClient
  */
@@ -45,6 +220,10 @@ export interface TrajectoryClientOptions {
   projectId?: string;
   /** Whether to auto-save after each operation. Defaults to true */
   autoSave?: boolean;
+  /**
+   * When set, session.complete() and session.done() automatically run compactWorkflow() against the trajectory's workflowId. Default false. Pass an object to control the flags passed to the CLI — e.g. { mechanical: true } skips the LLM for deterministic compaction, { markdown: false } skips the .md companion.
+   */
+  autoCompact?: boolean | { mechanical?: boolean; markdown?: boolean };
 }
 
 /**
@@ -77,6 +256,25 @@ export class TrajectorySession {
    */
   get id(): string {
     return this.trajectory.id;
+  }
+
+  private async autoCompactIfConfigured(): Promise<void> {
+    const autoCompact = this.client.getAutoCompactOptions();
+    if (!autoCompact || !this.trajectory.workflowId) {
+      return;
+    }
+
+    try {
+      await compactWorkflow(this.trajectory.workflowId, {
+        ...autoCompact,
+        cwd: this.client.getAutoCompactCwd(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(
+        `Warning: autoCompact failed for workflow ${this.trajectory.workflowId}: ${message}`,
+      );
+    }
   }
 
   /**
@@ -221,6 +419,7 @@ export class TrajectorySession {
   async complete(input: CompleteTrajectoryInput): Promise<Trajectory> {
     this.trajectory = completeTrajectory(this.trajectory, input);
     await this.client.save(this.trajectory);
+    await this.autoCompactIfConfigured();
     return this.trajectory;
   }
 
@@ -321,12 +520,26 @@ export class TrajectoryClient {
   readonly defaultAgent?: string;
   private projectId?: string;
   private autoSave: boolean;
+  private readonly autoCompactCwd?: string;
+  private readonly autoCompact:
+    | false
+    | { mechanical: boolean; markdown: boolean };
 
   constructor(options: TrajectoryClientOptions = {}) {
     this.storage = options.storage ?? new FileStorage(options.dataDir);
     this.defaultAgent = options.defaultAgent ?? process.env.TRAJECTORIES_AGENT;
     this.projectId = options.projectId ?? process.env.TRAJECTORIES_PROJECT;
     this.autoSave = options.autoSave ?? true;
+    this.autoCompact = normalizeAutoCompactOptions(options.autoCompact);
+    this.autoCompactCwd = options.storage ? undefined : options.dataDir;
+  }
+
+  getAutoCompactOptions(): false | { mechanical: boolean; markdown: boolean } {
+    return this.autoCompact;
+  }
+
+  getAutoCompactCwd(): string | undefined {
+    return this.autoCompactCwd;
   }
 
   /**
@@ -375,14 +588,21 @@ export class TrajectoryClient {
       );
     }
 
+    const workflowId = resolveStartWorkflowId(options);
+    const { workflowId: _workflowId, ...createOptions } = options ?? {};
+
     const trajectory = createTrajectory({
       title,
       projectId: this.projectId,
-      ...options,
+      ...createOptions,
     });
 
-    await this.storage.save(trajectory);
-    return new TrajectorySession(trajectory, this, this.autoSave);
+    const stampedTrajectory = workflowId
+      ? { ...trajectory, workflowId }
+      : trajectory;
+
+    await this.storage.save(stampedTrajectory);
+    return new TrajectorySession(stampedTrajectory, this, this.autoSave);
   }
 
   /**

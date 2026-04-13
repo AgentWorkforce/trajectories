@@ -1,93 +1,96 @@
-/**
- * Prompt templates for trajectory compaction.
- */
+export interface Message {
+  role: "system" | "user";
+  content: string;
+}
 
-const COMPACTED_TRAJECTORY_SCHEMA = `{
-  "id": "compact_<id>",
-  "version": 1,
-  "type": "compacted",
-  "compactedAt": "ISO-8601 timestamp",
-  "sourceTrajectories": ["traj_..."],
-  "dateRange": {
-    "start": "ISO-8601 timestamp",
-    "end": "ISO-8601 timestamp"
-  },
-  "summary": {
-    "totalDecisions": 0,
-    "totalEvents": 0,
-    "uniqueAgents": ["agent-name"]
-  },
-  "decisionGroups": [
+export interface PromptOptions {
+  focusAreas?: string[];
+  maxOutputTokens?: number;
+}
+
+export const COMPACTION_SYSTEM_PROMPT = `You are a technical analyst reviewing agent work sessions (trajectories).
+Your job is to produce a concise, insightful summary that captures:
+- What was accomplished and how
+- Key decisions and their reasoning
+- Patterns/conventions established that should be followed in future work
+- Lessons learned from challenges and failures
+- Open questions or unresolved issues
+
+Be specific. Reference actual file paths, function names, and technical details.
+Don't be generic - this summary replaces the raw data.`;
+
+export const COMPACTED_OUTPUT_SCHEMA = `{
+  "narrative": "string",
+  "decisions": [
     {
-      "category": "architecture",
-      "decisions": [
-        {
-          "question": "What choice was made?",
-          "chosen": "Selected option",
-          "reasoning": "Why the choice was made",
-          "fromTrajectory": "traj_..."
-        }
-      ]
+      "question": "string",
+      "chosen": "string",
+      "reasoning": "string",
+      "impact": "string"
     }
   ],
-  "keyLearnings": ["Concise learning"],
-  "keyFindings": ["Concise finding"],
-  "filesAffected": ["src/example.ts"],
-  "commits": ["abc1234"]
+  "conventions": [
+    {
+      "pattern": "string",
+      "rationale": "string",
+      "scope": "string"
+    }
+  ],
+  "lessons": [
+    {
+      "lesson": "string",
+      "context": "string",
+      "recommendation": "string"
+    }
+  ],
+  "openQuestions": ["string"]
 }`;
 
-/**
- * System prompt for generating a compacted trajectory summary.
- */
-export const COMPACTION_SYSTEM_PROMPT = `
-You are compacting multiple engineering trajectories into a single structured summary.
+export function buildCompactionPrompt(
+  serializedTrajectories: string,
+  options: PromptOptions = {},
+): Message[] {
+  const focusAreas =
+    options.focusAreas && options.focusAreas.length > 0
+      ? options.focusAreas.map((area) => `- ${area}`).join("\n")
+      : [
+          "- What work was attempted, completed, or abandoned",
+          "- Why specific technical decisions were made",
+          "- Which conventions should carry forward",
+          "- What broke, what worked, and what should change next time",
+        ].join("\n");
 
-Return only valid JSON. Do not include markdown, commentary, or code fences.
+  const maxOutputInstruction = options.maxOutputTokens
+    ? `Keep the full response within approximately ${options.maxOutputTokens} tokens while preserving technical specificity.`
+    : "Keep the response concise, dense with signal, and avoid filler.";
 
-Your job:
-- Analyze all provided trajectories together.
-- Preserve important decisions, findings, learnings, files, commits, and agents.
-- Group related decisions into useful topical categories.
-- Deduplicate repeated facts while preserving which trajectory each decision came from.
-- Prefer precise, factual summaries over speculative interpretation.
+  const userPrompt = [
+    "Review the following serialized agent trajectories and return a single JSON object.",
+    "The JSON must match this schema exactly:",
+    COMPACTED_OUTPUT_SCHEMA,
+    "",
+    "Requirements:",
+    "- Output raw JSON only. Do not wrap it in markdown fences.",
+    "- `narrative` should be 2-3 tight paragraphs.",
+    "- `decisions`, `conventions`, and `lessons` must always be arrays, even if empty.",
+    "- Prefer concrete file paths, symbols, commands, and implementation details over generic summaries.",
+    maxOutputInstruction,
+    "",
+    "Focus areas:",
+    focusAreas,
+    "",
+    "Serialized trajectories:",
+    serializedTrajectories.trim(),
+  ].join("\n");
 
-The JSON must match this shape exactly:
-${COMPACTED_TRAJECTORY_SCHEMA}
-
-Rules:
-- "version" must be 1.
-- "type" must be "compacted".
-- "sourceTrajectories" must include every trajectory ID found in the input.
-- "dateRange.start" must be the earliest trajectory start date.
-- "dateRange.end" must be the latest completed date, or latest available date if incomplete.
-- "summary.totalDecisions" must reflect the number of decision records in "decisionGroups".
-- "summary.totalEvents" should reflect the total number of notable events represented from the input.
-- "summary.uniqueAgents" must be deduplicated.
-- "keyLearnings" and "keyFindings" should be concise single-sentence strings.
-- "filesAffected" and "commits" must be deduplicated arrays.
-- If a field cannot be inferred exactly, provide the best grounded value rather than omitting it.
-`.trim();
-
-/**
- * Build the user prompt with serialized trajectories and optional focus areas.
- */
-export function buildCompactionUserPrompt(
-  serialized: string,
-  options?: { focus?: string },
-): string {
-  const focus = options?.focus?.trim();
-
-  const lines = [
-    "Compact the following trajectories into one JSON summary.",
-    `Current timestamp: ${new Date().toISOString()}`,
-    focus
-      ? `Focus areas: ${focus}`
-      : "Focus areas: overall decisions, cross-trajectory themes, learnings, and findings.",
-    "Use the exact JSON structure from the system prompt.",
-    "Do not omit required keys. Use concise wording and preserve trajectory IDs on each decision.",
-    "Input trajectories:",
-    serialized,
+  return [
+    {
+      role: "system",
+      content: COMPACTION_SYSTEM_PROMPT,
+    },
+    {
+      role: "user",
+      content: userPrompt,
+    },
   ];
-
-  return lines.join("\n\n");
 }
