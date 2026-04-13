@@ -1,3 +1,19 @@
+## [0.5.3](https://github.com/AgentWorkforce/trajectories/compare/v0.5.2...v0.5.3) (2026-04-13)
+
+
+### Bug Fixes
+
+* address 18 review findings across compact, provider, config, and workflow ([9e8e0c5](https://github.com/AgentWorkforce/trajectories/commit/9e8e0c5ab819469e44b2049821ae651c03848864))
+* CI failures + devin review (readNumber empty-string + lint + build) ([66cc7a1](https://github.com/AgentWorkforce/trajectories/commit/66cc7a1b43bf6ab6d73e96134716ac9ce8d08d1b)), closes [#17](https://github.com/AgentWorkforce/trajectories/issues/17)
+
+
+### Features
+
+* add LLM compaction workflow + agent-relay SDK ([10fd4da](https://github.com/AgentWorkforce/trajectories/commit/10fd4da7414e7baf74b938546b45f67c438a8a11))
+* LLM-powered trajectory compaction ([fd7612a](https://github.com/AgentWorkforce/trajectories/commit/fd7612aa18d840e7a0440c379423d7dbf5561363))
+* **sdk:** autoCompact option on TrajectoryClient auto-runs compactWorkflow on complete ([6298078](https://github.com/AgentWorkforce/trajectories/commit/62980788ce90e1b46b553b098703427c1a74fb40))
+* trail start honors TRAJECTORIES_WORKFLOW_ID + auto-compact template ([92b6f98](https://github.com/AgentWorkforce/trajectories/commit/92b6f98e4cc398b75e1dd06a4ca1df5b7b68fcf2))
+* workflow-aware auto-compaction (SDK tag + trail compact --workflow) ([21de705](https://github.com/AgentWorkforce/trajectories/commit/21de7051d42b008d4ef0b0e1f9f91d5fa873825a))
 ## [0.5.2](https://github.com/AgentWorkforce/trajectories/compare/v0.5.1...v0.5.2) (2026-02-20)
 
 
