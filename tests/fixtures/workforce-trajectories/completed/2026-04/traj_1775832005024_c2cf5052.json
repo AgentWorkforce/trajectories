@@ -1,0 +1,43 @@
+{
+  "id": "traj_1775832005024_c2cf5052",
+  "version": 1,
+  "task": {
+    "title": "align-trajectory-writer-with-schema",
+    "source": {
+      "system": "workflow-runner",
+      "id": "2a41e1bb7c0e9fd5e3bfa701"
+    }
+  },
+  "status": "completed",
+  "startedAt": "2026-04-10T14:40:05.024Z",
+  "completedAt": "2026-04-10T14:52:11.003Z",
+  "agents": [
+    {
+      "name": "orchestrator",
+      "role": "workflow-runner",
+      "joinedAt": "2026-04-10T14:40:05.024Z"
+    },
+    {
+      "name": "aligner",
+      "role": "specialist",
+      "joinedAt": "2026-04-10T14:40:08.441Z"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "ch_1b0c36aa",
+      "title": "Analysis",
+      "agentName": "orchestrator",
+      "startedAt": "2026-04-10T14:40:05.024Z",
+      "events": [
+        {
+          "ts": 1775832005024,
+          "type": "reflection",
+          "content": "Scope: audit zod constraints, decide relaxation strategy.",
+          "significance": "high"
+        }
+      ],
+      "endedAt": "2026-04-10T14:40:08.441Z"
+    }
+  ]
+}
