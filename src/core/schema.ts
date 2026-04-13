@@ -121,7 +121,7 @@ export const DecisionSchema = z.object({
  */
 export const AgentParticipationSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
-  role: z.enum(["lead", "contributor", "reviewer"]),
+  role: z.string().min(1, "Agent role is required"),
   joinedAt: z.string().datetime(),
   leftAt: z.string().datetime().optional(),
 });
@@ -231,7 +231,7 @@ export const TrajectoryTraceRefSchema = z.object({
  * Full trajectory schema
  */
 export const TrajectorySchema = z.object({
-  id: z.string().regex(/^traj_[a-z0-9]+$/, "Invalid trajectory ID format"),
+  id: z.string().regex(/^traj_[a-z0-9_]+$/, "Invalid trajectory ID format"),
   version: z.literal(1),
   task: TaskReferenceSchema,
   status: TrajectoryStatusSchema,
@@ -240,11 +240,11 @@ export const TrajectorySchema = z.object({
   agents: z.array(AgentParticipationSchema),
   chapters: z.array(ChapterSchema),
   retrospective: RetrospectiveSchema.optional(),
-  commits: z.array(z.string()),
-  filesChanged: z.array(z.string()),
-  projectId: z.string(),
+  commits: z.array(z.string()).default([]),
+  filesChanged: z.array(z.string()).default([]),
+  projectId: z.string().optional(),
   workflowId: z.string().optional(),
-  tags: z.array(z.string()),
+  tags: z.array(z.string()).default([]),
   _trace: TrajectoryTraceRefSchema.optional(),
 });
 

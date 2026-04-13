@@ -60,7 +60,12 @@ export type TrajectoryEventType =
   | "finding"
   | "reflection"
   | "note"
-  | "error";
+  | "error"
+  // Permissive fallback for event types produced by other tools
+  // (e.g. agent-relay's "completion-evidence"). The zod schema already
+  // accepts these via z.union([...literals, z.string()]); this keeps
+  // the TS type aligned so readers can assign freely.
+  | (string & {});
 
 /**
  * Significance level for events
@@ -149,8 +154,13 @@ export interface Finding {
 export interface AgentParticipation {
   /** Agent identifier */
   name: string;
-  /** Role in the trajectory */
-  role: "lead" | "contributor" | "reviewer";
+  /**
+   * Role in the trajectory. Common values are "lead", "contributor",
+   * "reviewer", but this is intentionally open-ended — the workforce
+   * workflow runner emits domain-specific roles like "workflow-runner"
+   * and "specialist" that we want to read without rejecting.
+   */
+  role: string;
   /** When the agent joined */
   joinedAt: string;
   /** When the agent left (if applicable) */
@@ -223,8 +233,8 @@ export interface Trajectory {
   commits: string[];
   /** Files that were modified */
   filesChanged: string[];
-  /** Project identifier */
-  projectId: string;
+  /** Project identifier. Optional — legacy trajectories may omit it. */
+  projectId?: string;
   /** Opaque id set by the workflow runner via TRAJECTORIES_WORKFLOW_ID env var. Lets trail compact --workflow <id> collate all trajectories from a single workflow run. */
   workflowId?: string;
   /** User-defined tags */

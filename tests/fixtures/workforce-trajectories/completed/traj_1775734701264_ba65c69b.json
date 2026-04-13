@@ -1,0 +1,67 @@
+{
+  "id": "traj_1775734701264_ba65c69b",
+  "version": 1,
+  "task": {
+    "title": "finish-npm-provenance-persona-workflow",
+    "source": {
+      "system": "workflow-runner",
+      "id": "051e6f8a822765938d8f29fc"
+    }
+  },
+  "status": "completed",
+  "startedAt": "2026-04-09T11:38:21.264Z",
+  "completedAt": "2026-04-09T11:42:17.910Z",
+  "agents": [
+    {
+      "name": "orchestrator",
+      "role": "workflow-runner",
+      "joinedAt": "2026-04-09T11:38:21.264Z"
+    },
+    {
+      "name": "docs",
+      "role": "specialist",
+      "joinedAt": "2026-04-09T11:38:24.613Z"
+    },
+    {
+      "name": "publisher",
+      "role": "specialist",
+      "joinedAt": "2026-04-09T11:38:24.614Z"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "ch_efda3e2f",
+      "title": "Planning",
+      "agentName": "orchestrator",
+      "startedAt": "2026-04-09T11:38:21.264Z",
+      "events": [
+        {
+          "ts": 1775734701264,
+          "type": "note",
+          "content": "Purpose: Document persona skills + npm-provenance persona."
+        }
+      ],
+      "endedAt": "2026-04-09T11:38:24.583Z"
+    },
+    {
+      "id": "ch_a8a6a1a8",
+      "title": "Execution: update-readme, create-publish-workflow",
+      "agentName": "orchestrator",
+      "startedAt": "2026-04-09T11:38:24.613Z",
+      "events": [
+        {
+          "ts": 1775734734733,
+          "type": "completion-evidence",
+          "content": "update-readme verification-based completion — Verification passed",
+          "significance": "medium",
+          "raw": {
+            "stepName": "update-readme",
+            "completionMode": "verification",
+            "exitCode": 0
+          }
+        }
+      ],
+      "endedAt": "2026-04-09T11:42:17.910Z"
+    }
+  ]
+}

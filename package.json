@@ -1,6 +1,6 @@
 {
   "name": "agent-trajectories",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Capture the complete train of thought of agent work as first-class artifacts",
   "type": "module",
   "main": "dist/index.js",
