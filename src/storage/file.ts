@@ -112,6 +112,79 @@ export class FileStorage implements StorageAdapter {
         trajectories: {},
       });
     }
+
+    // Reconcile on-disk trajectories with the index. Self-heals cases where
+    // files were written by a different process or an older layout that
+    // bypassed updateIndex.
+    await this.reconcileIndex();
+  }
+
+  /**
+   * Scan active/ and completed/ (both flat root and YYYY-MM subdirs) and add
+   * any trajectory files missing from the index. Existing index entries are
+   * preserved — reconciliation only adds, never removes.
+   */
+  async reconcileIndex(): Promise<void> {
+    const index = await this.loadIndex();
+    const before = Object.keys(index.trajectories).length;
+
+    const discovered: Array<{ path: string; dirKind: "active" | "completed" }> =
+      [];
+
+    // Active: flat directory of {id}.json files
+    try {
+      const activeFiles = await readdir(this.activeDir);
+      for (const file of activeFiles) {
+        if (!file.endsWith(".json")) continue;
+        discovered.push({
+          path: join(this.activeDir, file),
+          dirKind: "active",
+        });
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+
+    // Completed: files in the root, and files inside YYYY-MM subdirectories
+    try {
+      const completedEntries = await readdir(this.completedDir, {
+        withFileTypes: true,
+      });
+      for (const entry of completedEntries) {
+        const entryPath = join(this.completedDir, entry.name);
+        if (entry.isFile() && entry.name.endsWith(".json")) {
+          discovered.push({ path: entryPath, dirKind: "completed" });
+        } else if (entry.isDirectory()) {
+          const subFiles = await readdir(entryPath);
+          for (const file of subFiles) {
+            if (!file.endsWith(".json")) continue;
+            discovered.push({
+              path: join(entryPath, file),
+              dirKind: "completed",
+            });
+          }
+        }
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+
+    for (const { path: filePath } of discovered) {
+      const trajectory = await this.readTrajectoryFile(filePath);
+      if (!trajectory) continue;
+      if (index.trajectories[trajectory.id]) continue;
+      index.trajectories[trajectory.id] = {
+        title: trajectory.task.title,
+        status: trajectory.status,
+        startedAt: trajectory.startedAt,
+        completedAt: trajectory.completedAt,
+        path: filePath,
+      };
+    }
+
+    if (Object.keys(index.trajectories).length !== before) {
+      await this.saveIndex(index);
+    }
   }
 
   /**
