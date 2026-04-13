@@ -42,6 +42,11 @@ const WORKFORCE_BRANCH =
 const WORKFLOW_DIR = `${TRAJ_ROOT}/workflows/fix-trajectory-schema`;
 const FINDINGS_PATH = `${WORKFLOW_DIR}/investigation-findings.md`;
 const DECISION_PATH = `${WORKFLOW_DIR}/DECISION.md`;
+// The lead writes PR URL(s) here as its durable completion artifact.
+// Verification gates on the file existing instead of on the lead printing
+// a specific string to stdout — relay channel messages don't count as
+// stdout and caused earlier runs to time out even after the PR was opened.
+const PR_URLS_PATH = `${WORKFLOW_DIR}/PR_URLS.txt`;
 const E2E_SCRATCH = "/tmp/traj-schema-e2e";
 
 async function main() {
@@ -238,7 +243,7 @@ Branch:   ${TRAJ_BRANCH}
 
 Exit 0 on success (all tests pass, pass count monotonically non-decreasing).
 `.trim(),
-      verification: { type: "exit_code" },
+      verification: { type: "exit_code", value: "0" },
       retries: 1,
     })
 
@@ -273,7 +278,7 @@ Branch:   ${WORKFORCE_BRANCH}
 
 Exit 0 on clean skip or clean success.
 `.trim(),
-      verification: { type: "exit_code" },
+      verification: { type: "exit_code", value: "0" },
       retries: 1,
     })
 
@@ -444,18 +449,31 @@ Steps (stop on first failure):
    d. git push -u origin ${WORKFORCE_BRANCH}
    e. gh pr create — reference the trajectories PR URL in the body
 
-3. Print both PR URLs on separate lines, prefixed with "PR: ".
+3. Write the PR URL(s) to ${PR_URLS_PATH}, one per line, no other
+   content. Create the file even if only one PR was opened (workforce
+   track was SKIPPED). Example file contents:
+       https://github.com/AgentWorkforce/trajectories/pull/123
+       https://github.com/AgentWorkforce/workforce/pull/456
+
+   NOTE: This file is the workflow's completion signal. The verification
+   gate watches it on disk — not stdout and not relay channel messages.
+   You can still print the URLs to your own output for logging, but it
+   is the FILE that matters.
+
 4. Do NOT merge either PR.
 
 Exit 0 on success.
 `.trim(),
-      verification: { type: "output_contains", value: "PR: https://" },
+      verification: { type: "file_exists", value: PR_URLS_PATH },
     })
 
     .onError("fail-fast")
     .run({
       cwd: TRAJ_ROOT,
-      onEvent: (e) => console.log(`[${e.type}]${e.step ? ` ${e.step}` : ""}`),
+      onEvent: (e) => {
+        const stepName = "stepName" in e ? e.stepName : "";
+        console.log(`[${e.type}]${stepName ? ` ${stepName}` : ""}`);
+      },
     });
 
   console.log("\nImplementation workflow complete:", result.status);
