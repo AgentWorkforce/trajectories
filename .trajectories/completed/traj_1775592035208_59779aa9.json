@@ -1,0 +1,64 @@
+{
+  "id": "traj_1775592035208_59779aa9",
+  "version": 1,
+  "task": {
+    "title": "95-smoke-test-server-workflow",
+    "source": {
+      "system": "workflow-runner",
+      "id": "6b5f4889db372a61ea1f646c"
+    }
+  },
+  "status": "completed",
+  "startedAt": "2026-04-07T20:00:35.208Z",
+  "agents": [
+    {
+      "name": "orchestrator",
+      "role": "workflow-runner",
+      "joinedAt": "2026-04-07T20:00:35.208Z"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "ch_f46db1e4",
+      "title": "Planning",
+      "agentName": "orchestrator",
+      "startedAt": "2026-04-07T20:00:35.208Z",
+      "events": [
+        {
+          "ts": 1775592035208,
+          "type": "note",
+          "content": "Purpose: Smoke test: start server, verify health and API endpoints, then shut down"
+        },
+        {
+          "ts": 1775592035208,
+          "type": "note",
+          "content": "Approach: 1-step pipeline workflow — Parsed 1 steps, DAG validated, no cycles"
+        }
+      ],
+      "endedAt": "2026-04-07T20:00:36.998Z"
+    },
+    {
+      "id": "ch_47ac9ba9",
+      "title": "Retrospective",
+      "agentName": "orchestrator",
+      "startedAt": "2026-04-07T20:00:36.998Z",
+      "events": [
+        {
+          "ts": 1775592036998,
+          "type": "reflection",
+          "content": "All 1 steps completed in 2s. (completed in 2 seconds)",
+          "significance": "high"
+        }
+      ],
+      "endedAt": "2026-04-07T20:00:36.998Z"
+    }
+  ],
+  "completedAt": "2026-04-07T20:00:36.998Z",
+  "retrospective": {
+    "summary": "All 1 steps completed in 2s.",
+    "approach": "pipeline workflow (0 agents)",
+    "confidence": 0.75,
+    "learnings": [],
+    "challenges": []
+  }
+}

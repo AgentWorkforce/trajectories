@@ -1,0 +1,72 @@
+{
+  "id": "traj_1775590554286_bbbf5e8e",
+  "version": 1,
+  "task": {
+    "title": "95-smoke-test-server-workflow",
+    "source": {
+      "system": "workflow-runner",
+      "id": "b372dd395d6e05bde8732f1d"
+    }
+  },
+  "status": "abandoned",
+  "startedAt": "2026-04-07T19:35:54.286Z",
+  "agents": [
+    {
+      "name": "orchestrator",
+      "role": "workflow-runner",
+      "joinedAt": "2026-04-07T19:35:54.286Z"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "ch_1de180fe",
+      "title": "Planning",
+      "agentName": "orchestrator",
+      "startedAt": "2026-04-07T19:35:54.286Z",
+      "events": [
+        {
+          "ts": 1775590554286,
+          "type": "note",
+          "content": "Purpose: Smoke test: start server, verify health and API endpoints, then shut down"
+        },
+        {
+          "ts": 1775590554286,
+          "type": "note",
+          "content": "Approach: 1-step pipeline workflow — Parsed 1 steps, DAG validated, no cycles"
+        }
+      ],
+      "endedAt": "2026-04-07T19:37:02.309Z"
+    },
+    {
+      "id": "ch_a42d58ea",
+      "title": "Retrospective",
+      "agentName": "orchestrator",
+      "startedAt": "2026-04-07T19:37:02.309Z",
+      "events": [
+        {
+          "ts": 1775590622309,
+          "type": "reflection",
+          "content": "Failed at \"smoke-test\" [exit_nonzero] after 1min. 0/1 steps completed before failure. (abandoned after 1 minutes)",
+          "significance": "high"
+        },
+        {
+          "ts": 1775590622309,
+          "type": "error",
+          "content": "Workflow abandoned: Step \"smoke-test\" failed: Step \"smoke-test\" failed: Command failed with exit code 1: \nnode:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\nError [ERR_MODULE_NOT_FOUND]: Cannot find package '@hono/node-server' imported from /Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/server/src/server.ts\n    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:314:9)\n    at packageResolve (node:internal/modules/esm/resolve:768:81)\n    at moduleResolve (node:internal/modules/esm/resolve:855:18)\n    at defaultResolve (node:internal/modules",
+          "significance": "high"
+        }
+      ],
+      "endedAt": "2026-04-07T19:37:02.309Z"
+    }
+  ],
+  "completedAt": "2026-04-07T19:37:02.309Z",
+  "retrospective": {
+    "summary": "Failed at \"smoke-test\" [exit_nonzero] after 1min. 0/1 steps completed before failure.",
+    "approach": "pipeline workflow (0 agents)",
+    "confidence": 0,
+    "learnings": [],
+    "challenges": [
+      "The agent process exited with a non-zero exit code. Check stderr for the root cause."
+    ]
+  }
+}

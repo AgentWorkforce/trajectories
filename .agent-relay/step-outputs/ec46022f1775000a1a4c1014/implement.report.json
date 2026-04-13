@@ -1,0 +1,48 @@
+{
+  "cli": "codex",
+  "sessionId": "019d68cd-9810-7250-9ca2-4e1dc7d9748b",
+  "model": null,
+  "provider": "openai",
+  "durationMs": 11000,
+  "cost": null,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cacheRead": 0
+  },
+  "turns": 0,
+  "toolCalls": [],
+  "errors": [],
+  "finalStatus": "unknown",
+  "summary": null,
+  "raw": {
+    "matchedVia": "threads",
+    "thread": {
+      "id": "019d68cd-9810-7250-9ca2-4e1dc7d9748b",
+      "rollout_path": "/Users/khaliqgant/.codex/sessions/2026/04/07/rollout-2026-04-07T18-36-37-019d68cd-9810-7250-9ca2-4e1dc7d9748b.jsonl",
+      "created_at": 1775579797,
+      "updated_at": 1775579808,
+      "source": "exec",
+      "model_provider": "openai",
+      "cwd": "/Users/khaliqgant/Projects/AgentWorkforce/trajectories",
+      "title": "You are a non-interactive worker agent. Produce clean, structured output to stdout.\nDo NOT use mcp__relaycast__agent_add, add_agent, or any MCP tool to spawn sub-agents.\nDo NOT use mcp__relaycast__message_dm_send or any Relaycast messaging tools — you have no relay connection.\n\nCreate trail-viewer/Sources/Design/EmptyState.swift from this spec:\n\n# EmptyState.swift — Full File Contents\n\nWrite to: `trail-viewer/Sources/Components/EmptyState.swift`\n\n```swift\nimport SwiftUI\n\nstruct EmptyState: View {\n    let icon: String\n    let title: String\n    let subtitle: String\n\n    var body: some View {\n        VStack(spacing: Theme.spacingLG) {\n            Image(systemName: icon)\n                .font(.system(size: 48))\n                .foregroundColor(Theme.blue.opacity(0.4))\n\n            Text(title)\n                .sectionTitle()\n\n            Text(subtitle)\n                .bodyStyle()\n                .multilineTextAlignment(.center)\n                .frame(maxWidth: 320)\n        }\n        .frame(maxWidth: .infinity, maxHeight: .infinity)\n        .padding(Theme.spacingXL)\n    }\n}\n\n#Preview(\"No Trajectories\") {\n    EmptyState(\n        icon: \"doc.text.magnifyingglass\",\n        title: \"No Trajectories\",\n        subtitle: \"Open a trajectory file or folder to begin exploring agent steps and tool calls.\"\n    )\n}\n\n#Preview(\"No Results\") {\n    EmptyState(\n        icon: \"magnifyingglass\",\n        title: \"No Results\",\n        subtitle: \"Try adjusting your search or filters to find what you're looking for.\"\n    )\n}\n```\n\n## Design Notes\n\n- **Icon**: SF Symbol rendered at 48pt, using `Theme.blue` at 0.4 opacity for a soft, muted appearance\n- **Title**: Uses `.sectionTitle()` modifier (18pt semibold serif, `Theme.textPrimary`)\n- **Subtitle**: Uses `.bodyStyle()` modifier (13.5pt, `Theme.textSecondary`), center-aligned, capped at 320pt width for comfortable reading\n- **Layout**: VStack with `Theme.spacingLG` (24pt) between elements, fills all available space, padded with `Theme.spacingXL` (36pt)\n- **\"Beautiful Notebook\" feel**: Warm palette from Theme, serif typography, generous whitespace, understated icon opacity\n\n\nExtract the EmptyState.swift code and write it to trail-viewer/Sources/Design/EmptyState.swift.\nCreate the trail-viewer/Sources/Design directory if it does not exist.\nIMPORTANT: Write the file to disk. Do NOT output to stdout. Only create this one file.\n\n---\nIMPORTANT: You are running as a non-interactive subprocess. Do NOT call mcp__relaycast__agent_add, add_agent, or any MCP tool to spawn or manage other agents.\n\nCRITICAL REQUIREMENT — YOU MUST FOLLOW THIS EXACTLY:\nYou are running in non-interactive mode. There is NO opportunity for follow-up, clarification, or additional input. Your stdout output is your ONLY deliverable.\n\nYou MUST:\n1. Complete the ENTIRE task in a single pass — no partial work, no \"I'll continue later\"\n2. Print your COMPLETE deliverable to stdout — this is the ONLY output that will be captured\n3. Be thorough and self-contained — another agent will consume your output with zero context about your process\n4. End with a clear summary of what was accomplished and any artifacts produced\n\nDO NOT:\n- Ask questions or request clarification (there is no one to answer)\n- Output partial results expecting a follow-up (there will be none)\n- Skip steps or leave work incomplete\n- Output only status messages without the actual deliverable content",
+      "sandbox_policy": "{\"type\":\"danger-full-access\"}",
+      "approval_mode": "never",
+      "tokens_used": 0,
+      "has_user_event": 0,
+      "archived": 0,
+      "archived_at": null,
+      "git_sha": "3b18442c112161774853d7f7a778e67f44aa2307",
+      "git_branch": "trail-viewer",
+      "git_origin_url": "git@github.com:AgentWorkforce/trajectories.git",
+      "cli_version": "0.117.0",
+      "first_user_message": "You are a non-interactive worker agent. Produce clean, structured output to stdout.\nDo NOT use mcp__relaycast__agent_add, add_agent, or any MCP tool to spawn sub-agents.\nDo NOT use mcp__relaycast__message_dm_send or any Relaycast messaging tools — you have no relay connection.\n\nCreate trail-viewer/Sources/Design/EmptyState.swift from this spec:\n\n# EmptyState.swift — Full File Contents\n\nWrite to: `trail-viewer/Sources/Components/EmptyState.swift`\n\n```swift\nimport SwiftUI\n\nstruct EmptyState: View {\n    let icon: String\n    let title: String\n    let subtitle: String\n\n    var body: some View {\n        VStack(spacing: Theme.spacingLG) {\n            Image(systemName: icon)\n                .font(.system(size: 48))\n                .foregroundColor(Theme.blue.opacity(0.4))\n\n            Text(title)\n                .sectionTitle()\n\n            Text(subtitle)\n                .bodyStyle()\n                .multilineTextAlignment(.center)\n                .frame(maxWidth: 320)\n        }\n        .frame(maxWidth: .infinity, maxHeight: .infinity)\n        .padding(Theme.spacingXL)\n    }\n}\n\n#Preview(\"No Trajectories\") {\n    EmptyState(\n        icon: \"doc.text.magnifyingglass\",\n        title: \"No Trajectories\",\n        subtitle: \"Open a trajectory file or folder to begin exploring agent steps and tool calls.\"\n    )\n}\n\n#Preview(\"No Results\") {\n    EmptyState(\n        icon: \"magnifyingglass\",\n        title: \"No Results\",\n        subtitle: \"Try adjusting your search or filters to find what you're looking for.\"\n    )\n}\n```\n\n## Design Notes\n\n- **Icon**: SF Symbol rendered at 48pt, using `Theme.blue` at 0.4 opacity for a soft, muted appearance\n- **Title**: Uses `.sectionTitle()` modifier (18pt semibold serif, `Theme.textPrimary`)\n- **Subtitle**: Uses `.bodyStyle()` modifier (13.5pt, `Theme.textSecondary`), center-aligned, capped at 320pt width for comfortable reading\n- **Layout**: VStack with `Theme.spacingLG` (24pt) between elements, fills all available space, padded with `Theme.spacingXL` (36pt)\n- **\"Beautiful Notebook\" feel**: Warm palette from Theme, serif typography, generous whitespace, understated icon opacity\n\n\nExtract the EmptyState.swift code and write it to trail-viewer/Sources/Design/EmptyState.swift.\nCreate the trail-viewer/Sources/Design directory if it does not exist.\nIMPORTANT: Write the file to disk. Do NOT output to stdout. Only create this one file.\n\n---\nIMPORTANT: You are running as a non-interactive subprocess. Do NOT call mcp__relaycast__agent_add, add_agent, or any MCP tool to spawn or manage other agents.\n\nCRITICAL REQUIREMENT — YOU MUST FOLLOW THIS EXACTLY:\nYou are running in non-interactive mode. There is NO opportunity for follow-up, clarification, or additional input. Your stdout output is your ONLY deliverable.\n\nYou MUST:\n1. Complete the ENTIRE task in a single pass — no partial work, no \"I'll continue later\"\n2. Print your COMPLETE deliverable to stdout — this is the ONLY output that will be captured\n3. Be thorough and self-contained — another agent will consume your output with zero context about your process\n4. End with a clear summary of what was accomplished and any artifacts produced\n\nDO NOT:\n- Ask questions or request clarification (there is no one to answer)\n- Output partial results expecting a follow-up (there will be none)\n- Skip steps or leave work incomplete\n- Output only status messages without the actual deliverable content",
+      "agent_nickname": null,
+      "agent_role": null,
+      "memory_mode": "enabled",
+      "model": "gpt-5.4",
+      "reasoning_effort": "high",
+      "agent_path": null
+    }
+  }
+}

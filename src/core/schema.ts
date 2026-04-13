@@ -62,7 +62,9 @@ export const TrajectoryEventTypeSchema = z.union([
   z.literal("reflection"),
   z.literal("note"),
   z.literal("error"),
-  z.string(), // Allow event types emitted by other tools (e.g. agent-relay's completion-evidence / completion-marker). Downstream code filters to known types.
+  z.literal("completion-evidence"),
+  z.literal("completion-marker"),
+  z.string(), // Allow event types emitted by other tools. Downstream code filters to known types.
 ]);
 
 /**

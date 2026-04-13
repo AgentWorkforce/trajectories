@@ -452,7 +452,7 @@ export class FileStorage implements StorageAdapter {
 
     // Pagination
     const offset = query.offset ?? 0;
-    const limit = query.limit ?? 50;
+    const limit = query.limit ?? 500;
     entries = entries.slice(offset, offset + limit);
 
     // Convert to summaries
