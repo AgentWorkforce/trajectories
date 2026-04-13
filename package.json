@@ -46,9 +46,7 @@
     "type": "git",
     "url": "https://github.com/AgentWorkforce/trajectories"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "engines": {
     "node": ">=20.0.0"
   },
