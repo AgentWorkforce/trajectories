@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -294,6 +295,70 @@ describe("LLM compaction", () => {
       expect(compacted.narrative).toBeUndefined();
       expect(compacted.decisionGroups).toBeDefined();
       expect(compacted.filesAffected).toBeDefined();
+    },
+  );
+
+  it(
+    "can discard source trajectory files and index entries after compaction",
+    { timeout: 15_000 },
+    async () => {
+      const started = await runCommand(["start", "Prune compacted sources"]);
+      expect(started.success).toBe(true);
+
+      const decided = await runCommand([
+        "decision",
+        "Discard raw trajectories after compaction",
+        "--reasoning",
+        "The compacted artifact becomes the durable record and list output stays focused.",
+      ]);
+      expect(decided.success).toBe(true);
+
+      const completed = await runCommand([
+        "complete",
+        "--summary",
+        "Finished source pruning flow",
+        "--confidence",
+        "0.9",
+      ]);
+      expect(completed.success).toBe(true);
+
+      const indexPath = join(tempDir, ".trajectories", "index.json");
+      const beforeIndex = JSON.parse(await readFile(indexPath, "utf-8")) as {
+        trajectories: Record<string, { path: string }>;
+      };
+      const sourceId = Object.keys(beforeIndex.trajectories)[0];
+      expect(sourceId).toBeDefined();
+
+      const sourcePath = beforeIndex.trajectories[sourceId ?? ""]?.path;
+      expect(sourcePath).toBeDefined();
+      expect(existsSync(sourcePath ?? "")).toBe(true);
+      expect(existsSync((sourcePath ?? "").replace(/\.json$/, ".md"))).toBe(
+        true,
+      );
+
+      const result = await runCommand([
+        "compact",
+        "--mechanical",
+        "--discard-sources",
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(result.output).toContain("Compacted trajectory saved to:");
+      expect(result.output).toContain("Discarded source trajectories:");
+
+      const compactedDir = join(tempDir, ".trajectories", "compacted");
+      const compactedFiles = await readdir(compactedDir);
+      expect(compactedFiles.some((file) => file.endsWith(".json"))).toBe(true);
+      expect(compactedFiles.some((file) => file.endsWith(".md"))).toBe(true);
+
+      const afterIndex = JSON.parse(await readFile(indexPath, "utf-8")) as {
+        trajectories: Record<string, unknown>;
+      };
+      expect(afterIndex.trajectories[sourceId ?? ""]).toBeUndefined();
+      expect(existsSync(sourcePath ?? "")).toBe(false);
+      expect(existsSync((sourcePath ?? "").replace(/\.json$/, ".md"))).toBe(
+        false,
+      );
     },
   );
 });

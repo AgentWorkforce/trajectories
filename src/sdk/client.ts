@@ -53,19 +53,22 @@ function normalizeOptionalString(value?: string): string | undefined {
 }
 
 function normalizeAutoCompactOptions(
-  autoCompact?: boolean | { mechanical?: boolean; markdown?: boolean },
-): false | { mechanical: boolean; markdown: boolean } {
+  autoCompact?:
+    | boolean
+    | { mechanical?: boolean; markdown?: boolean; discardSources?: boolean },
+): false | { mechanical: boolean; markdown: boolean; discardSources: boolean } {
   if (!autoCompact) {
     return false;
   }
 
   if (autoCompact === true) {
-    return { mechanical: false, markdown: true };
+    return { mechanical: false, markdown: true, discardSources: false };
   }
 
   return {
     mechanical: autoCompact.mechanical ?? false,
     markdown: autoCompact.markdown ?? true,
+    discardSources: autoCompact.discardSources ?? false,
   };
 }
 
@@ -137,7 +140,12 @@ function parseCompactWorkflowOutput(stdout: string): {
 
 export async function compactWorkflow(
   workflowId: string,
-  options?: { markdown?: boolean; mechanical?: boolean; cwd?: string },
+  options?: {
+    markdown?: boolean;
+    mechanical?: boolean;
+    discardSources?: boolean;
+    cwd?: string;
+  },
 ): Promise<{ compactedPath: string; markdownPath?: string }> {
   const normalizedWorkflowId = normalizeOptionalString(workflowId);
   if (!normalizedWorkflowId) {
@@ -158,6 +166,9 @@ export async function compactWorkflow(
   }
   if (options?.mechanical) {
     args.push("--mechanical");
+  }
+  if (options?.discardSources) {
+    args.push("--discard-sources");
   }
 
   return new Promise((resolve, reject) => {
@@ -221,9 +232,11 @@ export interface TrajectoryClientOptions {
   /** Whether to auto-save after each operation. Defaults to true */
   autoSave?: boolean;
   /**
-   * When set, session.complete() and session.done() automatically run compactWorkflow() against the trajectory's workflowId. Default false. Pass an object to control the flags passed to the CLI — e.g. { mechanical: true } skips the LLM for deterministic compaction, { markdown: false } skips the .md companion.
+   * When set, session.complete() and session.done() automatically run compactWorkflow() against the trajectory's workflowId. Default false. Pass an object to control the flags passed to the CLI — e.g. { mechanical: true } skips the LLM for deterministic compaction, { markdown: false } skips the .md companion, { discardSources: true } prunes raw source trajectories after compaction.
    */
-  autoCompact?: boolean | { mechanical?: boolean; markdown?: boolean };
+  autoCompact?:
+    | boolean
+    | { mechanical?: boolean; markdown?: boolean; discardSources?: boolean };
 }
 
 /**
@@ -523,7 +536,7 @@ export class TrajectoryClient {
   private readonly autoCompactCwd?: string;
   private readonly autoCompact:
     | false
-    | { mechanical: boolean; markdown: boolean };
+    | { mechanical: boolean; markdown: boolean; discardSources: boolean };
 
   constructor(options: TrajectoryClientOptions = {}) {
     this.storage = options.storage ?? new FileStorage(options.dataDir);
@@ -534,7 +547,9 @@ export class TrajectoryClient {
     this.autoCompactCwd = options.storage ? undefined : options.dataDir;
   }
 
-  getAutoCompactOptions(): false | { mechanical: boolean; markdown: boolean } {
+  getAutoCompactOptions():
+    | false
+    | { mechanical: boolean; markdown: boolean; discardSources: boolean } {
     return this.autoCompact;
   }
 

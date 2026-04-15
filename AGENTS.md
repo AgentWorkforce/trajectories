@@ -1,4 +1,4 @@
-<!-- prpm:snippet:start @agent-workforce/trail-snippet@1.1.0 -->
+<!-- prpm:snippet:start @agent-workforce/trail-snippet@1.1.2 -->
 # Trail
 
 Record your work as a trajectory for future agents and humans to follow.
@@ -82,6 +82,20 @@ When done, complete with a retrospective:
 trail complete --summary "Added JWT auth with refresh tokens" --confidence 0.85
 ```
 
+After completing work, compact the finished trajectory or merged PR into a
+durable summary. When the compacted summary is sufficient, discard the raw
+source trajectories so `.trajectories/index.json` and list output stay focused:
+
+```bash
+trail compact --discard-sources
+# or after a PR merge:
+trail compact --pr 42 --discard-sources
+```
+
+`--discard-sources` removes the source trajectory JSON/Markdown/trace files and
+updates the index. Use it after confirming the compacted artifact is the record
+you want to keep.
+
 **Confidence levels:**
 - 0.9+ : High confidence, well-tested
 - 0.7-0.9 : Good confidence, standard implementation
@@ -122,23 +136,26 @@ trail export <trajectory-id> --format markdown
 
 ## Compacting Trajectories
 
-After a PR merge, compact related trajectories into a single summary:
+After a PR merge, compact related trajectories into a single summary and prune
+raw source trajectories when the summary should replace them:
 
 ```bash
-trail compact --pr 42
+trail compact --pr 42 --discard-sources
 ```
 
 Compact by branch:
 ```bash
-trail compact --branch feature/auth
+trail compact --branch feature/auth --discard-sources
 ```
 
 Compact by commit range:
 ```bash
-trail compact --commits abc123..def456
+trail compact --commits abc123..def456 --discard-sources
 ```
 
-Compaction consolidates decisions and creates a grouped summary, reducing noise while preserving key decisions.
+Compaction consolidates decisions and creates a grouped summary. Adding
+`--discard-sources` makes the compacted artifact the durable record by removing
+the raw trajectories and their index entries.
 
 ## Why Trail?
 
@@ -149,7 +166,7 @@ Your trajectory helps others understand:
 - **What challenges** you faced
 
 Future agents can query past trajectories to learn from your decisions.
-<!-- prpm:snippet:end @agent-workforce/trail-snippet@1.1.0 -->
+<!-- prpm:snippet:end @agent-workforce/trail-snippet@1.1.2 -->
 
 <!-- prpm:snippet:start @agent-relay/agent-relay-snippet@1.1.7 -->
 # Agent Relay

@@ -81,6 +81,20 @@ When done, complete with a retrospective:
 trail complete --summary "Added JWT auth with refresh tokens" --confidence 0.85
 ```
 
+After completing work, compact the finished trajectory or merged PR into a
+durable summary. When the compacted summary is sufficient, discard the raw
+source trajectories so `.trajectories/index.json` and list output stay focused:
+
+```bash
+trail compact --discard-sources
+# or after a PR merge:
+trail compact --pr 42 --discard-sources
+```
+
+`--discard-sources` removes the source trajectory JSON/Markdown/trace files and
+updates the index. Use it after confirming the compacted artifact is the record
+you want to keep.
+
 **Confidence levels:**
 - 0.9+ : High confidence, well-tested
 - 0.7-0.9 : Good confidence, standard implementation
@@ -121,23 +135,26 @@ trail export <trajectory-id> --format markdown
 
 ## Compacting Trajectories
 
-After a PR merge, compact related trajectories into a single summary:
+After a PR merge, compact related trajectories into a single summary and prune
+raw source trajectories when the summary should replace them:
 
 ```bash
-trail compact --pr 42
+trail compact --pr 42 --discard-sources
 ```
 
 Compact by branch (finds trajectories with commits not in the specified base branch):
 ```bash
-trail compact --branch main
+trail compact --branch main --discard-sources
 ```
 
 Compact by specific commits:
 ```bash
-trail compact --commits abc123,def456
+trail compact --commits abc123,def456 --discard-sources
 ```
 
-Compaction consolidates decisions and creates a grouped summary, reducing noise while preserving key decisions.
+Compaction consolidates decisions and creates a grouped summary. Adding
+`--discard-sources` makes the compacted artifact the durable record by removing
+the raw trajectories and their index entries.
 
 ## Why Trail?
 

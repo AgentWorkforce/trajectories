@@ -9,7 +9,13 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
 import type { Command } from "commander";
 import { getCompactionConfig } from "../../compact/config.js";
@@ -75,6 +81,12 @@ interface IndexEntry {
   compactedInto?: string;
 }
 
+interface TrajectoryIndex {
+  version: number;
+  lastUpdated: string;
+  trajectories: Record<string, IndexEntry>;
+}
+
 interface CompactCommandOptions {
   since?: string;
   until?: string;
@@ -88,8 +100,16 @@ interface CompactCommandOptions {
   mechanical?: boolean;
   focus?: string;
   markdown?: boolean;
+  discardSources?: boolean;
   dryRun?: boolean;
   output?: string;
+}
+
+interface DiscardSourcesSummary {
+  removedIndexEntries: number;
+  deletedJsonFiles: number;
+  deletedMarkdownFiles: number;
+  deletedTraceFiles: number;
 }
 
 interface LLMCompactionPlan {
@@ -137,6 +157,10 @@ export function registerCompactCommand(program: Command): void {
     )
     .option("--markdown", "Also write a Markdown companion file")
     .option("--no-markdown", "Skip writing a Markdown companion file")
+    .option(
+      "--discard-sources",
+      "After saving the compaction, delete source trajectory JSON/MD/trace files and remove their index entries",
+    )
     .option("--dry-run", "Preview what would be compacted without saving")
     .option("--output <path>", "Output path for compacted trajectory")
     .action(async (options: CompactCommandOptions) => {
@@ -193,7 +217,15 @@ export function registerCompactCommand(program: Command): void {
           outputPath,
           markdownEnabled,
         );
-        await markTrajectoriesAsCompacted(trajectories, mechanicalCompacted.id);
+        if (options.discardSources) {
+          const discardSummary = discardSourceTrajectories(trajectories);
+          printDiscardSummary(discardSummary);
+        } else {
+          await markTrajectoriesAsCompacted(
+            trajectories,
+            mechanicalCompacted.id,
+          );
+        }
 
         console.log(`\nCompacted trajectory saved to: ${outputPath}`);
         if (markdownEnabled) {
@@ -252,7 +284,12 @@ export function registerCompactCommand(program: Command): void {
       const outputPath =
         options.output || getDefaultOutputPath(compacted, options.workflow);
       saveCompactionArtifacts(compacted, outputPath, markdownEnabled);
-      await markTrajectoriesAsCompacted(trajectories, compacted.id);
+      if (options.discardSources) {
+        const discardSummary = discardSourceTrajectories(trajectories);
+        printDiscardSummary(discardSummary);
+      } else {
+        await markTrajectoriesAsCompacted(trajectories, compacted.id);
+      }
 
       console.log(`\nCompacted trajectory saved to: ${outputPath}`);
       if (markdownEnabled) {
@@ -441,9 +478,7 @@ function getCompactedTrajectoryIds(): Set<string> {
 
     try {
       const indexContent = readFileSync(indexPath, "utf-8");
-      const index = JSON.parse(indexContent) as {
-        trajectories: Record<string, IndexEntry>;
-      };
+      const index = JSON.parse(indexContent) as TrajectoryIndex;
 
       for (const [id, entry] of Object.entries(index.trajectories || {})) {
         if (entry.compactedInto) {
@@ -473,11 +508,7 @@ async function markTrajectoriesAsCompacted(
 
     try {
       const indexContent = readFileSync(indexPath, "utf-8");
-      const index = JSON.parse(indexContent) as {
-        version: number;
-        lastUpdated: string;
-        trajectories: Record<string, IndexEntry>;
-      };
+      const index = JSON.parse(indexContent) as TrajectoryIndex;
 
       let updated = false;
       for (const traj of trajectories) {
@@ -495,6 +526,103 @@ async function markTrajectoriesAsCompacted(
       // Index doesn't exist or is malformed
     }
   }
+}
+
+/**
+ * Remove raw source trajectories after a durable compacted artifact has
+ * been written. This keeps compaction as the long-lived record and makes
+ * the index reflect only material that should remain visible.
+ */
+function discardSourceTrajectories(
+  trajectories: Trajectory[],
+): DiscardSourcesSummary {
+  const sourceIds = new Set(trajectories.map((trajectory) => trajectory.id));
+  const summary: DiscardSourcesSummary = {
+    removedIndexEntries: 0,
+    deletedJsonFiles: 0,
+    deletedMarkdownFiles: 0,
+    deletedTraceFiles: 0,
+  };
+
+  for (const searchPath of getSearchPaths()) {
+    const indexPath = join(searchPath, "index.json");
+    if (!existsSync(indexPath)) continue;
+
+    let index: TrajectoryIndex;
+    try {
+      const indexContent = readFileSync(indexPath, "utf-8");
+      const parsedIndex = JSON.parse(indexContent) as unknown;
+      if (!isTrajectoryIndex(parsedIndex)) {
+        continue;
+      }
+      index = parsedIndex;
+    } catch {
+      // Keep behavior consistent with markTrajectoriesAsCompacted: malformed
+      // indexes are ignored instead of blocking an already-saved compaction.
+      continue;
+    }
+
+    let updated = false;
+    for (const id of sourceIds) {
+      const entry = index.trajectories[id];
+      if (!entry) continue;
+
+      if (deleteFileIfExists(entry.path)) {
+        summary.deletedJsonFiles += 1;
+      }
+      if (deleteFileIfExists(getMarkdownOutputPath(entry.path))) {
+        summary.deletedMarkdownFiles += 1;
+      }
+      if (deleteFileIfExists(getTraceOutputPath(entry.path))) {
+        summary.deletedTraceFiles += 1;
+      }
+
+      delete index.trajectories[id];
+      summary.removedIndexEntries += 1;
+      updated = true;
+    }
+
+    if (updated) {
+      index.lastUpdated = new Date().toISOString();
+      writeFileSync(indexPath, JSON.stringify(index, null, 2));
+    }
+  }
+
+  return summary;
+}
+
+function deleteFileIfExists(path: string): boolean {
+  if (!existsSync(path)) {
+    return false;
+  }
+
+  unlinkSync(path);
+  return true;
+}
+
+function isTrajectoryIndex(value: unknown): value is TrajectoryIndex {
+  if (value === null || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<TrajectoryIndex>;
+  return (
+    candidate.trajectories !== null &&
+    typeof candidate.trajectories === "object" &&
+    !Array.isArray(candidate.trajectories)
+  );
+}
+
+function getTraceOutputPath(outputPath: string): string {
+  return outputPath.endsWith(".json")
+    ? outputPath.slice(0, -".json".length).concat(".trace.json")
+    : `${outputPath}.trace.json`;
+}
+
+function printDiscardSummary(summary: DiscardSourcesSummary): void {
+  console.log(
+    `Discarded source trajectories: ${summary.removedIndexEntries} index entries, ${summary.deletedJsonFiles} JSON files, ${summary.deletedMarkdownFiles} Markdown files, ${summary.deletedTraceFiles} trace files`,
+  );
 }
 
 function parseRelativeDate(input: string): Date {
