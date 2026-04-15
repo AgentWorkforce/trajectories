@@ -274,13 +274,23 @@ describe("workflow compaction", () => {
     const session = await client.start("SDK helper task");
     await session.decide("Which approach?", "Option A", "Cleaner abstraction");
     await session.done("sdk helper done", 0.85);
+    const sessionId = session.id;
     clearEnv("TRAJECTORIES_WORKFLOW_ID");
 
     await client.close();
 
+    const indexPath = join(tempDir, ".trajectories", "index.json");
+    const beforeIndex = JSON.parse(await readFile(indexPath, "utf-8")) as {
+      trajectories: Record<string, { path: string }>;
+    };
+    const sourcePath = beforeIndex.trajectories[sessionId]?.path;
+    expect(sourcePath).toBeDefined();
+    expect(existsSync(sourcePath ?? "")).toBe(true);
+
     const result = await compactWorkflow("wf-a", {
       mechanical: true,
       markdown: true,
+      discardSources: true,
       cwd: tempDir,
     });
 
@@ -296,6 +306,13 @@ describe("workflow compaction", () => {
     ) as { workflowId?: string; sourceTrajectories: string[] };
     expect(compacted.workflowId).toBe("wf-a");
     expect(compacted.sourceTrajectories).toHaveLength(1);
+    expect(compacted.sourceTrajectories).toContain(sessionId);
+
+    const afterIndex = JSON.parse(await readFile(indexPath, "utf-8")) as {
+      trajectories: Record<string, unknown>;
+    };
+    expect(afterIndex.trajectories[sessionId]).toBeUndefined();
+    expect(existsSync(sourcePath ?? "")).toBe(false);
   }, 60_000);
 
   it("does not drop trajectories that contain unknown event types", async () => {

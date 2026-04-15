@@ -132,11 +132,14 @@ trail compact --commits abc1234,def5678  # Trajectories matching specific commit
 trail compact --pr 123                # Trajectories mentioning PR #123
 trail compact --since 7d              # Last 7 days
 trail compact --all                   # Everything (including previously compacted)
+trail compact --pr 123 --discard-sources  # Delete source trajectories and update index after compaction
 ```
 
 ### Automatic Compaction (GitHub Action)
 
-Add these steps to any workflow that runs on PR merge (e.g., your release or publish flow). Requires `ref: ${{ github.event.pull_request.base.ref }}` and `fetch-depth: 0` on checkout, plus `contents: write` permission:
+Add these steps to any workflow that runs on PR merge (e.g., your release or publish flow). Requires `ref: ${{ github.event.pull_request.base.ref }}` and `fetch-depth: 0` on checkout, plus `contents: write` permission.
+
+Use `--discard-sources` when the compacted summary should replace the raw source trajectories. This removes the source JSON/Markdown/trace files and updates `.trajectories/index.json`, reducing future list/search noise.
 
 ```yaml
       - name: Compact trajectories
@@ -144,13 +147,13 @@ Add these steps to any workflow that runs on PR merge (e.g., your release or pub
           PR_COMMITS=$(git log ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} --format=%H | paste -sd, -)
           OUTPUT=".trajectories/compacted/pr-${{ github.event.pull_request.number }}.json"
           if [ -n "$PR_COMMITS" ]; then
-            npx agent-trajectories compact --commits "$PR_COMMITS" --output "$OUTPUT"
+            npx agent-trajectories compact --commits "$PR_COMMITS" --output "$OUTPUT" --discard-sources
           else
-            npx agent-trajectories compact --pr ${{ github.event.pull_request.number }} --output "$OUTPUT"
+            npx agent-trajectories compact --pr ${{ github.event.pull_request.number }} --output "$OUTPUT" --discard-sources
           fi
       - name: Commit compacted trajectories
         run: |
-          git add .trajectories/compacted/ || true
+          git add .trajectories/ || true
           git diff --cached --quiet || \
             (git commit -m "chore: compact trajectories for PR #${{ github.event.pull_request.number }}" && git push)
 ```
