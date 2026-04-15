@@ -8,11 +8,13 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./sdk": {
       "types": "./dist/sdk/index.d.ts",
-      "import": "./dist/sdk/index.js"
+      "import": "./dist/sdk/index.js",
+      "default": "./dist/sdk/index.js"
     }
   },
   "bin": {
