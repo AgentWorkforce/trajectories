@@ -1,3 +1,10 @@
+## [0.5.7](https://github.com/AgentWorkforce/trajectories/compare/v0.5.6...v0.5.7) (2026-04-20)
+
+
+### Bug Fixes
+
+* avoid cross-process index tmp collisions ([692b1ac](https://github.com/AgentWorkforce/trajectories/commit/692b1ac465d14ea04c3b80c5214e31b86e9f8558))
+* serialize index.json read-modify-write to prevent race ([fd8e9ed](https://github.com/AgentWorkforce/trajectories/commit/fd8e9ed88a4abc1ee19a6b1a3784ccb05aa1da68))
 ## [0.5.6](https://github.com/AgentWorkforce/trajectories/compare/v0.5.5...v0.5.6) (2026-04-15)
 ## [0.5.5](https://github.com/AgentWorkforce/trajectories/compare/v0.5.4...v0.5.5) (2026-04-15)
 

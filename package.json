@@ -1,6 +1,6 @@
 {
   "name": "agent-trajectories",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "description": "Capture the complete train of thought of agent work as first-class artifacts",
   "type": "module",
   "main": "dist/index.js",
@@ -48,7 +48,9 @@
     "type": "git",
     "url": "https://github.com/AgentWorkforce/trajectories"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "engines": {
     "node": ">=20.0.0"
   },
