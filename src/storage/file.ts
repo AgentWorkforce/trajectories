@@ -5,6 +5,7 @@
  * Active trajectories go in active/, completed in completed/YYYY-MM/.
  */
 
+import { randomUUID } from "node:crypto";
 import { type Dirent, existsSync } from "node:fs";
 import {
   mkdir,
@@ -706,17 +707,18 @@ export class FileStorage implements StorageAdapter {
   }
 
   /**
-   * Atomic write: stage into `index.json.tmp` then rename over the live
-   * file. `rename` is atomic on POSIX, so concurrent readers in any
-   * process either see the old complete file or the new complete file
-   * — never a half-written / zero-byte state.
+   * Atomic write: stage into a process-unique temp path in the same directory
+   * and then rename over the live file. `rename` is atomic on POSIX, so
+   * concurrent readers in any process either see the old complete file or
+   * the new complete file — never a half-written / zero-byte state.
    *
-   * Callers MUST hold `withIndexLock(this.indexPath, ...)` so the tmp
-   * path isn't stomped on by a parallel writer in the same process.
+   * Callers MUST hold `withIndexLock(this.indexPath, ...)` so the in-process
+   * read-modify-write cycle stays serialized; the unique temp name also keeps
+   * parallel writers in other processes from colliding on a shared tmp path.
    */
   private async saveIndex(index: TrajectoryIndex): Promise<void> {
     index.lastUpdated = new Date().toISOString();
-    const tmpPath = `${this.indexPath}.tmp`;
+    const tmpPath = `${this.indexPath}.${process.pid}.${randomUUID()}.tmp`;
     await writeFile(tmpPath, JSON.stringify(index, null, 2), "utf-8");
     await rename(tmpPath, this.indexPath);
   }
