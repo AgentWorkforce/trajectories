@@ -1,3 +1,14 @@
+## [0.5.8](https://github.com/AgentWorkforce/trajectories/compare/v0.5.7...v0.5.8) (2026-05-08)
+
+
+### Bug Fixes
+
+* preserve relative path when quarantining invalid trajectories ([87cc513](https://github.com/AgentWorkforce/trajectories/commit/87cc51376aaa86e9a3860532eb0216ec37cf7842))
+
+
+### Features
+
+* surface invalid trajectory files via status -v and trail doctor ([1ba2391](https://github.com/AgentWorkforce/trajectories/commit/1ba2391d73d5adb0b5bf4b7693bf479ee30867c2))
 ## [0.5.7](https://github.com/AgentWorkforce/trajectories/compare/v0.5.6...v0.5.7) (2026-04-20)
 
 
