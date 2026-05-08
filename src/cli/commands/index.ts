@@ -16,6 +16,7 @@
  * - enable: Install git hook for trajectory trailers
  * - disable: Remove the trajectory git hook
  * - compact: Compress trajectories into summarized form
+ * - doctor: Diagnose and quarantine trajectory files that fail to load
  */
 
 import type { Command } from "commander";
@@ -23,6 +24,7 @@ import { registerAbandonCommand } from "./abandon.js";
 import { registerCompactCommand } from "./compact.js";
 import { registerCompleteCommand } from "./complete.js";
 import { registerDecisionCommand } from "./decision.js";
+import { registerDoctorCommand } from "./doctor.js";
 import { registerEnableCommand } from "./enable.js";
 import { registerExportCommand } from "./export.js";
 import { registerListCommand } from "./list.js";
@@ -46,4 +48,5 @@ export function registerCommands(program: Command): void {
   registerExportCommand(program);
   registerEnableCommand(program);
   registerCompactCommand(program);
+  registerDoctorCommand(program);
 }

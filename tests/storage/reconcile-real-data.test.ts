@@ -181,4 +181,61 @@ describe("FileStorage reconcile — real workforce fixtures", () => {
     expect(summary.skippedMalformedJson).toBe(0);
     expect(summary.skippedSchemaViolation).toBe(1);
   });
+
+  it("quarantineInvalid preserves both files when basenames collide across dirs", async () => {
+    // Regression: an earlier version of quarantineInvalid used basename(),
+    // so two invalid files at active/foo.json and completed/.../foo.json
+    // collapsed onto the same destination and one was silently lost.
+    const { FileStorage } = await import("../../src/storage/file.js");
+    const { writeFile, readdir } = await import("node:fs/promises");
+
+    const trajRoot = join(tempDir, ".trajectories");
+    await mkdir(join(trajRoot, "active"), { recursive: true });
+    await mkdir(join(trajRoot, "completed", "2026-04"), { recursive: true });
+
+    // Same basename, different parent dirs, both schema-invalid.
+    const invalidPayload = JSON.stringify({
+      id: "traj_dup00000_0000",
+      version: 1,
+    });
+    await writeFile(
+      join(trajRoot, "active", "traj_dup00000_0000.json"),
+      invalidPayload,
+      "utf-8",
+    );
+    await writeFile(
+      join(trajRoot, "completed", "2026-04", "traj_dup00000_0000.json"),
+      invalidPayload,
+      "utf-8",
+    );
+
+    const storage = new FileStorage(tempDir);
+    const result = await storage.quarantineInvalid();
+
+    expect(result.moved).toHaveLength(2);
+
+    // Both files should now live under invalid/, with the relative path
+    // preserved so neither overwrites the other.
+    const activeQuarantined = join(
+      trajRoot,
+      "invalid",
+      "active",
+      "traj_dup00000_0000.json",
+    );
+    const completedQuarantined = join(
+      trajRoot,
+      "invalid",
+      "completed",
+      "2026-04",
+      "traj_dup00000_0000.json",
+    );
+    const activeContent = await readFile(activeQuarantined, "utf-8");
+    const completedContent = await readFile(completedQuarantined, "utf-8");
+    expect(activeContent).toBe(invalidPayload);
+    expect(completedContent).toBe(invalidPayload);
+
+    // And the originals must be gone from active/ and completed/.
+    const activeAfter = await readdir(join(trajRoot, "active"));
+    expect(activeAfter).not.toContain("traj_dup00000_0000.json");
+  });
 });
