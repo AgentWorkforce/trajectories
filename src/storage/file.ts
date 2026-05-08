@@ -15,7 +15,8 @@ import {
   unlink,
   writeFile,
 } from "node:fs/promises";
-import { join } from "node:path";
+import { basename, join } from "node:path";
+import type { z } from "zod";
 import { validateTrajectory } from "../core/schema.js";
 import type {
   Trajectory,
@@ -93,9 +94,31 @@ export type ReadTrajectoryResult =
     };
 
 /**
+ * Reason a single trajectory file was skipped during reconcile.
+ */
+export type ReconcileFailureReason =
+  | "malformed_json"
+  | "schema_violation"
+  | "io_error";
+
+/**
+ * Per-file failure record for a skipped trajectory. `message` is a
+ * pre-rendered, single-line description suitable for direct display in
+ * CLI output — callers should not have to know about Zod or fs error
+ * shapes to render diagnostics.
+ */
+export interface ReconcileFailure {
+  path: string;
+  reason: ReconcileFailureReason;
+  message: string;
+}
+
+/**
  * Aggregated counts emitted by reconcileIndex for observability. Exposed
  * on the return value so tests and callers can assert on counts without
- * parsing log output.
+ * parsing log output. `failures` carries the per-file detail so a CLI
+ * doctor or `--verbose` mode can print actionable info without re-walking
+ * the directory tree.
  */
 export interface ReconcileSummary {
   scanned: number;
@@ -104,6 +127,35 @@ export interface ReconcileSummary {
   skippedMalformedJson: number;
   skippedSchemaViolation: number;
   skippedIoError: number;
+  failures: ReconcileFailure[];
+}
+
+/**
+ * Render a read failure into a single-line, human-readable message.
+ * Knows enough about Zod and Node's fs errors to extract the most
+ * useful field; falls back to String(error) for anything else.
+ */
+function describeReadFailure(
+  reason: ReconcileFailureReason,
+  error: unknown,
+): string {
+  if (
+    reason === "schema_violation" &&
+    error &&
+    typeof error === "object" &&
+    "issues" in error
+  ) {
+    const issues = (error as z.ZodError).issues ?? [];
+    if (issues.length > 0) {
+      const first = issues[0];
+      const where = first.path.length > 0 ? first.path.join(".") : "root";
+      const extra = issues.length > 1 ? ` (+${issues.length - 1} more)` : "";
+      return `${where}: ${first.message}${extra}`;
+    }
+    return "schema validation failed";
+  }
+  if (error instanceof Error) return error.message;
+  return String(error);
 }
 
 /**
@@ -144,6 +196,7 @@ export class FileStorage implements StorageAdapter {
   private activeDir: string;
   private completedDir: string;
   private indexPath: string;
+  private lastReconcileSummary?: ReconcileSummary;
 
   constructor(baseDir?: string) {
     this.baseDir = baseDir ?? process.cwd();
@@ -208,6 +261,7 @@ export class FileStorage implements StorageAdapter {
       skippedMalformedJson: 0,
       skippedSchemaViolation: 0,
       skippedIoError: 0,
+      failures: [],
     };
 
     await withIndexLock(this.indexPath, async () => {
@@ -243,6 +297,11 @@ export class FileStorage implements StorageAdapter {
           } else {
             summary.skippedIoError += 1;
           }
+          summary.failures.push({
+            path: result.path,
+            reason: result.reason,
+            message: describeReadFailure(result.reason, result.error),
+          });
           continue;
         }
         const trajectory = result.trajectory;
@@ -286,7 +345,54 @@ export class FileStorage implements StorageAdapter {
       console.warn(`[trajectories] ${parts.join(", ")}`);
     }
 
+    this.lastReconcileSummary = summary;
     return summary;
+  }
+
+  /**
+   * Returns the most recent reconcile summary, if any. Lets the CLI
+   * inspect the failures collected during `initialize()` without having
+   * to re-walk the directory tree (and re-emit the warn line).
+   */
+  getLastReconcileSummary(): ReconcileSummary | undefined {
+    return this.lastReconcileSummary;
+  }
+
+  /**
+   * Move trajectory files that fail to load into `.trajectories/invalid/`
+   * so reconcile no longer scans them. Only quarantines parse and schema
+   * failures — transient io_error failures are left in place because the
+   * file may load fine on the next attempt.
+   *
+   * Returns the list of files that were moved (with their original paths
+   * and the destination directory) so the caller can report what changed.
+   */
+  async quarantineInvalid(): Promise<{
+    moved: ReconcileFailure[];
+    targetDir: string;
+  }> {
+    const summary = await this.reconcileIndex();
+    const targetDir = join(this.trajectoriesDir, "invalid");
+    const candidates = summary.failures.filter((f) => f.reason !== "io_error");
+    if (candidates.length === 0) {
+      return { moved: [], targetDir };
+    }
+    await mkdir(targetDir, { recursive: true });
+    const moved: ReconcileFailure[] = [];
+    for (const failure of candidates) {
+      const dest = join(targetDir, basename(failure.path));
+      try {
+        await rename(failure.path, dest);
+        moved.push(failure);
+      } catch (error) {
+        // Skip and surface — never silently lose a file. The doctor
+        // command rolls these into its output so the user can intervene.
+        console.warn(
+          `[trajectories] failed to quarantine ${failure.path}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+    return { moved, targetDir };
   }
 
   /**

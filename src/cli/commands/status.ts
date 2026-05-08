@@ -13,9 +13,34 @@ export function registerStatusCommand(program: Command): void {
   program
     .command("status")
     .description("Show active trajectory status")
-    .action(async () => {
+    .option(
+      "-v, --verbose",
+      "Show paths and validation errors for any trajectory files that failed to load",
+    )
+    .action(async (opts: { verbose?: boolean }) => {
       const storage = new FileStorage();
       await storage.initialize();
+
+      if (opts.verbose) {
+        const summary = storage.getLastReconcileSummary();
+        const failures = summary?.failures ?? [];
+        if (failures.length === 0) {
+          console.log("All trajectory files loaded cleanly.");
+        } else {
+          console.log(
+            `Skipped ${failures.length} trajectory file(s) during reconcile:`,
+          );
+          for (const failure of failures) {
+            console.log(`  ${failure.path}`);
+            console.log(`    reason:  ${failure.reason}`);
+            console.log(`    detail:  ${failure.message}`);
+          }
+          console.log(
+            "\nRun `trail doctor --quarantine` to move them aside and silence this warning.",
+          );
+        }
+        console.log("");
+      }
 
       const active = await storage.getActive();
 
