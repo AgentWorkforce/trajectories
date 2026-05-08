@@ -15,7 +15,7 @@ import {
   unlink,
   writeFile,
 } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, dirname, isAbsolute, join, relative } from "node:path";
 import type { z } from "zod";
 import { validateTrajectory } from "../core/schema.js";
 import type {
@@ -380,8 +380,9 @@ export class FileStorage implements StorageAdapter {
     await mkdir(targetDir, { recursive: true });
     const moved: ReconcileFailure[] = [];
     for (const failure of candidates) {
-      const dest = join(targetDir, basename(failure.path));
+      const dest = await this.resolveQuarantineDest(failure.path, targetDir);
       try {
+        await mkdir(dirname(dest), { recursive: true });
         await rename(failure.path, dest);
         moved.push(failure);
       } catch (error) {
@@ -393,6 +394,44 @@ export class FileStorage implements StorageAdapter {
       }
     }
     return { moved, targetDir };
+  }
+
+  /**
+   * Pick a destination path under `targetDir` for a quarantined file.
+   *
+   * Preserves the file's relative location under the trajectories root
+   * (e.g. `completed/2026-04/foo.json` → `invalid/completed/2026-04/foo.json`)
+   * so two invalid files that share a basename across `active/` and
+   * `completed/` don't collapse onto each other and silently overwrite.
+   *
+   * Falls back to a numeric-suffix scheme for paths that live outside
+   * the trajectories directory or that, after relative resolution, would
+   * still collide with something already quarantined.
+   */
+  private async resolveQuarantineDest(
+    sourcePath: string,
+    targetDir: string,
+  ): Promise<string> {
+    const rel = relative(this.trajectoriesDir, sourcePath);
+    const safeRel =
+      rel && !rel.startsWith("..") && !isAbsolute(rel)
+        ? rel
+        : basename(sourcePath);
+    let dest = join(targetDir, safeRel);
+    if (!existsSync(dest)) return dest;
+
+    // Defensive: someone (or a previous quarantine run) already put a
+    // file at this path. Append an incrementing suffix so we still keep
+    // both copies for inspection.
+    const ext = safeRel.endsWith(".json") ? ".json" : "";
+    const stem = ext ? safeRel.slice(0, -ext.length) : safeRel;
+    for (let i = 1; i < 1000; i += 1) {
+      dest = join(targetDir, `${stem}.${i}${ext}`);
+      if (!existsSync(dest)) return dest;
+    }
+    // 1000 collisions on the same basename is pathological; fall through
+    // with the last candidate so rename surfaces the EEXIST itself.
+    return dest;
   }
 
   /**
