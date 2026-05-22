@@ -309,29 +309,17 @@ Recommend users add to `.gitignore`:
 
 ## Performance Considerations
 
-### Index for Fast Lookups
+### Directory Scans for Lookups
 
-Maintain `index.json` for quick listing without reading all files:
-
-```json
-{
-  "version": 1,
-  "lastUpdated": "2024-01-15T10:00:00Z",
-  "trajectories": {
-    "traj_abc123": {
-      "title": "Implement auth",
-      "status": "completed",
-      "startedAt": "2024-01-15T08:00:00Z",
-      "completedAt": "2024-01-15T10:00:00Z"
-    }
-  }
-}
-```
+List and search commands scan per-trajectory files under `active/` and
+`completed/`. Keeping each trajectory in its own directory avoids a shared
+mutable index file and reduces merge conflicts when multiple branches add
+trajectories.
 
 ### Lazy Loading
 
 Only load full trajectory data when needed:
-- `list` command reads only index
+- `list` command scans trajectory files and reads summary metadata
 - `show` command loads full trajectory
 - `search` may need to load all (acceptable for v1, optimize later with SQLite)
 
@@ -347,13 +335,14 @@ Warn users if trajectory exceeds reasonable size:
 
 ```
 .trajectories/
-├── index.json              # Quick lookup index
 ├── active/                 # In-progress trajectories
-│   └── traj_abc123.json
+│   └── traj_abc123/
+│       └── trajectory.json
 ├── completed/              # Finished trajectories
 │   └── 2024-01/            # Organized by month
-│       ├── traj_def456.json
-│       └── traj_def456.md  # Auto-generated markdown
+│       └── traj_def456/
+│           ├── trajectory.json
+│           └── summary.md  # Auto-generated markdown
 └── .gitignore              # Ignore active/, keep completed/
 ```
 

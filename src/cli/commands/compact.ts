@@ -9,13 +9,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  unlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { Command } from "commander";
 import { getCompactionConfig } from "../../compact/config.js";
@@ -69,24 +63,6 @@ interface CompactedTrajectory extends CompactedTrajectoryMetadata {
   openQuestions?: string[];
 }
 
-/**
- * Index entry with compaction tracking
- */
-interface IndexEntry {
-  title: string;
-  status: string;
-  startedAt: string;
-  completedAt?: string;
-  path: string;
-  compactedInto?: string;
-}
-
-interface TrajectoryIndex {
-  version: number;
-  lastUpdated: string;
-  trajectories: Record<string, IndexEntry>;
-}
-
 interface CompactCommandOptions {
   since?: string;
   until?: string;
@@ -106,10 +82,11 @@ interface CompactCommandOptions {
 }
 
 interface DiscardSourcesSummary {
-  removedIndexEntries: number;
+  removedTrajectories: number;
   deletedJsonFiles: number;
   deletedMarkdownFiles: number;
   deletedTraceFiles: number;
+  deletedCompactionFiles: number;
 }
 
 interface LLMCompactionPlan {
@@ -159,7 +136,7 @@ export function registerCompactCommand(program: Command): void {
     .option("--no-markdown", "Skip writing a Markdown companion file")
     .option(
       "--discard-sources",
-      "After saving the compaction, delete source trajectory JSON/MD/trace files and remove their index entries",
+      "After saving the compaction, delete source trajectory JSON/MD/trace files",
     )
     .option("--dry-run", "Preview what would be compacted without saving")
     .option("--output <path>", "Output path for compacted trajectory")
@@ -218,7 +195,7 @@ export function registerCompactCommand(program: Command): void {
           markdownEnabled,
         );
         if (options.discardSources) {
-          const discardSummary = discardSourceTrajectories(trajectories);
+          const discardSummary = await discardSourceTrajectories(trajectories);
           printDiscardSummary(discardSummary);
         } else {
           await markTrajectoriesAsCompacted(
@@ -285,7 +262,7 @@ export function registerCompactCommand(program: Command): void {
         options.output || getDefaultOutputPath(compacted, options.workflow);
       saveCompactionArtifacts(compacted, outputPath, markdownEnabled);
       if (options.discardSources) {
-        const discardSummary = discardSourceTrajectories(trajectories);
+        const discardSummary = await discardSourceTrajectories(trajectories);
         printDiscardSummary(discardSummary);
       } else {
         await markTrajectoriesAsCompacted(trajectories, compacted.id);
@@ -336,10 +313,10 @@ async function loadTrajectories(options: {
       )
     : null;
 
-  // Get compaction state from index
+  // Get compaction state from per-trajectory markers
   const compactedIds = options.all
     ? new Set<string>()
-    : getCompactedTrajectoryIds();
+    : await getCompactedTrajectoryIds();
 
   const searchPaths = getSearchPaths();
   const seenIds = new Set<string>();
@@ -347,18 +324,7 @@ async function loadTrajectories(options: {
   for (const searchPath of searchPaths) {
     if (!existsSync(searchPath)) continue;
 
-    // Set env var only for the synchronous FileStorage constructor, then
-    // immediately restore to avoid leaking state across async boundaries.
-    const originalDataDir = process.env.TRAJECTORIES_DATA_DIR;
-    process.env.TRAJECTORIES_DATA_DIR = searchPath;
-    const storage = new FileStorage();
-    if (originalDataDir !== undefined) {
-      process.env.TRAJECTORIES_DATA_DIR = originalDataDir;
-    } else {
-      // biome-ignore lint/performance/noDelete: process.env requires delete to truly unset (assignment stores string "undefined")
-      delete process.env.TRAJECTORIES_DATA_DIR;
-    }
-
+    const storage = createStorageForSearchPath(searchPath);
     await storage.initialize();
 
     const summaries = await storage.list({
@@ -432,6 +398,21 @@ async function loadTrajectories(options: {
   return trajectories;
 }
 
+function createStorageForSearchPath(searchPath: string): FileStorage {
+  // Set env var only for the synchronous FileStorage constructor, then
+  // immediately restore to avoid leaking state across async boundaries.
+  const originalDataDir = process.env.TRAJECTORIES_DATA_DIR;
+  process.env.TRAJECTORIES_DATA_DIR = searchPath;
+  const storage = new FileStorage();
+  if (originalDataDir !== undefined) {
+    process.env.TRAJECTORIES_DATA_DIR = originalDataDir;
+  } else {
+    // biome-ignore lint/performance/noDelete: process.env requires delete to truly unset (assignment stores string "undefined")
+    delete process.env.TRAJECTORIES_DATA_DIR;
+  }
+  return storage;
+}
+
 /**
  * Get commits that are on the current branch but not in the target branch
  */
@@ -468,25 +449,19 @@ function getBranchCommits(targetBranch: string): Set<string> {
 /**
  * Get IDs of trajectories that have already been compacted
  */
-function getCompactedTrajectoryIds(): Set<string> {
+async function getCompactedTrajectoryIds(): Promise<Set<string>> {
   const compacted = new Set<string>();
   const searchPaths = getSearchPaths();
 
   for (const searchPath of searchPaths) {
-    const indexPath = join(searchPath, "index.json");
-    if (!existsSync(indexPath)) continue;
+    if (!existsSync(searchPath)) {
+      continue;
+    }
 
-    try {
-      const indexContent = readFileSync(indexPath, "utf-8");
-      const index = JSON.parse(indexContent) as TrajectoryIndex;
-
-      for (const [id, entry] of Object.entries(index.trajectories || {})) {
-        if (entry.compactedInto) {
-          compacted.add(id);
-        }
-      }
-    } catch {
-      // Index doesn't exist or is malformed
+    const storage = createStorageForSearchPath(searchPath);
+    await storage.initialize();
+    for (const id of await storage.getCompactedTrajectoryIds()) {
+      compacted.add(id);
     }
   }
 
@@ -503,125 +478,58 @@ async function markTrajectoriesAsCompacted(
   const searchPaths = getSearchPaths();
 
   for (const searchPath of searchPaths) {
-    const indexPath = join(searchPath, "index.json");
-    if (!existsSync(indexPath)) continue;
+    if (!existsSync(searchPath)) {
+      continue;
+    }
 
-    try {
-      const indexContent = readFileSync(indexPath, "utf-8");
-      const index = JSON.parse(indexContent) as TrajectoryIndex;
-
-      let updated = false;
-      for (const traj of trajectories) {
-        if (index.trajectories[traj.id]) {
-          index.trajectories[traj.id].compactedInto = compactedIntoId;
-          updated = true;
-        }
-      }
-
-      if (updated) {
-        index.lastUpdated = new Date().toISOString();
-        writeFileSync(indexPath, JSON.stringify(index, null, 2));
-      }
-    } catch {
-      // Index doesn't exist or is malformed
+    const storage = createStorageForSearchPath(searchPath);
+    await storage.initialize();
+    for (const traj of trajectories) {
+      await storage.markCompacted(traj.id, compactedIntoId);
     }
   }
 }
 
 /**
  * Remove raw source trajectories after a durable compacted artifact has
- * been written. This keeps compaction as the long-lived record and makes
- * the index reflect only material that should remain visible.
+ * been written. This keeps compaction as the long-lived record and keeps
+ * list/search output focused on material that should remain visible.
  */
-function discardSourceTrajectories(
+async function discardSourceTrajectories(
   trajectories: Trajectory[],
-): DiscardSourcesSummary {
-  const sourceIds = new Set(trajectories.map((trajectory) => trajectory.id));
+): Promise<DiscardSourcesSummary> {
   const summary: DiscardSourcesSummary = {
-    removedIndexEntries: 0,
+    removedTrajectories: 0,
     deletedJsonFiles: 0,
     deletedMarkdownFiles: 0,
     deletedTraceFiles: 0,
+    deletedCompactionFiles: 0,
   };
 
   for (const searchPath of getSearchPaths()) {
-    const indexPath = join(searchPath, "index.json");
-    if (!existsSync(indexPath)) continue;
-
-    let index: TrajectoryIndex;
-    try {
-      const indexContent = readFileSync(indexPath, "utf-8");
-      const parsedIndex = JSON.parse(indexContent) as unknown;
-      if (!isTrajectoryIndex(parsedIndex)) {
-        continue;
-      }
-      index = parsedIndex;
-    } catch {
-      // Keep behavior consistent with markTrajectoriesAsCompacted: malformed
-      // indexes are ignored instead of blocking an already-saved compaction.
+    if (!existsSync(searchPath)) {
       continue;
     }
 
-    let updated = false;
-    for (const id of sourceIds) {
-      const entry = index.trajectories[id];
-      if (!entry) continue;
+    const storage = createStorageForSearchPath(searchPath);
+    await storage.initialize();
 
-      if (deleteFileIfExists(entry.path)) {
-        summary.deletedJsonFiles += 1;
-      }
-      if (deleteFileIfExists(getMarkdownOutputPath(entry.path))) {
-        summary.deletedMarkdownFiles += 1;
-      }
-      if (deleteFileIfExists(getTraceOutputPath(entry.path))) {
-        summary.deletedTraceFiles += 1;
-      }
-
-      delete index.trajectories[id];
-      summary.removedIndexEntries += 1;
-      updated = true;
-    }
-
-    if (updated) {
-      index.lastUpdated = new Date().toISOString();
-      writeFileSync(indexPath, JSON.stringify(index, null, 2));
+    for (const trajectory of trajectories) {
+      const deleteSummary = await storage.deleteWithSummary(trajectory.id);
+      summary.removedTrajectories += deleteSummary.removedTrajectories;
+      summary.deletedJsonFiles += deleteSummary.deletedJsonFiles;
+      summary.deletedMarkdownFiles += deleteSummary.deletedMarkdownFiles;
+      summary.deletedTraceFiles += deleteSummary.deletedTraceFiles;
+      summary.deletedCompactionFiles += deleteSummary.deletedCompactionFiles;
     }
   }
 
   return summary;
 }
 
-function deleteFileIfExists(path: string): boolean {
-  if (!existsSync(path)) {
-    return false;
-  }
-
-  unlinkSync(path);
-  return true;
-}
-
-function isTrajectoryIndex(value: unknown): value is TrajectoryIndex {
-  if (value === null || typeof value !== "object") {
-    return false;
-  }
-
-  const candidate = value as Partial<TrajectoryIndex>;
-  return (
-    candidate.trajectories !== null &&
-    typeof candidate.trajectories === "object" &&
-    !Array.isArray(candidate.trajectories)
-  );
-}
-
-function getTraceOutputPath(outputPath: string): string {
-  return outputPath.endsWith(".json")
-    ? outputPath.slice(0, -".json".length).concat(".trace.json")
-    : `${outputPath}.trace.json`;
-}
-
 function printDiscardSummary(summary: DiscardSourcesSummary): void {
   console.log(
-    `Discarded source trajectories: ${summary.removedIndexEntries} index entries, ${summary.deletedJsonFiles} JSON files, ${summary.deletedMarkdownFiles} Markdown files, ${summary.deletedTraceFiles} trace files`,
+    `Discarded source trajectories: ${summary.removedTrajectories} trajectories, ${summary.deletedJsonFiles} JSON files, ${summary.deletedMarkdownFiles} Markdown files, ${summary.deletedTraceFiles} trace files, ${summary.deletedCompactionFiles} compaction markers`,
   );
 }
 

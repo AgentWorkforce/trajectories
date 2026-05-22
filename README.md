@@ -132,14 +132,14 @@ trail compact --commits abc1234,def5678  # Trajectories matching specific commit
 trail compact --pr 123                # Trajectories mentioning PR #123
 trail compact --since 7d              # Last 7 days
 trail compact --all                   # Everything (including previously compacted)
-trail compact --pr 123 --discard-sources  # Delete source trajectories and update index after compaction
+trail compact --pr 123 --discard-sources  # Delete source trajectories after compaction
 ```
 
 ### Automatic Compaction (GitHub Action)
 
 Add these steps to any workflow that runs on PR merge (e.g., your release or publish flow). Requires `ref: ${{ github.event.pull_request.base.ref }}` and `fetch-depth: 0` on checkout, plus `contents: write` permission.
 
-Use `--discard-sources` when the compacted summary should replace the raw source trajectories. This removes the source JSON/Markdown/trace files and updates `.trajectories/index.json`, reducing future list/search noise.
+Use `--discard-sources` when the compacted summary should replace the raw source trajectories. This removes the source JSON/Markdown/trace files, reducing future list/search noise.
 
 ```yaml
       - name: Compact trajectories

@@ -40,6 +40,9 @@ describe("FileStorage", () => {
       expect(existsSync(join(tempDir, ".trajectories", "completed"))).toBe(
         true,
       );
+      expect(existsSync(join(tempDir, ".trajectories", "index.json"))).toBe(
+        false,
+      );
     });
 
     it("should not fail if directory already exists", async () => {
@@ -51,10 +54,27 @@ describe("FileStorage", () => {
       // Act & Assert - should not throw
       await expect(storage.initialize()).resolves.not.toThrow();
     });
+
+    it("should remove a legacy index.json file", async () => {
+      // Arrange
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const { mkdir, writeFile } = await import("node:fs/promises");
+      const storage = new FileStorage(tempDir);
+      await mkdir(join(tempDir, ".trajectories"), { recursive: true });
+      const indexPath = join(tempDir, ".trajectories", "index.json");
+      await writeFile(indexPath, "{}", "utf-8");
+
+      // Act
+      await storage.initialize();
+
+      // Assert
+      const { existsSync } = await import("node:fs");
+      expect(existsSync(indexPath)).toBe(false);
+    });
   });
 
   describe("save", () => {
-    it("should save active trajectory to active directory", async () => {
+    it("should save active trajectory to its own active directory", async () => {
       // Arrange
       const { FileStorage } = await import("../../src/storage/file.js");
       const { createTrajectory } = await import("../../src/core/trajectory.js");
@@ -71,7 +91,8 @@ describe("FileStorage", () => {
         tempDir,
         ".trajectories",
         "active",
-        `${trajectory.id}.json`,
+        trajectory.id,
+        "trajectory.json",
       );
       expect(existsSync(filePath)).toBe(true);
       const saved = JSON.parse(readFileSync(filePath, "utf-8"));
@@ -103,15 +124,20 @@ describe("FileStorage", () => {
         tempDir,
         ".trajectories",
         "active",
-        `${trajectory.id}.json`,
+        trajectory.id,
+        "trajectory.json",
       );
       const completedDir = join(tempDir, ".trajectories", "completed");
-      expect(existsSync(activeFile)).toBe(false);
-      // Should be in a date-based subdirectory
-      const files = await import("node:fs/promises").then((fs) =>
-        fs.readdir(completedDir, { recursive: true }),
+      const date = new Date(trajectory.completedAt ?? trajectory.startedAt);
+      const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const completedFile = join(
+        completedDir,
+        month,
+        trajectory.id,
+        "trajectory.json",
       );
-      expect(files.some((f) => f.includes(trajectory.id))).toBe(true);
+      expect(existsSync(activeFile)).toBe(false);
+      expect(existsSync(completedFile)).toBe(true);
     });
 
     it("should also generate markdown summary for completed trajectory", async () => {
@@ -138,7 +164,7 @@ describe("FileStorage", () => {
           recursive: true,
         }),
       );
-      expect(files.some((f) => f.endsWith(".md"))).toBe(true);
+      expect(files.some((f) => f.endsWith("summary.md"))).toBe(true);
     });
   });
 
@@ -196,6 +222,31 @@ describe("FileStorage", () => {
       // Assert
       expect(retrieved).not.toBeNull();
       expect(retrieved?.status).toBe("completed");
+    });
+
+    it("should retrieve a legacy flat trajectory file", async () => {
+      // Arrange
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const { createTrajectory } = await import("../../src/core/trajectory.js");
+      const { mkdir, writeFile } = await import("node:fs/promises");
+      const storage = new FileStorage(tempDir);
+      await storage.initialize();
+      const trajectory = createTrajectory({ title: "Legacy task" });
+      await mkdir(join(tempDir, ".trajectories", "active"), {
+        recursive: true,
+      });
+      await writeFile(
+        join(tempDir, ".trajectories", "active", `${trajectory.id}.json`),
+        JSON.stringify(trajectory, null, 2),
+        "utf-8",
+      );
+
+      // Act
+      const retrieved = await storage.get(trajectory.id);
+
+      // Assert
+      expect(retrieved?.id).toBe(trajectory.id);
+      expect(retrieved?.task.title).toBe("Legacy task");
     });
   });
 
@@ -377,8 +428,8 @@ describe("FileStorage", () => {
     });
   });
 
-  describe("updateIndex", () => {
-    it("should maintain an index.json file", async () => {
+  describe("git-friendly layout", () => {
+    it("should not create a shared index.json file", async () => {
       // Arrange
       const { FileStorage } = await import("../../src/storage/file.js");
       const { createTrajectory } = await import("../../src/core/trajectory.js");
@@ -390,11 +441,20 @@ describe("FileStorage", () => {
       await storage.save(trajectory);
 
       // Assert
-      const { readFileSync } = await import("node:fs");
+      const { existsSync } = await import("node:fs");
       const indexPath = join(tempDir, ".trajectories", "index.json");
-      const index = JSON.parse(readFileSync(indexPath, "utf-8"));
-      expect(index.trajectories).toBeDefined();
-      expect(index.trajectories[trajectory.id]).toBeDefined();
+      expect(existsSync(indexPath)).toBe(false);
+      expect(
+        existsSync(
+          join(
+            tempDir,
+            ".trajectories",
+            "active",
+            trajectory.id,
+            "trajectory.json",
+          ),
+        ),
+      ).toBe(true);
     });
   });
 
@@ -460,7 +520,7 @@ describe("FileStorage", () => {
       expect(summaries.map((s) => s.id)).toContain(trajectory.id);
     });
 
-    it("does not overwrite existing index entries", async () => {
+    it("does not create a shared index when scanning existing files", async () => {
       const { FileStorage } = await import("../../src/storage/file.js");
       const { createTrajectory } = await import("../../src/core/trajectory.js");
 
@@ -472,11 +532,12 @@ describe("FileStorage", () => {
       // Running reconcile again should be a no-op for this entry.
       await storage.reconcileIndex();
 
-      const { readFileSync } = await import("node:fs");
-      const index = JSON.parse(
-        readFileSync(join(tempDir, ".trajectories", "index.json"), "utf-8"),
+      const { existsSync } = await import("node:fs");
+      expect(existsSync(join(tempDir, ".trajectories", "index.json"))).toBe(
+        false,
       );
-      expect(index.trajectories[trajectory.id].title).toBe("Originally saved");
+      const summaries = await storage.list({});
+      expect(summaries.map((summary) => summary.id)).toContain(trajectory.id);
     });
   });
 });
@@ -522,10 +583,94 @@ describe("Environment Variable Support", () => {
 
       // Assert - file should be at tempDir/active, not tempDir/.trajectories/active
       const { existsSync } = await import("node:fs");
-      expect(existsSync(join(tempDir, "active", `${trajectory.id}.json`))).toBe(
-        true,
-      );
+      expect(
+        existsSync(join(tempDir, "active", trajectory.id, "trajectory.json")),
+      ).toBe(true);
       expect(existsSync(join(tempDir, ".trajectories"))).toBe(false);
+      expect(existsSync(join(tempDir, "index.json"))).toBe(false);
+    });
+
+    it("should not create index.json when TRAJECTORIES_DATA_DIR is set", async () => {
+      // Arrange
+      process.env.TRAJECTORIES_DATA_DIR = tempDir;
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const storage = new FileStorage();
+
+      // Act
+      await storage.initialize();
+
+      // Assert
+      const { existsSync } = await import("node:fs");
+      expect(existsSync(join(tempDir, "index.json"))).toBe(false);
+      expect(existsSync(join(tempDir, "active"))).toBe(true);
+      expect(existsSync(join(tempDir, "completed"))).toBe(true);
+    });
+
+    it("should migrate legacy compacted index entries to per-trajectory markers", async () => {
+      // Arrange
+      process.env.TRAJECTORIES_DATA_DIR = tempDir;
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const { createTrajectory, completeTrajectory } = await import(
+        "../../src/core/trajectory.js"
+      );
+      const { writeFile } = await import("node:fs/promises");
+      const storage = new FileStorage();
+      await storage.initialize();
+      const completed = completeTrajectory(
+        createTrajectory({ title: "Done" }),
+        {
+          summary: "Done",
+          approach: "Test",
+          confidence: 0.9,
+        },
+      );
+      await storage.save(completed);
+      const date = new Date(completed.completedAt ?? completed.startedAt);
+      const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const path = join(
+        tempDir,
+        "completed",
+        month,
+        completed.id,
+        "trajectory.json",
+      );
+      await writeFile(
+        join(tempDir, "index.json"),
+        JSON.stringify(
+          {
+            version: 1,
+            lastUpdated: new Date().toISOString(),
+            trajectories: {
+              [completed.id]: {
+                title: completed.task.title,
+                status: completed.status,
+                startedAt: completed.startedAt,
+                completedAt: completed.completedAt,
+                path,
+                compactedInto: "compact_test",
+              },
+            },
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      );
+
+      // Act
+      await storage.initialize();
+
+      // Assert
+      const { existsSync } = await import("node:fs");
+      expect(existsSync(join(tempDir, "index.json"))).toBe(false);
+      expect(
+        existsSync(
+          join(tempDir, "completed", month, completed.id, "compaction.json"),
+        ),
+      ).toBe(true);
+      expect(await storage.getCompactedTrajectoryIds()).toEqual(
+        new Set([completed.id]),
+      );
     });
 
     it("should not add .trajectories suffix when TRAJECTORIES_DATA_DIR is set", async () => {
