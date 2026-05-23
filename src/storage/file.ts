@@ -14,7 +14,14 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
-import { basename, dirname, isAbsolute, join, relative } from "node:path";
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  join,
+  relative,
+  resolve,
+} from "node:path";
 import type { z } from "zod";
 import { validateTrajectory } from "../core/schema.js";
 import type {
@@ -587,27 +594,47 @@ export class FileStorage implements StorageAdapter {
    * Mark a trajectory as compacted without writing to a shared index.
    */
   async markCompacted(id: string, compactedInto: string): Promise<boolean> {
-    const paths = await this.findTrajectoryFilePaths(id);
-    if (paths.length === 0) {
-      return false;
+    const markedIds = await this.markCompactedMany([id], compactedInto);
+    return markedIds.has(id);
+  }
+
+  /**
+   * Mark multiple trajectories as compacted with one filesystem scan.
+   */
+  async markCompactedMany(
+    ids: string[],
+    compactedInto: string,
+  ): Promise<Set<string>> {
+    const pathsById = await this.findTrajectoryFilePathsForIds(ids);
+    const markedIds = new Set<string>();
+    const compactedAt = new Date().toISOString();
+    const writes: Promise<void>[] = [];
+
+    for (const [id, paths] of pathsById.entries()) {
+      if (paths.length === 0) {
+        continue;
+      }
+
+      markedIds.add(id);
+      const marker: CompactionMarker = {
+        trajectoryId: id,
+        compactedInto,
+        compactedAt,
+      };
+
+      for (const filePath of paths) {
+        writes.push(
+          writeFile(
+            this.getCompactionMarkerPath(filePath, id),
+            JSON.stringify(marker, null, 2),
+            "utf-8",
+          ),
+        );
+      }
     }
 
-    const marker: CompactionMarker = {
-      trajectoryId: id,
-      compactedInto,
-      compactedAt: new Date().toISOString(),
-    };
-
-    await Promise.all(
-      paths.map((filePath) =>
-        writeFile(
-          this.getCompactionMarkerPath(filePath, id),
-          JSON.stringify(marker, null, 2),
-          "utf-8",
-        ),
-      ),
-    );
-    return true;
+    await Promise.all(writes);
+    return markedIds;
   }
 
   /**
@@ -642,6 +669,13 @@ export class FileStorage implements StorageAdapter {
    * Delete a trajectory and return file counts for CLI reporting.
    */
   async deleteWithSummary(id: string): Promise<DeleteTrajectorySummary> {
+    return this.deleteManyWithSummary([id]);
+  }
+
+  /**
+   * Delete multiple trajectories with one filesystem scan.
+   */
+  async deleteManyWithSummary(ids: string[]): Promise<DeleteTrajectorySummary> {
     const summary: DeleteTrajectorySummary = {
       removedTrajectories: 0,
       deletedJsonFiles: 0,
@@ -649,10 +683,17 @@ export class FileStorage implements StorageAdapter {
       deletedTraceFiles: 0,
       deletedCompactionFiles: 0,
     };
-    const paths = await this.findTrajectoryFilePaths(id);
+    const pathsById = await this.findTrajectoryFilePathsForIds(ids);
+    const deletedPaths = new Set<string>();
 
-    for (const filePath of paths) {
-      await this.removeTrajectoryFile(filePath, summary);
+    for (const paths of pathsById.values()) {
+      for (const filePath of paths) {
+        if (deletedPaths.has(filePath)) {
+          continue;
+        }
+        deletedPaths.add(filePath);
+        await this.removeTrajectoryFile(filePath, summary);
+      }
     }
 
     return summary;
@@ -668,6 +709,10 @@ export class FileStorage implements StorageAdapter {
   // Private helpers
 
   private getActiveCandidatePaths(id: string): string[] {
+    if (!isSafeTrajectoryId(id)) {
+      return [];
+    }
+
     return [
       join(this.activeDir, id, TRAJECTORY_FILE),
       // Legacy layout from v0.5.x and earlier.
@@ -710,33 +755,46 @@ export class FileStorage implements StorageAdapter {
   }
 
   private async findTrajectoryFilePaths(id: string): Promise<string[]> {
-    const paths = new Set<string>();
+    const pathsById = await this.findTrajectoryFilePathsForIds([id]);
+    return pathsById.get(id) ?? [];
+  }
 
-    for (const filePath of this.getActiveCandidatePaths(id)) {
-      if (existsSync(filePath)) {
-        paths.add(filePath);
-      }
+  private async findTrajectoryFilePathsForIds(
+    ids: Iterable<string>,
+  ): Promise<Map<string, string[]>> {
+    const targetIds = new Set(Array.from(ids).filter(isSafeTrajectoryId));
+    const pathsById = new Map<string, string[]>(
+      Array.from(targetIds).map((id) => [id, []]),
+    );
+    if (targetIds.size === 0) {
+      return pathsById;
     }
 
     const allFiles = await this.listTrajectoryFiles();
     for (const filePath of allFiles) {
-      if (this.pathMatchesTrajectoryId(filePath, id)) {
-        paths.add(filePath);
+      const trajectoryId = this.getTrajectoryIdFromPath(filePath);
+      if (!trajectoryId || !targetIds.has(trajectoryId)) {
+        continue;
       }
+      pathsById.get(trajectoryId)?.push(filePath);
     }
 
-    return Array.from(paths);
+    return pathsById;
   }
 
-  private pathMatchesTrajectoryId(filePath: string, id: string): boolean {
-    if (basename(filePath) === `${id}.json`) {
-      return true;
+  private getTrajectoryIdFromPath(filePath: string): string | undefined {
+    if (basename(filePath) === TRAJECTORY_FILE) {
+      const id = basename(dirname(filePath));
+      return isSafeTrajectoryId(id) ? id : undefined;
     }
 
-    return (
-      basename(filePath) === TRAJECTORY_FILE &&
-      basename(dirname(filePath)) === id
-    );
+    const name = basename(filePath);
+    if (name.endsWith(".json")) {
+      const id = name.slice(0, -".json".length);
+      return isSafeTrajectoryId(id) ? id : undefined;
+    }
+
+    return undefined;
   }
 
   private async removeTrajectoryFiles(
@@ -758,8 +816,14 @@ export class FileStorage implements StorageAdapter {
     summary: DeleteTrajectorySummary,
   ): Promise<void> {
     if (basename(filePath) === TRAJECTORY_FILE) {
-      await this.countDirectoryTrajectoryFiles(dirname(filePath), summary);
-      await rm(dirname(filePath), { recursive: true, force: true });
+      const trajectoryDir = dirname(filePath);
+      await this.countDirectoryTrajectoryFiles(trajectoryDir, summary);
+      await this.removeFileIfExists(
+        join(dirname(trajectoryDir), `${basename(trajectoryDir)}.trace.json`),
+        "trace",
+        summary,
+      );
+      await rm(trajectoryDir, { recursive: true, force: true });
       return;
     }
 
@@ -925,33 +989,51 @@ export class FileStorage implements StorageAdapter {
 
     await Promise.all(
       Object.entries(trajectories).map(async ([id, entry]) => {
-        if (entry === null || typeof entry !== "object") {
+        if (
+          entry === null ||
+          typeof entry !== "object" ||
+          !isSafeTrajectoryId(id)
+        ) {
           return;
         }
 
         const compactedInto = (entry as { compactedInto?: unknown })
           .compactedInto;
         const path = (entry as { path?: unknown }).path;
-        if (
-          typeof compactedInto !== "string" ||
-          typeof path !== "string" ||
-          !existsSync(path)
-        ) {
+        if (typeof compactedInto !== "string") {
           return;
         }
+
+        const paths =
+          typeof path === "string" &&
+          existsSync(path) &&
+          this.isPathInsideTrajectoriesDir(path)
+            ? [path]
+            : await this.findTrajectoryFilePaths(id);
+        if (paths.length === 0) return;
 
         const marker: CompactionMarker = {
           trajectoryId: id,
           compactedInto,
           compactedAt: new Date().toISOString(),
         };
-        await writeFile(
-          this.getCompactionMarkerPath(path, id),
-          JSON.stringify(marker, null, 2),
-          "utf-8",
+
+        await Promise.all(
+          paths.map((filePath) =>
+            writeFile(
+              this.getCompactionMarkerPath(filePath, id),
+              JSON.stringify(marker, null, 2),
+              "utf-8",
+            ),
+          ),
         );
       }),
     );
+  }
+
+  private isPathInsideTrajectoriesDir(path: string): boolean {
+    const rel = relative(resolve(this.trajectoriesDir), resolve(path));
+    return Boolean(rel && !rel.startsWith("..") && !isAbsolute(rel));
   }
 
   private async walkFilesInto(
@@ -1074,6 +1156,15 @@ function isTrajectoryJsonFile(name: string): boolean {
       !name.endsWith(".trace.json") &&
       !name.endsWith(LEGACY_COMPACTION_SUFFIX) &&
       name !== COMPACTION_FILE)
+  );
+}
+
+function isSafeTrajectoryId(id: string): boolean {
+  return (
+    id.length > 0 &&
+    !id.includes("..") &&
+    !id.includes("/") &&
+    !id.includes("\\")
   );
 }
 

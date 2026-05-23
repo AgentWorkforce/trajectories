@@ -403,14 +403,16 @@ function createStorageForSearchPath(searchPath: string): FileStorage {
   // immediately restore to avoid leaking state across async boundaries.
   const originalDataDir = process.env.TRAJECTORIES_DATA_DIR;
   process.env.TRAJECTORIES_DATA_DIR = searchPath;
-  const storage = new FileStorage();
-  if (originalDataDir !== undefined) {
-    process.env.TRAJECTORIES_DATA_DIR = originalDataDir;
-  } else {
-    // biome-ignore lint/performance/noDelete: process.env requires delete to truly unset (assignment stores string "undefined")
-    delete process.env.TRAJECTORIES_DATA_DIR;
+  try {
+    return new FileStorage();
+  } finally {
+    if (originalDataDir !== undefined) {
+      process.env.TRAJECTORIES_DATA_DIR = originalDataDir;
+    } else {
+      // biome-ignore lint/performance/noDelete: process.env requires delete to truly unset (assignment stores string "undefined")
+      delete process.env.TRAJECTORIES_DATA_DIR;
+    }
   }
-  return storage;
 }
 
 /**
@@ -484,9 +486,10 @@ async function markTrajectoriesAsCompacted(
 
     const storage = createStorageForSearchPath(searchPath);
     await storage.initialize();
-    for (const traj of trajectories) {
-      await storage.markCompacted(traj.id, compactedIntoId);
-    }
+    await storage.markCompactedMany(
+      trajectories.map((trajectory) => trajectory.id),
+      compactedIntoId,
+    );
   }
 }
 
@@ -514,14 +517,14 @@ async function discardSourceTrajectories(
     const storage = createStorageForSearchPath(searchPath);
     await storage.initialize();
 
-    for (const trajectory of trajectories) {
-      const deleteSummary = await storage.deleteWithSummary(trajectory.id);
-      summary.removedTrajectories += deleteSummary.removedTrajectories;
-      summary.deletedJsonFiles += deleteSummary.deletedJsonFiles;
-      summary.deletedMarkdownFiles += deleteSummary.deletedMarkdownFiles;
-      summary.deletedTraceFiles += deleteSummary.deletedTraceFiles;
-      summary.deletedCompactionFiles += deleteSummary.deletedCompactionFiles;
-    }
+    const deleteSummary = await storage.deleteManyWithSummary(
+      trajectories.map((trajectory) => trajectory.id),
+    );
+    summary.removedTrajectories += deleteSummary.removedTrajectories;
+    summary.deletedJsonFiles += deleteSummary.deletedJsonFiles;
+    summary.deletedMarkdownFiles += deleteSummary.deletedMarkdownFiles;
+    summary.deletedTraceFiles += deleteSummary.deletedTraceFiles;
+    summary.deletedCompactionFiles += deleteSummary.deletedCompactionFiles;
   }
 
   return summary;

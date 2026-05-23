@@ -426,6 +426,65 @@ describe("FileStorage", () => {
       // Act & Assert - should not throw
       await expect(storage.delete("traj_nonexistent")).resolves.not.toThrow();
     });
+
+    it("should delete sibling trace files for directory-layout completed trajectories", async () => {
+      // Arrange
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const { createTrajectory, completeTrajectory } = await import(
+        "../../src/core/trajectory.js"
+      );
+      const { writeFile } = await import("node:fs/promises");
+      const storage = new FileStorage(tempDir);
+      await storage.initialize();
+      const completed = completeTrajectory(
+        createTrajectory({ title: "Trace cleanup" }),
+        {
+          summary: "Done",
+          approach: "Test",
+          confidence: 0.9,
+        },
+      );
+      await storage.save(completed);
+      const date = new Date(completed.completedAt ?? completed.startedAt);
+      const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const tracePath = join(
+        tempDir,
+        ".trajectories",
+        "completed",
+        month,
+        `${completed.id}.trace.json`,
+      );
+      await writeFile(tracePath, "{}", "utf-8");
+
+      // Act
+      const summary = await storage.deleteWithSummary(completed.id);
+
+      // Assert
+      const { existsSync } = await import("node:fs");
+      expect(summary.deletedTraceFiles).toBe(1);
+      expect(existsSync(tracePath)).toBe(false);
+      expect(await storage.get(completed.id)).toBeNull();
+    });
+
+    it("should ignore unsafe trajectory IDs for lookup, compaction, and delete", async () => {
+      // Arrange
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const storage = new FileStorage(tempDir);
+      await storage.initialize();
+
+      // Act / Assert
+      expect(await storage.get("../escape")).toBeNull();
+      expect(await storage.markCompacted("../escape", "compact_test")).toBe(
+        false,
+      );
+      expect(await storage.deleteWithSummary("../escape")).toEqual({
+        removedTrajectories: 0,
+        deletedJsonFiles: 0,
+        deletedMarkdownFiles: 0,
+        deletedTraceFiles: 0,
+        deletedCompactionFiles: 0,
+      });
+    });
   });
 
   describe("git-friendly layout", () => {
@@ -663,6 +722,65 @@ describe("Environment Variable Support", () => {
       // Assert
       const { existsSync } = await import("node:fs");
       expect(existsSync(join(tempDir, "index.json"))).toBe(false);
+      expect(
+        existsSync(
+          join(tempDir, "completed", month, completed.id, "compaction.json"),
+        ),
+      ).toBe(true);
+      expect(await storage.getCompactedTrajectoryIds()).toEqual(
+        new Set([completed.id]),
+      );
+    });
+
+    it("should migrate legacy compacted index entries when stored paths are stale", async () => {
+      // Arrange
+      process.env.TRAJECTORIES_DATA_DIR = tempDir;
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const { createTrajectory, completeTrajectory } = await import(
+        "../../src/core/trajectory.js"
+      );
+      const { writeFile } = await import("node:fs/promises");
+      const storage = new FileStorage();
+      await storage.initialize();
+      const completed = completeTrajectory(
+        createTrajectory({ title: "Moved repo" }),
+        {
+          summary: "Done",
+          approach: "Test",
+          confidence: 0.9,
+        },
+      );
+      await storage.save(completed);
+      const date = new Date(completed.completedAt ?? completed.startedAt);
+      const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      await writeFile(
+        join(tempDir, "index.json"),
+        JSON.stringify(
+          {
+            version: 1,
+            lastUpdated: new Date().toISOString(),
+            trajectories: {
+              [completed.id]: {
+                title: completed.task.title,
+                status: completed.status,
+                startedAt: completed.startedAt,
+                completedAt: completed.completedAt,
+                path: join(tempDir, "old-location", "trajectory.json"),
+                compactedInto: "compact_test",
+              },
+            },
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      );
+
+      // Act
+      await storage.initialize();
+
+      // Assert
+      const { existsSync } = await import("node:fs");
       expect(
         existsSync(
           join(tempDir, "completed", month, completed.id, "compaction.json"),
