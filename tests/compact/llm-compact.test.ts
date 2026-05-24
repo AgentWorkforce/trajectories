@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runCommand } from "../../src/cli/runner.js";
 import { generateCompactionMarkdown } from "../../src/compact/markdown.js";
@@ -299,7 +299,7 @@ describe("LLM compaction", () => {
   );
 
   it(
-    "can discard source trajectory files and index entries after compaction",
+    "can discard source trajectory files after compaction",
     { timeout: 15_000 },
     async () => {
       const started = await runCommand(["start", "Prune compacted sources"]);
@@ -322,19 +322,18 @@ describe("LLM compaction", () => {
       ]);
       expect(completed.success).toBe(true);
 
-      const indexPath = join(tempDir, ".trajectories", "index.json");
-      const beforeIndex = JSON.parse(await readFile(indexPath, "utf-8")) as {
-        trajectories: Record<string, { path: string }>;
-      };
-      const sourceId = Object.keys(beforeIndex.trajectories)[0];
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const storage = new FileStorage(tempDir);
+      await storage.initialize();
+      const summaries = await storage.list({ status: "completed" });
+      const sourceId = summaries[0]?.id;
       expect(sourceId).toBeDefined();
 
-      const sourcePath = beforeIndex.trajectories[sourceId ?? ""]?.path;
+      const sourcePath = await findTrajectoryJson(tempDir, sourceId ?? "");
+      const sourceMarkdownPath = getMarkdownCompanionPath(sourcePath ?? "");
       expect(sourcePath).toBeDefined();
       expect(existsSync(sourcePath ?? "")).toBe(true);
-      expect(existsSync((sourcePath ?? "").replace(/\.json$/, ".md"))).toBe(
-        true,
-      );
+      expect(existsSync(sourceMarkdownPath ?? "")).toBe(true);
 
       const result = await runCommand([
         "compact",
@@ -351,17 +350,36 @@ describe("LLM compaction", () => {
       expect(compactedFiles.some((file) => file.endsWith(".json"))).toBe(true);
       expect(compactedFiles.some((file) => file.endsWith(".md"))).toBe(true);
 
-      const afterIndex = JSON.parse(await readFile(indexPath, "utf-8")) as {
-        trajectories: Record<string, unknown>;
-      };
-      expect(afterIndex.trajectories[sourceId ?? ""]).toBeUndefined();
-      expect(existsSync(sourcePath ?? "")).toBe(false);
-      expect(existsSync((sourcePath ?? "").replace(/\.json$/, ".md"))).toBe(
+      expect(existsSync(join(tempDir, ".trajectories", "index.json"))).toBe(
         false,
       );
+      expect(existsSync(sourcePath ?? "")).toBe(false);
+      expect(existsSync(sourceMarkdownPath ?? "")).toBe(false);
     },
   );
 });
+
+async function findTrajectoryJson(
+  rootDir: string,
+  id: string,
+): Promise<string | undefined> {
+  const root = join(rootDir, ".trajectories");
+  const files = (await readdir(root, { recursive: true })) as string[];
+  const match = files.find(
+    (file) =>
+      file === `active/${id}.json` ||
+      file === `completed/${id}.json` ||
+      file.endsWith(`/${id}.json`) ||
+      file.endsWith(`/${id}/trajectory.json`),
+  );
+  return match ? join(root, match) : undefined;
+}
+
+function getMarkdownCompanionPath(path: string): string {
+  return basename(path) === "trajectory.json"
+    ? join(dirname(path), "summary.md")
+    : path.replace(/\.json$/, ".md");
+}
 
 describe("CLI provider resolution", () => {
   let originalEnv: Record<string, string | undefined>;

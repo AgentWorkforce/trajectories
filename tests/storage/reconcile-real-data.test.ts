@@ -5,13 +5,14 @@
  * from workforce) committed under tests/fixtures/workforce-trajectories/.
  * The point is to lock down the legacy data contract: the reader must
  * accept real-world role values, id shapes, and layouts without
- * rejecting the data, and reconcileIndex must populate the index from
- * both flat-root and YYYY-MM subdir layouts.
+ * rejecting the data, and reconcileIndex must discover both flat-root
+ * and YYYY-MM subdir layouts without a shared index.
  *
  * If a future refactor breaks reconcile for legacy data, these tests
  * fail in ~50ms — long before any E2E gate fires.
  */
 
+import { existsSync } from "node:fs";
 import { cp, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -99,28 +100,21 @@ describe("FileStorage reconcile — real workforce fixtures", () => {
     expect(trajectory?.projectId).toBeUndefined();
   });
 
-  it("populates index.json with both fixtures after reconcile", async () => {
+  it("does not create index.json after reconciling fixtures", async () => {
     const { FileStorage } = await import("../../src/storage/file.js");
     await seedFixtureInto(tempDir);
 
     const storage = new FileStorage(tempDir);
     await storage.initialize();
 
-    const indexRaw = await readFile(
-      join(tempDir, ".trajectories", "index.json"),
-      "utf-8",
+    expect(existsSync(join(tempDir, ".trajectories", "index.json"))).toBe(
+      false,
     );
-    const index = JSON.parse(indexRaw);
-    expect(Object.keys(index.trajectories ?? {}).sort()).toEqual([
+    const summaries = await storage.list({ status: "completed" });
+    expect(summaries.map((summary) => summary.id).sort()).toEqual([
       "traj_1775734701264_ba65c69b",
       "traj_1775832005024_c2cf5052",
     ]);
-    expect(index.trajectories.traj_1775734701264_ba65c69b.path).toContain(
-      "completed/traj_1775734701264_ba65c69b.json",
-    );
-    expect(index.trajectories.traj_1775832005024_c2cf5052.path).toContain(
-      "completed/2026-04/traj_1775832005024_c2cf5052.json",
-    );
   });
 
   it("reconcileIndex reports a structured summary", async () => {
@@ -130,12 +124,12 @@ describe("FileStorage reconcile — real workforce fixtures", () => {
     const storage = new FileStorage(tempDir);
     await storage.initialize();
 
-    // A second reconcile on an already-reconciled index should scan 2
-    // files, count them as already indexed, and add nothing.
+    // A second reconcile should scan the same 2 files and report both as
+    // valid without writing a shared index.
     const summary = await storage.reconcileIndex();
     expect(summary.scanned).toBe(2);
-    expect(summary.added).toBe(0);
-    expect(summary.alreadyIndexed).toBe(2);
+    expect(summary.added).toBe(2);
+    expect(summary.alreadyIndexed).toBe(0);
     expect(summary.skippedMalformedJson).toBe(0);
     expect(summary.skippedSchemaViolation).toBe(0);
   });

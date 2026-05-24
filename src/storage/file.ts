@@ -1,21 +1,27 @@
 /**
  * File system storage adapter for trajectories
  *
- * Stores trajectories as JSON files in a .trajectories directory.
- * Active trajectories go in active/, completed in completed/YYYY-MM/.
+ * Stores each trajectory in its own directory under .trajectories.
+ * Active trajectories go in active/<id>/, completed in completed/YYYY-MM/<id>/.
  */
 
-import { randomUUID } from "node:crypto";
 import { type Dirent, existsSync } from "node:fs";
 import {
   mkdir,
   readFile,
   readdir,
   rename,
-  unlink,
+  rm,
   writeFile,
 } from "node:fs/promises";
-import { basename, dirname, isAbsolute, join, relative } from "node:path";
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  join,
+  relative,
+  resolve,
+} from "node:path";
 import type { z } from "zod";
 import { validateTrajectory } from "../core/schema.js";
 import type {
@@ -25,6 +31,11 @@ import type {
 } from "../core/types.js";
 import { exportToMarkdown } from "../export/markdown.js";
 import type { StorageAdapter } from "./interface.js";
+
+const TRAJECTORY_FILE = "trajectory.json";
+const SUMMARY_FILE = "summary.md";
+const COMPACTION_FILE = "compaction.json";
+const LEGACY_COMPACTION_SUFFIX = ".compaction.json";
 
 /**
  * Expand ~ to home directory in a path
@@ -60,22 +71,18 @@ export function getSearchPaths(): string[] {
   return [join(process.cwd(), ".trajectories")];
 }
 
-/**
- * Index file structure for quick lookups
- */
-interface TrajectoryIndex {
-  version: number;
-  lastUpdated: string;
-  trajectories: Record<
-    string,
-    {
-      title: string;
-      status: string;
-      startedAt: string;
-      completedAt?: string;
-      path: string;
-    }
-  >;
+interface CompactionMarker {
+  trajectoryId: string;
+  compactedInto: string;
+  compactedAt: string;
+}
+
+export interface DeleteTrajectorySummary {
+  removedTrajectories: number;
+  deletedJsonFiles: number;
+  deletedMarkdownFiles: number;
+  deletedTraceFiles: number;
+  deletedCompactionFiles: number;
 }
 
 /**
@@ -159,35 +166,6 @@ function describeReadFailure(
 }
 
 /**
- * Per-path promise-chain mutex for index.json access.
- *
- * Keyed by the absolute index path, so multiple FileStorage instances in
- * the same process that target the same `.trajectories` directory share
- * the same lock. This is an in-process mutex only — it does not protect
- * against writers in other processes. Cross-process safety is provided
- * by the atomic tmp-file + rename in `saveIndex` (rename is atomic on
- * POSIX, so readers never observe a half-written index).
- *
- * Implementation: store the tail of a promise chain per path. Each new
- * critical section chains onto `.then(task)` so it only runs after the
- * previous task resolves. We swallow errors on the tail so one failed
- * task doesn't poison the chain for subsequent callers.
- */
-const indexLocks = new Map<string, Promise<unknown>>();
-
-function withIndexLock<T>(path: string, task: () => Promise<T>): Promise<T> {
-  const prev = indexLocks.get(path) ?? Promise.resolve();
-  const next = prev.then(task, task);
-  // Replace the tail with a swallowed-error version so a rejection in
-  // `task` doesn't propagate to the next queued caller.
-  indexLocks.set(
-    path,
-    next.catch(() => undefined),
-  );
-  return next;
-}
-
-/**
  * File system storage adapter
  */
 export class FileStorage implements StorageAdapter {
@@ -195,7 +173,6 @@ export class FileStorage implements StorageAdapter {
   private trajectoriesDir: string;
   private activeDir: string;
   private completedDir: string;
-  private indexPath: string;
   private lastReconcileSummary?: ReconcileSummary;
 
   constructor(baseDir?: string) {
@@ -212,7 +189,6 @@ export class FileStorage implements StorageAdapter {
 
     this.activeDir = join(this.trajectoriesDir, "active");
     this.completedDir = join(this.trajectoriesDir, "completed");
-    this.indexPath = join(this.trajectoriesDir, "index.json");
   }
 
   /**
@@ -223,35 +199,25 @@ export class FileStorage implements StorageAdapter {
     await mkdir(this.activeDir, { recursive: true });
     await mkdir(this.completedDir, { recursive: true });
 
-    // Create index if it doesn't exist. Take the lock so a parallel
-    // initialize() in the same process doesn't race its seed write.
-    if (!existsSync(this.indexPath)) {
-      await withIndexLock(this.indexPath, async () => {
-        if (!existsSync(this.indexPath)) {
-          await this.saveIndex(this.emptyIndex());
-        }
-      });
-    }
+    await this.migrateLegacyIndexCompactionMarkers();
+    await rm(join(this.trajectoriesDir, "index.json"), { force: true });
 
-    // Reconcile on-disk trajectories with the index. Self-heals cases where
-    // files were written by a different process or an older layout that
-    // bypassed updateIndex.
+    // Scan on-disk trajectories so status/doctor can surface invalid files.
     await this.reconcileIndex();
   }
 
   /**
-   * Scan active/ and completed/ recursively and add any trajectory files
-   * missing from the index. Existing entries are preserved — reconcile
-   * only adds, never removes.
+   * Scan active/ and completed/ recursively and report trajectory files
+   * that can be loaded plus files that should be surfaced by doctor.
    *
    * Handles three on-disk layouts in completed/:
    *   - flat:      completed/{id}.json         (legacy workforce data)
-   *   - monthly:   completed/YYYY-MM/{id}.json (current save() writes)
+   *   - monthly:   completed/YYYY-MM/{id}.json (legacy monthly layout)
+   *   - directory: completed/YYYY-MM/{id}/trajectory.json (current layout)
    *   - nested:    completed/.../{id}.json     (defensive — any depth)
    *
-   * Returns a ReconcileSummary so tests and CLI wrappers can observe
-   * outcomes without parsing logs. Only writes the index if anything was
-   * added.
+   * The method name is kept for callers such as `trail doctor`, but no
+   * shared index file is written.
    */
   async reconcileIndex(): Promise<ReconcileSummary> {
     const summary: ReconcileSummary = {
@@ -264,65 +230,28 @@ export class FileStorage implements StorageAdapter {
       failures: [],
     };
 
-    await withIndexLock(this.indexPath, async () => {
-      const index = await this.loadIndex();
-      const before = Object.keys(index.trajectories).length;
+    const discovered = await this.listTrajectoryFiles();
 
-      const discovered: string[] = [];
-
-      // Walk active/ — intentionally NOT recursive; active trajectories
-      // always live at the flat root.
-      try {
-        const activeFiles = await readdir(this.activeDir);
-        for (const file of activeFiles) {
-          if (!file.endsWith(".json")) continue;
-          discovered.push(join(this.activeDir, file));
+    for (const filePath of discovered) {
+      summary.scanned += 1;
+      const result = await this.readTrajectoryFile(filePath);
+      if (!result.ok) {
+        if (result.reason === "malformed_json") {
+          summary.skippedMalformedJson += 1;
+        } else if (result.reason === "schema_violation") {
+          summary.skippedSchemaViolation += 1;
+        } else {
+          summary.skippedIoError += 1;
         }
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+        summary.failures.push({
+          path: result.path,
+          reason: result.reason,
+          message: describeReadFailure(result.reason, result.error),
+        });
+        continue;
       }
-
-      // Walk completed/ recursively so we transparently support every
-      // historical layout without guessing depth.
-      await this.walkJsonFilesInto(this.completedDir, discovered);
-
-      for (const filePath of discovered) {
-        summary.scanned += 1;
-        const result = await this.readTrajectoryFile(filePath);
-        if (!result.ok) {
-          if (result.reason === "malformed_json") {
-            summary.skippedMalformedJson += 1;
-          } else if (result.reason === "schema_violation") {
-            summary.skippedSchemaViolation += 1;
-          } else {
-            summary.skippedIoError += 1;
-          }
-          summary.failures.push({
-            path: result.path,
-            reason: result.reason,
-            message: describeReadFailure(result.reason, result.error),
-          });
-          continue;
-        }
-        const trajectory = result.trajectory;
-        if (index.trajectories[trajectory.id]) {
-          summary.alreadyIndexed += 1;
-          continue;
-        }
-        index.trajectories[trajectory.id] = {
-          title: trajectory.task.title,
-          status: trajectory.status,
-          startedAt: trajectory.startedAt,
-          completedAt: trajectory.completedAt,
-          path: filePath,
-        };
-        summary.added += 1;
-      }
-
-      if (Object.keys(index.trajectories).length !== before) {
-        await this.saveIndex(index);
-      }
-    });
+      summary.added += 1;
+    }
 
     // Only log when something interesting happened. Noise is worse than
     // silence here — the CLI spinner is the user's feedback.
@@ -331,7 +260,7 @@ export class FileStorage implements StorageAdapter {
         summary.skippedSchemaViolation +
         summary.skippedIoError >
       0;
-    if (summary.added > 0 || hadSkips) {
+    if (hadSkips) {
       const parts = [`reconciled ${summary.added}/${summary.scanned}`];
       if (summary.skippedMalformedJson > 0) {
         parts.push(`malformed: ${summary.skippedMalformedJson}`);
@@ -435,7 +364,7 @@ export class FileStorage implements StorageAdapter {
   }
 
   /**
-   * Recursively collect all .json file paths under `dir` into `out`.
+   * Recursively collect trajectory JSON file paths under `dir` into `out`.
    * Silently treats a missing directory as empty.
    */
   private async walkJsonFilesInto(dir: string, out: string[]): Promise<void> {
@@ -451,7 +380,7 @@ export class FileStorage implements StorageAdapter {
       const entryPath = join(dir, entry.name);
       if (entry.isDirectory()) {
         await this.walkJsonFilesInto(entryPath, out);
-      } else if (entry.isFile() && entry.name.endsWith(".json")) {
+      } else if (entry.isFile() && isTrajectoryJsonFile(entry.name)) {
         out.push(entryPath);
       }
     }
@@ -484,74 +413,48 @@ export class FileStorage implements StorageAdapter {
     const isCompleted =
       trajectory.status === "completed" || trajectory.status === "abandoned";
 
-    // Determine file path
-    let filePath: string;
+    const existingPaths = await this.findTrajectoryFilePaths(trajectory.id);
+    let trajectoryDir: string;
     if (isCompleted) {
       const date = new Date(trajectory.completedAt ?? trajectory.startedAt);
       const monthDir = join(
         this.completedDir,
         `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
       );
-      await mkdir(monthDir, { recursive: true });
-      filePath = join(monthDir, `${trajectory.id}.json`);
-
-      // Remove from active if it was there
-      const activePath = join(this.activeDir, `${trajectory.id}.json`);
-      if (existsSync(activePath)) {
-        await unlink(activePath);
-      }
-
-      // Generate markdown summary for completed trajectories
-      const mdPath = join(monthDir, `${trajectory.id}.md`);
-      const markdown = exportToMarkdown(trajectory);
-      await writeFile(mdPath, markdown, "utf-8");
+      trajectoryDir = join(monthDir, trajectory.id);
     } else {
-      filePath = join(this.activeDir, `${trajectory.id}.json`);
+      trajectoryDir = join(this.activeDir, trajectory.id);
     }
 
-    // Write trajectory file
-    await writeFile(filePath, JSON.stringify(trajectory, null, 2), "utf-8");
+    const filePath = join(trajectoryDir, TRAJECTORY_FILE);
+    await this.removeTrajectoryFiles(existingPaths, filePath);
+    await mkdir(trajectoryDir, { recursive: true });
 
-    // Update index
-    await this.updateIndex(trajectory, filePath);
+    if (isCompleted) {
+      const markdown = exportToMarkdown(trajectory);
+      await writeFile(join(trajectoryDir, SUMMARY_FILE), markdown, "utf-8");
+    }
+
+    await writeFile(filePath, JSON.stringify(trajectory, null, 2), "utf-8");
   }
 
   /**
    * Get a trajectory by ID
    */
   async get(id: string): Promise<Trajectory | null> {
-    // Check active first
-    const activePath = join(this.activeDir, `${id}.json`);
-    if (existsSync(activePath)) {
-      return this.readTrajectoryOrNull(activePath);
+    for (const filePath of this.getActiveCandidatePaths(id)) {
+      if (!existsSync(filePath)) continue;
+      const trajectory = await this.readTrajectoryOrNull(filePath);
+      if (trajectory?.id === id) {
+        return trajectory;
+      }
     }
 
-    // Check completed (need to search subdirectories)
-    const index = await this.loadIndex();
-    const entry = index.trajectories[id];
-    if (entry?.path && existsSync(entry.path)) {
-      return this.readTrajectoryOrNull(entry.path);
-    }
-
-    // Search completed directories manually if not in index. Handles both
-    // the flat `completed/{id}.json` layout (legacy) and the nested
-    // `completed/YYYY-MM/{id}.json` layout written by save().
-    try {
-      const flatPath = join(this.completedDir, `${id}.json`);
-      if (existsSync(flatPath)) {
-        return this.readTrajectoryOrNull(flatPath);
-      }
-      const months = await readdir(this.completedDir);
-      for (const month of months) {
-        const filePath = join(this.completedDir, month, `${id}.json`);
-        if (existsSync(filePath)) {
-          return this.readTrajectoryOrNull(filePath);
-        }
-      }
-    } catch (error) {
-      // ENOENT means directory doesn't exist yet - this is expected
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-        console.error("Error searching completed trajectories:", error);
+    const paths = await this.findTrajectoryFilePaths(id);
+    for (const filePath of paths) {
+      const trajectory = await this.readTrajectoryOrNull(filePath);
+      if (trajectory?.id === id) {
+        return trajectory;
       }
     }
 
@@ -562,75 +465,61 @@ export class FileStorage implements StorageAdapter {
    * Get the currently active trajectory
    */
   async getActive(): Promise<Trajectory | null> {
-    try {
-      const files = await readdir(this.activeDir);
-      const jsonFiles = files.filter((f) => f.endsWith(".json"));
+    const activeFiles = await this.collectTrajectoryFiles(this.activeDir);
 
-      if (jsonFiles.length === 0) {
-        return null;
-      }
-
-      // Get most recently started
-      let mostRecent: Trajectory | null = null;
-      let mostRecentTime = 0;
-
-      for (const file of jsonFiles) {
-        const trajectory = await this.readTrajectoryOrNull(
-          join(this.activeDir, file),
-        );
-        if (trajectory) {
-          const startTime = new Date(trajectory.startedAt).getTime();
-          if (startTime > mostRecentTime) {
-            mostRecentTime = startTime;
-            mostRecent = trajectory;
-          }
-        }
-      }
-
-      return mostRecent;
-    } catch (error) {
-      // ENOENT means directory doesn't exist yet - this is expected
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-        return null;
-      }
-      // Log unexpected errors for debugging
-      console.error("Error reading active trajectories:", error);
+    if (activeFiles.length === 0) {
       return null;
     }
+
+    // Get most recently started
+    let mostRecent: Trajectory | null = null;
+    let mostRecentTime = 0;
+
+    for (const filePath of activeFiles) {
+      const trajectory = await this.readTrajectoryOrNull(filePath);
+      if (trajectory?.status !== "active") continue;
+
+      const startTime = new Date(trajectory.startedAt).getTime();
+      if (startTime > mostRecentTime) {
+        mostRecentTime = startTime;
+        mostRecent = trajectory;
+      }
+    }
+
+    return mostRecent;
   }
 
   /**
    * List trajectories with optional filtering
    */
   async list(query: TrajectoryQuery): Promise<TrajectorySummary[]> {
-    const index = await this.loadIndex();
-    let entries = Object.entries(index.trajectories);
+    let trajectories = await this.loadAllTrajectories();
 
     // Filter by status
     if (query.status) {
-      entries = entries.filter(([, entry]) => entry.status === query.status);
+      trajectories = trajectories.filter((t) => t.status === query.status);
     }
 
     // Filter by date range
     if (query.since) {
       const sinceTime = new Date(query.since).getTime();
-      entries = entries.filter(
-        ([, entry]) => new Date(entry.startedAt).getTime() >= sinceTime,
+      trajectories = trajectories.filter(
+        (trajectory) => new Date(trajectory.startedAt).getTime() >= sinceTime,
       );
     }
     if (query.until) {
       const untilTime = new Date(query.until).getTime();
-      entries = entries.filter(
-        ([, entry]) => new Date(entry.startedAt).getTime() <= untilTime,
+      trajectories = trajectories.filter(
+        (trajectory) => new Date(trajectory.startedAt).getTime() <= untilTime,
       );
     }
 
     // Sort (default: startedAt desc)
     const sortBy = query.sortBy ?? "startedAt";
     const sortOrder = query.sortOrder ?? "desc";
-    entries.sort((a, b) => {
-      const aVal = a[1][sortBy as keyof (typeof a)[1]] ?? "";
-      const bVal = b[1][sortBy as keyof (typeof b)[1]] ?? "";
+    trajectories.sort((a, b) => {
+      const aVal = this.getSortValue(a, sortBy);
+      const bVal = this.getSortValue(b, sortBy);
       const cmp = String(aVal).localeCompare(String(bVal));
       return sortOrder === "asc" ? cmp : -cmp;
     });
@@ -638,59 +527,17 @@ export class FileStorage implements StorageAdapter {
     // Pagination
     const offset = query.offset ?? 0;
     const limit = query.limit ?? 500;
-    entries = entries.slice(offset, offset + limit);
+    trajectories = trajectories.slice(offset, offset + limit);
 
     // Convert to summaries
-    return Promise.all(
-      entries.map(async ([id, entry]) => {
-        // Load full trajectory to get counts
-        const trajectory = await this.get(id);
-        return {
-          id,
-          title: entry.title,
-          status: entry.status as "active" | "completed" | "abandoned",
-          startedAt: entry.startedAt,
-          completedAt: entry.completedAt,
-          confidence: trajectory?.retrospective?.confidence,
-          chapterCount: trajectory?.chapters.length ?? 0,
-          decisionCount:
-            trajectory?.chapters.reduce(
-              (count, chapter) =>
-                count +
-                chapter.events.filter((e) => e.type === "decision").length,
-              0,
-            ) ?? 0,
-        };
-      }),
-    );
+    return trajectories.map((trajectory) => this.toSummary(trajectory));
   }
 
   /**
    * Delete a trajectory
    */
   async delete(id: string): Promise<void> {
-    // Remove from active
-    const activePath = join(this.activeDir, `${id}.json`);
-    if (existsSync(activePath)) {
-      await unlink(activePath);
-    }
-
-    // Read + mutate + write the index under the lock so we can't clobber
-    // a concurrent save's update.
-    await withIndexLock(this.indexPath, async () => {
-      const index = await this.loadIndex();
-      const entry = index.trajectories[id];
-      if (entry?.path && existsSync(entry.path)) {
-        await unlink(entry.path);
-        // Also remove markdown if exists
-        const mdPath = entry.path.replace(".json", ".md");
-        if (existsSync(mdPath)) {
-          await unlink(mdPath);
-        }
-      }
-      delete index.trajectories[id];
-      await this.saveIndex(index);
-    });
+    await this.deleteWithSummary(id);
   }
 
   /**
@@ -744,6 +591,115 @@ export class FileStorage implements StorageAdapter {
   }
 
   /**
+   * Mark a trajectory as compacted without writing to a shared index.
+   */
+  async markCompacted(id: string, compactedInto: string): Promise<boolean> {
+    const markedIds = await this.markCompactedMany([id], compactedInto);
+    return markedIds.has(id);
+  }
+
+  /**
+   * Mark multiple trajectories as compacted with one filesystem scan.
+   */
+  async markCompactedMany(
+    ids: string[],
+    compactedInto: string,
+  ): Promise<Set<string>> {
+    const pathsById = await this.findTrajectoryFilePathsForIds(ids);
+    const markedIds = new Set<string>();
+    const compactedAt = new Date().toISOString();
+    const writes: Promise<void>[] = [];
+
+    for (const [id, paths] of pathsById.entries()) {
+      if (paths.length === 0) {
+        continue;
+      }
+
+      markedIds.add(id);
+      const marker: CompactionMarker = {
+        trajectoryId: id,
+        compactedInto,
+        compactedAt,
+      };
+
+      for (const filePath of paths) {
+        writes.push(
+          writeFile(
+            this.getCompactionMarkerPath(filePath, id),
+            JSON.stringify(marker, null, 2),
+            "utf-8",
+          ),
+        );
+      }
+    }
+
+    await Promise.all(writes);
+    return markedIds;
+  }
+
+  /**
+   * Return trajectory IDs that have a per-trajectory compaction marker.
+   */
+  async getCompactedTrajectoryIds(): Promise<Set<string>> {
+    const markerPaths = await this.listCompactionMarkerFiles();
+    const compactedIds = new Set<string>();
+
+    for (const markerPath of markerPaths) {
+      try {
+        const marker = JSON.parse(
+          await readFile(markerPath, "utf-8"),
+        ) as Partial<CompactionMarker>;
+        const trajectoryId =
+          typeof marker.trajectoryId === "string"
+            ? marker.trajectoryId
+            : this.getTrajectoryIdFromCompactionMarkerPath(markerPath);
+        if (trajectoryId && typeof marker.compactedInto === "string") {
+          compactedIds.add(trajectoryId);
+        }
+      } catch {
+        // Ignore malformed compaction markers. They should not block normal
+        // list/search/compact operations.
+      }
+    }
+
+    return compactedIds;
+  }
+
+  /**
+   * Delete a trajectory and return file counts for CLI reporting.
+   */
+  async deleteWithSummary(id: string): Promise<DeleteTrajectorySummary> {
+    return this.deleteManyWithSummary([id]);
+  }
+
+  /**
+   * Delete multiple trajectories with one filesystem scan.
+   */
+  async deleteManyWithSummary(ids: string[]): Promise<DeleteTrajectorySummary> {
+    const summary: DeleteTrajectorySummary = {
+      removedTrajectories: 0,
+      deletedJsonFiles: 0,
+      deletedMarkdownFiles: 0,
+      deletedTraceFiles: 0,
+      deletedCompactionFiles: 0,
+    };
+    const pathsById = await this.findTrajectoryFilePathsForIds(ids);
+    const deletedPaths = new Set<string>();
+
+    for (const paths of pathsById.values()) {
+      for (const filePath of paths) {
+        if (deletedPaths.has(filePath)) {
+          continue;
+        }
+        deletedPaths.add(filePath);
+        await this.removeTrajectoryFile(filePath, summary);
+      }
+    }
+
+    return summary;
+  }
+
+  /**
    * Close storage (no-op for file storage)
    */
   async close(): Promise<void> {
@@ -751,6 +707,400 @@ export class FileStorage implements StorageAdapter {
   }
 
   // Private helpers
+
+  private getActiveCandidatePaths(id: string): string[] {
+    if (!isSafeTrajectoryId(id)) {
+      return [];
+    }
+
+    return [
+      join(this.activeDir, id, TRAJECTORY_FILE),
+      // Legacy layout from v0.5.x and earlier.
+      join(this.activeDir, `${id}.json`),
+    ];
+  }
+
+  private async loadAllTrajectories(): Promise<Trajectory[]> {
+    const files = await this.listTrajectoryFiles();
+    const trajectories = new Map<string, Trajectory>();
+
+    for (const filePath of files) {
+      const trajectory = await this.readTrajectoryOrNull(filePath);
+      if (!trajectory) {
+        continue;
+      }
+
+      const current = trajectories.get(trajectory.id);
+      if (!current || this.isNewerTrajectory(trajectory, current)) {
+        trajectories.set(trajectory.id, trajectory);
+      }
+    }
+
+    return Array.from(trajectories.values());
+  }
+
+  private async listTrajectoryFiles(): Promise<string[]> {
+    const [activeFiles, completedFiles] = await Promise.all([
+      this.collectTrajectoryFiles(this.activeDir),
+      this.collectTrajectoryFiles(this.completedDir),
+    ]);
+
+    return [...activeFiles, ...completedFiles];
+  }
+
+  private async collectTrajectoryFiles(dir: string): Promise<string[]> {
+    const files: string[] = [];
+    await this.walkJsonFilesInto(dir, files);
+    return files;
+  }
+
+  private async findTrajectoryFilePaths(id: string): Promise<string[]> {
+    const pathsById = await this.findTrajectoryFilePathsForIds([id]);
+    return pathsById.get(id) ?? [];
+  }
+
+  private async findTrajectoryFilePathsForIds(
+    ids: Iterable<string>,
+  ): Promise<Map<string, string[]>> {
+    const targetIds = new Set(Array.from(ids).filter(isSafeTrajectoryId));
+    const pathsById = new Map<string, string[]>(
+      Array.from(targetIds).map((id) => [id, []]),
+    );
+    if (targetIds.size === 0) {
+      return pathsById;
+    }
+
+    const allFiles = await this.listTrajectoryFiles();
+    for (const filePath of allFiles) {
+      const trajectoryId = this.getTrajectoryIdFromPath(filePath);
+      if (!trajectoryId || !targetIds.has(trajectoryId)) {
+        continue;
+      }
+      pathsById.get(trajectoryId)?.push(filePath);
+    }
+
+    return pathsById;
+  }
+
+  private getTrajectoryIdFromPath(filePath: string): string | undefined {
+    if (basename(filePath) === TRAJECTORY_FILE) {
+      const id = basename(dirname(filePath));
+      return isSafeTrajectoryId(id) ? id : undefined;
+    }
+
+    const name = basename(filePath);
+    if (name.endsWith(".json")) {
+      const id = name.slice(0, -".json".length);
+      return isSafeTrajectoryId(id) ? id : undefined;
+    }
+
+    return undefined;
+  }
+
+  private async removeTrajectoryFiles(
+    paths: string[],
+    exceptPath?: string,
+  ): Promise<void> {
+    const summary = this.emptyDeleteSummary();
+
+    for (const filePath of paths) {
+      if (filePath === exceptPath) {
+        continue;
+      }
+      await this.removeTrajectoryFile(filePath, summary);
+    }
+  }
+
+  private async removeTrajectoryFile(
+    filePath: string,
+    summary: DeleteTrajectorySummary,
+  ): Promise<void> {
+    if (basename(filePath) === TRAJECTORY_FILE) {
+      const trajectoryDir = dirname(filePath);
+      await this.countDirectoryTrajectoryFiles(trajectoryDir, summary);
+      await this.removeFileIfExists(
+        join(dirname(trajectoryDir), `${basename(trajectoryDir)}.trace.json`),
+        "trace",
+        summary,
+      );
+      await rm(trajectoryDir, { recursive: true, force: true });
+      return;
+    }
+
+    await this.removeFileIfExists(filePath, "json", summary);
+    await this.removeFileIfExists(
+      getMarkdownOutputPath(filePath),
+      "markdown",
+      summary,
+    );
+    await this.removeFileIfExists(
+      getTraceOutputPath(filePath),
+      "trace",
+      summary,
+    );
+    await this.removeFileIfExists(
+      getLegacyCompactionMarkerPath(filePath),
+      "compaction",
+      summary,
+    );
+  }
+
+  private async countDirectoryTrajectoryFiles(
+    trajectoryDir: string,
+    summary: DeleteTrajectorySummary,
+  ): Promise<void> {
+    await this.countFileIfExists(
+      join(trajectoryDir, TRAJECTORY_FILE),
+      "json",
+      summary,
+    );
+    await this.countFileIfExists(
+      join(trajectoryDir, SUMMARY_FILE),
+      "markdown",
+      summary,
+    );
+    await this.countFileIfExists(
+      join(trajectoryDir, `${basename(trajectoryDir)}.trace.json`),
+      "trace",
+      summary,
+    );
+    await this.countFileIfExists(
+      join(trajectoryDir, "trace.json"),
+      "trace",
+      summary,
+    );
+    await this.countFileIfExists(
+      join(trajectoryDir, COMPACTION_FILE),
+      "compaction",
+      summary,
+    );
+  }
+
+  private async removeFileIfExists(
+    path: string,
+    kind: "json" | "markdown" | "trace" | "compaction",
+    summary: DeleteTrajectorySummary,
+  ): Promise<void> {
+    if (!existsSync(path)) {
+      return;
+    }
+    await rm(path, { force: true });
+    this.incrementDeleteSummary(kind, summary);
+  }
+
+  private async countFileIfExists(
+    path: string,
+    kind: "json" | "markdown" | "trace" | "compaction",
+    summary: DeleteTrajectorySummary,
+  ): Promise<void> {
+    if (existsSync(path)) {
+      this.incrementDeleteSummary(kind, summary);
+    }
+  }
+
+  private incrementDeleteSummary(
+    kind: "json" | "markdown" | "trace" | "compaction",
+    summary: DeleteTrajectorySummary,
+  ): void {
+    if (kind === "json") {
+      summary.deletedJsonFiles += 1;
+      summary.removedTrajectories += 1;
+    } else if (kind === "markdown") {
+      summary.deletedMarkdownFiles += 1;
+    } else if (kind === "trace") {
+      summary.deletedTraceFiles += 1;
+    } else {
+      summary.deletedCompactionFiles += 1;
+    }
+  }
+
+  private emptyDeleteSummary(): DeleteTrajectorySummary {
+    return {
+      removedTrajectories: 0,
+      deletedJsonFiles: 0,
+      deletedMarkdownFiles: 0,
+      deletedTraceFiles: 0,
+      deletedCompactionFiles: 0,
+    };
+  }
+
+  private async listCompactionMarkerFiles(): Promise<string[]> {
+    const markerPaths: string[] = [];
+    await this.walkFilesInto(
+      this.activeDir,
+      markerPaths,
+      isCompactionMarkerFile,
+    );
+    await this.walkFilesInto(
+      this.completedDir,
+      markerPaths,
+      isCompactionMarkerFile,
+    );
+    return markerPaths;
+  }
+
+  private getCompactionMarkerPath(filePath: string, id: string): string {
+    if (basename(filePath) === TRAJECTORY_FILE) {
+      return join(dirname(filePath), COMPACTION_FILE);
+    }
+
+    return join(dirname(filePath), `${id}${LEGACY_COMPACTION_SUFFIX}`);
+  }
+
+  private getTrajectoryIdFromCompactionMarkerPath(
+    markerPath: string,
+  ): string | undefined {
+    if (basename(markerPath) === COMPACTION_FILE) {
+      const id = basename(dirname(markerPath));
+      return id.startsWith("traj_") ? id : undefined;
+    }
+
+    const markerName = basename(markerPath);
+    return markerName.endsWith(LEGACY_COMPACTION_SUFFIX)
+      ? markerName.slice(0, -LEGACY_COMPACTION_SUFFIX.length)
+      : undefined;
+  }
+
+  private async migrateLegacyIndexCompactionMarkers(): Promise<void> {
+    const indexPath = join(this.trajectoriesDir, "index.json");
+    if (!existsSync(indexPath)) {
+      return;
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(await readFile(indexPath, "utf-8"));
+    } catch {
+      return;
+    }
+
+    if (parsed === null || typeof parsed !== "object") {
+      return;
+    }
+
+    const trajectories = (parsed as { trajectories?: unknown }).trajectories;
+    if (
+      trajectories === null ||
+      typeof trajectories !== "object" ||
+      Array.isArray(trajectories)
+    ) {
+      return;
+    }
+
+    await Promise.all(
+      Object.entries(trajectories).map(async ([id, entry]) => {
+        if (
+          entry === null ||
+          typeof entry !== "object" ||
+          !isSafeTrajectoryId(id)
+        ) {
+          return;
+        }
+
+        const compactedInto = (entry as { compactedInto?: unknown })
+          .compactedInto;
+        const path = (entry as { path?: unknown }).path;
+        if (typeof compactedInto !== "string") {
+          return;
+        }
+
+        const paths =
+          typeof path === "string" &&
+          existsSync(path) &&
+          this.isPathInsideTrajectoriesDir(path)
+            ? [path]
+            : await this.findTrajectoryFilePaths(id);
+        if (paths.length === 0) return;
+
+        const marker: CompactionMarker = {
+          trajectoryId: id,
+          compactedInto,
+          compactedAt: new Date().toISOString(),
+        };
+
+        await Promise.all(
+          paths.map((filePath) =>
+            writeFile(
+              this.getCompactionMarkerPath(filePath, id),
+              JSON.stringify(marker, null, 2),
+              "utf-8",
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  private isPathInsideTrajectoriesDir(path: string): boolean {
+    const rel = relative(resolve(this.trajectoriesDir), resolve(path));
+    return Boolean(rel && !rel.startsWith("..") && !isAbsolute(rel));
+  }
+
+  private async walkFilesInto(
+    dir: string,
+    out: string[],
+    predicate: (name: string) => boolean,
+  ): Promise<void> {
+    let entries: Dirent[];
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+      throw error;
+    }
+
+    for (const entry of entries) {
+      const entryPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await this.walkFilesInto(entryPath, out, predicate);
+      } else if (entry.isFile() && predicate(entry.name)) {
+        out.push(entryPath);
+      }
+    }
+  }
+
+  private getSortValue(
+    trajectory: Trajectory,
+    sortBy: NonNullable<TrajectoryQuery["sortBy"]>,
+  ): string {
+    if (sortBy === "title") {
+      return trajectory.task.title;
+    }
+
+    return trajectory[sortBy] ?? "";
+  }
+
+  private toSummary(trajectory: Trajectory): TrajectorySummary {
+    return {
+      id: trajectory.id,
+      title: trajectory.task.title,
+      status: trajectory.status,
+      startedAt: trajectory.startedAt,
+      completedAt: trajectory.completedAt,
+      confidence: trajectory.retrospective?.confidence,
+      chapterCount: trajectory.chapters.length,
+      decisionCount: trajectory.chapters.reduce(
+        (count, chapter) =>
+          count +
+          chapter.events.filter((event) => event.type === "decision").length,
+        0,
+      ),
+    };
+  }
+
+  private isNewerTrajectory(
+    candidate: Trajectory,
+    current: Trajectory,
+  ): boolean {
+    const candidateTime = new Date(
+      candidate.completedAt ?? candidate.startedAt,
+    ).getTime();
+    const currentTime = new Date(
+      current.completedAt ?? current.startedAt,
+    ).getTime();
+
+    return candidateTime > currentTime;
+  }
 
   /**
    * Read a trajectory file and return a tagged result so callers can
@@ -796,92 +1146,46 @@ export class FileStorage implements StorageAdapter {
     const result = await this.readTrajectoryFile(path);
     return result.ok ? result.trajectory : null;
   }
+}
 
-  /**
-   * Read and parse the on-disk index.
-   *
-   * Tolerances (belt-and-braces against the read/write race):
-   *   - ENOENT: first-run, return an empty index silently.
-   *   - Empty file: a concurrent writer truncated index.json in "w" mode
-   *     right before we read. Return an empty index silently — this is
-   *     not a real corruption, just an interleaving the mutex + atomic
-   *     rename should already prevent. Logging here would be noise.
-   *   - Non-empty but malformed JSON: genuinely corrupted on disk (hand
-   *     edit, disk error, etc). Log it and return an empty index so the
-   *     caller can recover, but keep the log so the problem is visible.
-   */
-  private async loadIndex(): Promise<TrajectoryIndex> {
-    let content: string;
-    try {
-      content = await readFile(this.indexPath, "utf-8");
-    } catch (error) {
-      // ENOENT means index doesn't exist yet - expected on first run.
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-        console.error(
-          "Error loading trajectory index, using empty index:",
-          error,
-        );
-      }
-      return this.emptyIndex();
-    }
+function isTrajectoryJsonFile(name: string): boolean {
+  return (
+    name === TRAJECTORY_FILE ||
+    (name.endsWith(".json") &&
+      name !== "index.json" &&
+      !name.endsWith(".trace.json") &&
+      !name.endsWith(LEGACY_COMPACTION_SUFFIX) &&
+      name !== COMPACTION_FILE)
+  );
+}
 
-    // Empty file == treat as empty index. Happens when readFile sneaks
-    // in between a writer's truncate and its write. Defense in depth
-    // against the race the in-process mutex already eliminates.
-    if (content.length === 0) {
-      return this.emptyIndex();
-    }
+function isSafeTrajectoryId(id: string): boolean {
+  return (
+    id.length > 0 &&
+    !id.includes("..") &&
+    !id.includes("/") &&
+    !id.includes("\\")
+  );
+}
 
-    try {
-      return JSON.parse(content) as TrajectoryIndex;
-    } catch (error) {
-      console.error(
-        "Error loading trajectory index, using empty index:",
-        error,
-      );
-      return this.emptyIndex();
-    }
-  }
+function isCompactionMarkerFile(name: string): boolean {
+  return name === COMPACTION_FILE || name.endsWith(LEGACY_COMPACTION_SUFFIX);
+}
 
-  private emptyIndex(): TrajectoryIndex {
-    return {
-      version: 1,
-      lastUpdated: new Date().toISOString(),
-      trajectories: {},
-    };
-  }
+function getMarkdownOutputPath(outputPath: string): string {
+  return outputPath.endsWith(".json")
+    ? outputPath.slice(0, -".json".length).concat(".md")
+    : `${outputPath}.md`;
+}
 
-  /**
-   * Atomic write: stage into a process-unique temp path in the same directory
-   * and then rename over the live file. `rename` is atomic on POSIX, so
-   * concurrent readers in any process either see the old complete file or
-   * the new complete file — never a half-written / zero-byte state.
-   *
-   * Callers MUST hold `withIndexLock(this.indexPath, ...)` so the in-process
-   * read-modify-write cycle stays serialized; the unique temp name also keeps
-   * parallel writers in other processes from colliding on a shared tmp path.
-   */
-  private async saveIndex(index: TrajectoryIndex): Promise<void> {
-    index.lastUpdated = new Date().toISOString();
-    const tmpPath = `${this.indexPath}.${process.pid}.${randomUUID()}.tmp`;
-    await writeFile(tmpPath, JSON.stringify(index, null, 2), "utf-8");
-    await rename(tmpPath, this.indexPath);
-  }
+function getTraceOutputPath(outputPath: string): string {
+  return outputPath.endsWith(".json")
+    ? outputPath.slice(0, -".json".length).concat(".trace.json")
+    : `${outputPath}.trace.json`;
+}
 
-  private async updateIndex(
-    trajectory: Trajectory,
-    filePath: string,
-  ): Promise<void> {
-    await withIndexLock(this.indexPath, async () => {
-      const index = await this.loadIndex();
-      index.trajectories[trajectory.id] = {
-        title: trajectory.task.title,
-        status: trajectory.status,
-        startedAt: trajectory.startedAt,
-        completedAt: trajectory.completedAt,
-        path: filePath,
-      };
-      await this.saveIndex(index);
-    });
-  }
+function getLegacyCompactionMarkerPath(outputPath: string): string {
+  return outputPath.endsWith(".json")
+    ? outputPath.slice(0, -".json".length).concat(LEGACY_COMPACTION_SUFFIX)
+    : `${outputPath}${LEGACY_COMPACTION_SUFFIX}`;
 }

@@ -11,6 +11,12 @@ const __dirname = dirname(__filename);
 const repoRoot = resolvePath(__dirname, "../..");
 const cliSourceEntry = join(repoRoot, "src/cli/index.ts");
 const cliDistEntry = join(repoRoot, "dist/cli/index.js");
+const viteNodeEntry = join(
+  repoRoot,
+  "node_modules",
+  ".bin",
+  process.platform === "win32" ? "vite-node.cmd" : "vite-node",
+);
 
 interface EnvSnapshot {
   TRAJECTORIES_WORKFLOW_ID?: string;
@@ -94,6 +100,19 @@ process.exit(result.status ?? 1);
   );
 }
 
+function findTrajectoryJson(rootDir: string, id: string): string | undefined {
+  const root = join(rootDir, ".trajectories");
+  const files = readdirSync(root, { recursive: true }) as string[];
+  const match = files.find(
+    (file) =>
+      file === `active/${id}.json` ||
+      file === `completed/${id}.json` ||
+      file.endsWith(`/${id}.json`) ||
+      file.endsWith(`/${id}/trajectory.json`),
+  );
+  return match ? join(root, match) : undefined;
+}
+
 describe("workflow compaction", () => {
   let tempDir: string;
   let originalCwd: string;
@@ -138,8 +157,15 @@ describe("workflow compaction", () => {
       TRAJECTORIES_WORKFLOW_ID: "wf-cli-env",
     };
     const startResult = spawnSync(
-      "npx",
-      ["tsx", cliSourceEntry, "start", "CLI env stamped task", "--quiet"],
+      viteNodeEntry,
+      [
+        "--root",
+        repoRoot,
+        cliSourceEntry,
+        "start",
+        "CLI env stamped task",
+        "--quiet",
+      ],
       { cwd: tempDir, encoding: "utf-8", env: envForCli },
     );
     expect(startResult.status).toBe(0);
@@ -150,7 +176,8 @@ describe("workflow compaction", () => {
       tempDir,
       ".trajectories",
       "active",
-      `${trajectoryId}.json`,
+      trajectoryId,
+      "trajectory.json",
     );
     expect(existsSync(activePath)).toBe(true);
     const raw = JSON.parse(await readFile(activePath, "utf-8")) as {
@@ -161,9 +188,10 @@ describe("workflow compaction", () => {
 
   it("trail start CLI honors --workflow flag even when env var is unset", async () => {
     const startResult = spawnSync(
-      "npx",
+      viteNodeEntry,
       [
-        "tsx",
+        "--root",
+        repoRoot,
         cliSourceEntry,
         "start",
         "CLI flag stamped task",
@@ -179,7 +207,8 @@ describe("workflow compaction", () => {
       tempDir,
       ".trajectories",
       "active",
-      `${trajectoryId}.json`,
+      trajectoryId,
+      "trajectory.json",
     );
     const raw = JSON.parse(await readFile(activePath, "utf-8")) as {
       workflowId?: string;
@@ -217,9 +246,10 @@ describe("workflow compaction", () => {
     await client.close();
 
     const spawnResult = spawnSync(
-      "npx",
+      viteNodeEntry,
       [
-        "tsx",
+        "--root",
+        repoRoot,
         cliSourceEntry,
         "compact",
         "--workflow",
@@ -279,11 +309,7 @@ describe("workflow compaction", () => {
 
     await client.close();
 
-    const indexPath = join(tempDir, ".trajectories", "index.json");
-    const beforeIndex = JSON.parse(await readFile(indexPath, "utf-8")) as {
-      trajectories: Record<string, { path: string }>;
-    };
-    const sourcePath = beforeIndex.trajectories[sessionId]?.path;
+    const sourcePath = findTrajectoryJson(tempDir, sessionId);
     expect(sourcePath).toBeDefined();
     expect(existsSync(sourcePath ?? "")).toBe(true);
 
@@ -308,10 +334,9 @@ describe("workflow compaction", () => {
     expect(compacted.sourceTrajectories).toHaveLength(1);
     expect(compacted.sourceTrajectories).toContain(sessionId);
 
-    const afterIndex = JSON.parse(await readFile(indexPath, "utf-8")) as {
-      trajectories: Record<string, unknown>;
-    };
-    expect(afterIndex.trajectories[sessionId]).toBeUndefined();
+    expect(existsSync(join(tempDir, ".trajectories", "index.json"))).toBe(
+      false,
+    );
     expect(existsSync(sourcePath ?? "")).toBe(false);
   }, 60_000);
 
@@ -381,27 +406,11 @@ describe("workflow compaction", () => {
     const trajFilePath = join(monthDir, `${trajId}.json`);
     writeFileSync(trajFilePath, JSON.stringify(rawTrajectory, null, 2));
 
-    // Index entry is how FileStorage.list() finds completed trajectories.
-    const indexPath = join(dataDir, "index.json");
-    const index = {
-      version: 1,
-      lastUpdated: timestamp,
-      trajectories: {
-        [trajId]: {
-          title: "Schema leniency",
-          status: "completed",
-          startedAt: timestamp,
-          completedAt: timestamp,
-          path: trajFilePath,
-        },
-      },
-    };
-    writeFileSync(indexPath, JSON.stringify(index, null, 2));
-
     const spawnResult = spawnSync(
-      "npx",
+      viteNodeEntry,
       [
-        "tsx",
+        "--root",
+        repoRoot,
         cliSourceEntry,
         "compact",
         "--workflow",

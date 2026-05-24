@@ -619,12 +619,13 @@ agent-trajectories/
 
 ```
 .trajectories/
-├── index.json                # Quick lookup index
 ├── active/
-│   └── traj_abc123.json
+│   └── traj_abc123/
+│       └── trajectory.json
 ├── completed/
 │   └── 2024-01/
-│       └── traj_def456.json
+│       └── traj_def456/
+│           └── trajectory.json
 └── archive/
 ```
 
@@ -633,11 +634,12 @@ agent-trajectories/
 - Git-friendly (version with code)
 - Human-readable/editable
 - Works everywhere
+- No shared mutable index file to merge
 
 **Cons:**
 - No efficient querying
 - No full-text search
-- Index can get out of sync
+- Directory scans may become expensive at very large scales
 - Large repos = slow listing
 
 **Best for:** Simple setups, single-agent use, git-centric workflows
