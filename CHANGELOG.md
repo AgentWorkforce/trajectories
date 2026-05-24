@@ -1,3 +1,9 @@
+## [0.5.9](https://github.com/AgentWorkforce/trajectories/compare/v0.5.8...v0.5.9) (2026-05-24)
+
+
+### Bug Fixes
+
+* **storage:** address index-free layout review ([14f30d3](https://github.com/AgentWorkforce/trajectories/commit/14f30d31cdfb5cff3e6826437fa74c0be7441d84))
 ## [0.5.8](https://github.com/AgentWorkforce/trajectories/compare/v0.5.7...v0.5.8) (2026-05-08)
 
 
