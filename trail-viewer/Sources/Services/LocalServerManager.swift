@@ -130,13 +130,13 @@ final class LocalServerManager {
                 .appendingPathComponent("trajectories", isDirectory: true)
             let isDefaultDataDir = selected.lastPathComponent == "trajectories" &&
                 selected.deletingLastPathComponent().lastPathComponent == ".agentworkforce"
-            let hasTrajectoryChildren = FileManager.default.fileExists(
+            let hasActiveDir = FileManager.default.fileExists(
                 atPath: selected.appendingPathComponent("active", isDirectory: true).path
-            ) || FileManager.default.fileExists(
-                atPath: selected.appendingPathComponent("completed", isDirectory: true).path
-            ) || FileManager.default.fileExists(
-                atPath: selected.appendingPathComponent("index.json").path
             )
+            let hasCompletedDir = FileManager.default.fileExists(
+                atPath: selected.appendingPathComponent("completed", isDirectory: true).path
+            )
+            let hasTrajectoryChildren = hasActiveDir && hasCompletedDir
             let resolvedTrajectoryPath: String
             if isDefaultDataDir || hasTrajectoryChildren {
                 resolvedTrajectoryPath = trajectoryPath

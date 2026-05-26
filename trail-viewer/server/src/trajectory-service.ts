@@ -18,12 +18,10 @@ const DEFAULT_TRAJECTORY_DATA_DIR = join(".agentworkforce", "trajectories");
 
 function isTrajectoryDataDir(path: string): boolean {
   const normalized = path.replace(/[\\/]+$/, "");
-  return (
-    normalized.endsWith(DEFAULT_TRAJECTORY_DATA_DIR) ||
-    existsSync(join(path, "active")) ||
-    existsSync(join(path, "completed")) ||
-    existsSync(join(path, "index.json"))
-  );
+  const hasDataSubdirs =
+    existsSync(join(path, "active")) && existsSync(join(path, "completed"));
+
+  return normalized.endsWith(DEFAULT_TRAJECTORY_DATA_DIR) || hasDataSubdirs;
 }
 
 function resolveTrajectoryDataDir(path: string): string {

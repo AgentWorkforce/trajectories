@@ -312,7 +312,7 @@ npx vitest run 2>&1 | tail -40
       command: `
 set -e
 rm -rf ${E2E_SCRATCH}
-mkdir -p ${E2E_SCRATCH}
+mkdir -p ${E2E_SCRATCH}/.agentworkforce
 cp -R ${WORKFORCE_ROOT}/.agentworkforce/trajectories ${E2E_SCRATCH}/.agentworkforce/trajectories
 echo "=== fixture files ==="
 find ${E2E_SCRATCH}/.agentworkforce/trajectories -type f -name "*.json" | sort
