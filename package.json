@@ -23,6 +23,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "trail": "vite-node src/cli/index.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "lint": "biome check .",
@@ -48,9 +49,7 @@
     "type": "git",
     "url": "https://github.com/AgentWorkforce/trajectories"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "engines": {
     "node": ">=20.0.0"
   },
@@ -67,6 +66,7 @@
     "lint-staged": "^16.2.7",
     "tsup": "^8.5.1",
     "typescript": "^5.4.0",
+    "vite-node": "^2.1.9",
     "vitest": "^2.0.0"
   },
   "lint-staged": {

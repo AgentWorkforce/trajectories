@@ -5,14 +5,19 @@ Record your work as a trajectory for future agents and humans to follow.
 
 ## Usage
 
-If `trail` is installed globally, run commands directly:
+Run without a global install by invoking the npm package:
 ```bash
-trail start "Task description"
+npx --yes agent-trajectories start "Task description"
 ```
 
-If not globally installed, use npx to run from local installation:
+If this is the `agent-trajectories` repository, use the local source runner:
 ```bash
-npx trail start "Task description"
+npm run trail -- start "Task description"
+```
+
+If `trail` is installed globally or locally, run commands directly:
+```bash
+trail start "Task description"
 ```
 
 ## When Starting Work
