@@ -10,15 +10,26 @@ Run without a global install by invoking the npm package:
 npx --yes agent-trajectories start "Task description"
 ```
 
+If `agent-trajectories` is installed locally in a project, run through npm so
+`node_modules/.bin` is resolved:
+```bash
+npx --no-install trail start "Task description"
+# or
+npm exec -- trail start "Task description"
+```
+
 If this is the `agent-trajectories` repository, use the local source runner:
 ```bash
 npm run trail -- start "Task description"
 ```
 
-If `trail` is installed globally or locally, run commands directly:
+If `trail` is installed globally, run commands directly:
 ```bash
 trail start "Task description"
 ```
+
+Examples below use `trail` directly; for non-global installs, substitute the
+appropriate `npx`, `npm exec`, or `npm run trail --` prefix from above.
 
 ## When Starting Work
 

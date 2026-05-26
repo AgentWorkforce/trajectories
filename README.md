@@ -105,12 +105,15 @@ trail start "Implement auth module"
 # Or install locally in a project
 npm install agent-trajectories
 npx --no-install trail start "Implement auth module"
+# or
+npm exec -- trail start "Implement auth module"
 ```
 
 ```bash
 # Start tracking a task
 trail start "Implement auth module"
-# (use `npx --yes agent-trajectories start ...` if trail is not installed)
+# (for non-global installs, replace `trail` with
+#  `npx --yes agent-trajectories`, `npx --no-install trail`, or `npm exec -- trail`)
 
 # View current status
 trail status
