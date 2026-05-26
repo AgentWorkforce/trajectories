@@ -1,3 +1,14 @@
+# [0.6.0](https://github.com/AgentWorkforce/trajectories/compare/v0.5.9...v0.6.0) (2026-05-26)
+
+
+### Bug Fixes
+
+* address trajectory path review feedback ([eb59d68](https://github.com/AgentWorkforce/trajectories/commit/eb59d68417f8e208b9ed99fca33239508240f377))
+
+
+### Features
+
+* **storage:** move trajectories under agentworkforce ([a552c80](https://github.com/AgentWorkforce/trajectories/commit/a552c80c04f251c284cf8e76a3908ff1333b0174))
 ## [0.5.9](https://github.com/AgentWorkforce/trajectories/compare/v0.5.8...v0.5.9) (2026-05-24)
 
 
