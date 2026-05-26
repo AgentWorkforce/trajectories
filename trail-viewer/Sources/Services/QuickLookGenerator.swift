@@ -6,7 +6,7 @@ import Foundation
 ///
 /// ```ts
 /// // POST /api/previews/generate
-/// // Body: { path: "/absolute/path/to/.trajectories/completed" }
+/// // Body: { path: "/absolute/path/to/.agentworkforce/trajectories/completed" }
 /// // Returns: { count: number }
 /// //
 /// // import { generatePreviewsForAll } from "./preview-generator.js"
@@ -72,7 +72,7 @@ final class QuickLookGenerator {
     /// Finds the generated HTML preview for a trajectory ID.
     ///
     /// Expected layout:
-    /// `.trajectories/completed/YYYY-MM/traj_xxx.html`
+    /// `.agentworkforce/trajectories/completed/YYYY-MM/traj_xxx.html`
     static func previewURL(for trajectoryId: String, in directory: String) -> URL? {
         let fileManager = FileManager.default
         let rootURL = URL(fileURLWithPath: (directory as NSString).expandingTildeInPath)

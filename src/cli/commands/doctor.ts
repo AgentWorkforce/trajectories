@@ -4,7 +4,7 @@
  * Diagnose and (optionally) repair trajectory files that fail to load.
  * Reconcile silently skips bad files so the CLI keeps working; doctor
  * surfaces the path + first validation error for each one and can move
- * them into `.trajectories/invalid/` so reconcile stops complaining.
+ * them into `.agentworkforce/trajectories/invalid/` so reconcile stops complaining.
  */
 
 import type { Command } from "commander";
@@ -18,7 +18,7 @@ export function registerDoctorCommand(program: Command): void {
     )
     .option(
       "--quarantine",
-      "Move invalid files to .trajectories/invalid/ so reconcile stops scanning them",
+      "Move invalid files to .agentworkforce/trajectories/invalid/ so reconcile stops scanning them",
     )
     .action(async (opts: { quarantine?: boolean }) => {
       const storage = new FileStorage();
@@ -41,7 +41,7 @@ export function registerDoctorCommand(program: Command): void {
 
       if (!opts.quarantine) {
         console.log(
-          "\nRun `trail doctor --quarantine` to move these files into .trajectories/invalid/.",
+          "\nRun `trail doctor --quarantine` to move these files into .agentworkforce/trajectories/invalid/.",
         );
         return;
       }

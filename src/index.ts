@@ -77,7 +77,12 @@ export type {
 } from "./core/types.js";
 
 // Storage
-export { FileStorage } from "./storage/file.js";
+export {
+  DEFAULT_TRAJECTORY_DATA_DIR,
+  LEGACY_TRAJECTORY_DATA_DIR,
+  FileStorage,
+  getDefaultTrajectoryDataDir,
+} from "./storage/file.js";
 export type { StorageAdapter, StorageConfig } from "./storage/interface.js";
 
 // Export

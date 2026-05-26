@@ -16,7 +16,7 @@
  *   3. Conditionally aligns workforce writer inside WORKFORCE_WORKTREE
  *   4. Builds + runs unit tests from TRAJ_WORKTREE
  *   5. E2E verification: runs the worktree-built CLI against a copy of
- *      workforce/.trajectories/, gating on 3 hard signals
+ *      workforce/.agentworkforce/trajectories/, gating on 3 hard signals
  *   6. Lead commits in both worktrees, pushes, opens 2 PRs, prints URLs
  *
  * Normally invoked by run-all.sh, but can be run standalone IF you set
@@ -312,13 +312,13 @@ npx vitest run 2>&1 | tail -40
       command: `
 set -e
 rm -rf ${E2E_SCRATCH}
-mkdir -p ${E2E_SCRATCH}
-cp -R ${WORKFORCE_ROOT}/.trajectories ${E2E_SCRATCH}/.trajectories
+mkdir -p ${E2E_SCRATCH}/.agentworkforce
+cp -R ${WORKFORCE_ROOT}/.agentworkforce/trajectories ${E2E_SCRATCH}/.agentworkforce/trajectories
 echo "=== fixture files ==="
-find ${E2E_SCRATCH}/.trajectories -type f -name "*.json" | sort
+find ${E2E_SCRATCH}/.agentworkforce/trajectories -type f -name "*.json" | sort
 echo ""
 echo "=== count ==="
-find ${E2E_SCRATCH}/.trajectories -type f -name "*.json" | wc -l
+find ${E2E_SCRATCH}/.agentworkforce/trajectories -type f -name "*.json" | wc -l
 `.trim(),
       captureOutput: true,
       failOnError: true,
@@ -335,20 +335,20 @@ set -e
 # on-disk files so the reconcile summary reflects actual work.
 FRESH=${E2E_SCRATCH}-fresh
 rm -rf "$FRESH"
-mkdir -p "$FRESH/.trajectories/completed"
-if ls ${E2E_SCRATCH}/.trajectories/completed/*.json >/dev/null 2>&1; then
-  cp ${E2E_SCRATCH}/.trajectories/completed/*.json "$FRESH/.trajectories/completed/" || true
+mkdir -p "$FRESH/.agentworkforce/trajectories/completed"
+if ls ${E2E_SCRATCH}/.agentworkforce/trajectories/completed/*.json >/dev/null 2>&1; then
+  cp ${E2E_SCRATCH}/.agentworkforce/trajectories/completed/*.json "$FRESH/.agentworkforce/trajectories/completed/" || true
 fi
-if [ -d ${E2E_SCRATCH}/.trajectories/completed ]; then
-  find ${E2E_SCRATCH}/.trajectories/completed -mindepth 2 -name "*.json" -print0 2>/dev/null | while IFS= read -r -d '' f; do
-    rel=\${f#${E2E_SCRATCH}/.trajectories/completed/}
+if [ -d ${E2E_SCRATCH}/.agentworkforce/trajectories/completed ]; then
+  find ${E2E_SCRATCH}/.agentworkforce/trajectories/completed -mindepth 2 -name "*.json" -print0 2>/dev/null | while IFS= read -r -d '' f; do
+    rel=\${f#${E2E_SCRATCH}/.agentworkforce/trajectories/completed/}
     dir=$(dirname "$rel")
-    mkdir -p "$FRESH/.trajectories/completed/$dir"
-    cp "$f" "$FRESH/.trajectories/completed/$rel"
+    mkdir -p "$FRESH/.agentworkforce/trajectories/completed/$dir"
+    cp "$f" "$FRESH/.agentworkforce/trajectories/completed/$rel"
   done
 fi
 
-FILES_ON_DISK=$(find "$FRESH/.trajectories" -type f -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+FILES_ON_DISK=$(find "$FRESH/.agentworkforce/trajectories" -type f -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
 echo "=== fixture file count: $FILES_ON_DISK ==="
 
 cd "$FRESH"

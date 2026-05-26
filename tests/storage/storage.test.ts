@@ -25,7 +25,7 @@ describe("FileStorage", () => {
   });
 
   describe("initialization", () => {
-    it("should create .trajectories directory if it does not exist", async () => {
+    it("should create .agentworkforce/trajectories directory if it does not exist", async () => {
       // Arrange
       const { FileStorage } = await import("../../src/storage/file.js");
       const storage = new FileStorage(tempDir);
@@ -35,14 +35,22 @@ describe("FileStorage", () => {
 
       // Assert
       const { existsSync } = await import("node:fs");
-      expect(existsSync(join(tempDir, ".trajectories"))).toBe(true);
-      expect(existsSync(join(tempDir, ".trajectories", "active"))).toBe(true);
-      expect(existsSync(join(tempDir, ".trajectories", "completed"))).toBe(
+      expect(existsSync(join(tempDir, ".agentworkforce", "trajectories"))).toBe(
         true,
       );
-      expect(existsSync(join(tempDir, ".trajectories", "index.json"))).toBe(
-        false,
-      );
+      expect(
+        existsSync(join(tempDir, ".agentworkforce", "trajectories", "active")),
+      ).toBe(true);
+      expect(
+        existsSync(
+          join(tempDir, ".agentworkforce", "trajectories", "completed"),
+        ),
+      ).toBe(true);
+      expect(
+        existsSync(
+          join(tempDir, ".agentworkforce", "trajectories", "index.json"),
+        ),
+      ).toBe(false);
     });
 
     it("should not fail if directory already exists", async () => {
@@ -60,8 +68,15 @@ describe("FileStorage", () => {
       const { FileStorage } = await import("../../src/storage/file.js");
       const { mkdir, writeFile } = await import("node:fs/promises");
       const storage = new FileStorage(tempDir);
-      await mkdir(join(tempDir, ".trajectories"), { recursive: true });
-      const indexPath = join(tempDir, ".trajectories", "index.json");
+      await mkdir(join(tempDir, ".agentworkforce", "trajectories"), {
+        recursive: true,
+      });
+      const indexPath = join(
+        tempDir,
+        ".agentworkforce",
+        "trajectories",
+        "index.json",
+      );
       await writeFile(indexPath, "{}", "utf-8");
 
       // Act
@@ -70,6 +85,36 @@ describe("FileStorage", () => {
       // Assert
       const { existsSync } = await import("node:fs");
       expect(existsSync(indexPath)).toBe(false);
+    });
+
+    it("should migrate an existing .trajectories directory to the default data path", async () => {
+      // Arrange
+      const {
+        DEFAULT_TRAJECTORY_DATA_DIR,
+        FileStorage,
+        LEGACY_TRAJECTORY_DATA_DIR,
+      } = await import("../../src/storage/file.js");
+      const { existsSync } = await import("node:fs");
+      const { mkdir, writeFile } = await import("node:fs/promises");
+      const legacyActiveDir = join(
+        tempDir,
+        LEGACY_TRAJECTORY_DATA_DIR,
+        "active",
+      );
+      await mkdir(legacyActiveDir, { recursive: true });
+      await writeFile(join(legacyActiveDir, "legacy.json"), "{}", "utf-8");
+      const storage = new FileStorage(tempDir);
+
+      // Act
+      await storage.initialize();
+
+      // Assert
+      expect(existsSync(join(tempDir, LEGACY_TRAJECTORY_DATA_DIR))).toBe(false);
+      expect(
+        existsSync(
+          join(tempDir, DEFAULT_TRAJECTORY_DATA_DIR, "active", "legacy.json"),
+        ),
+      ).toBe(true);
     });
   });
 
@@ -89,7 +134,8 @@ describe("FileStorage", () => {
       const { existsSync, readFileSync } = await import("node:fs");
       const filePath = join(
         tempDir,
-        ".trajectories",
+        ".agentworkforce",
+        "trajectories",
         "active",
         trajectory.id,
         "trajectory.json",
@@ -122,12 +168,18 @@ describe("FileStorage", () => {
       const { existsSync } = await import("node:fs");
       const activeFile = join(
         tempDir,
-        ".trajectories",
+        ".agentworkforce",
+        "trajectories",
         "active",
         trajectory.id,
         "trajectory.json",
       );
-      const completedDir = join(tempDir, ".trajectories", "completed");
+      const completedDir = join(
+        tempDir,
+        ".agentworkforce",
+        "trajectories",
+        "completed",
+      );
       const date = new Date(trajectory.completedAt ?? trajectory.startedAt);
       const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       const completedFile = join(
@@ -160,9 +212,12 @@ describe("FileStorage", () => {
 
       // Assert
       const files = await import("node:fs/promises").then((fs) =>
-        fs.readdir(join(tempDir, ".trajectories", "completed"), {
-          recursive: true,
-        }),
+        fs.readdir(
+          join(tempDir, ".agentworkforce", "trajectories", "completed"),
+          {
+            recursive: true,
+          },
+        ),
       );
       expect(files.some((f) => f.endsWith("summary.md"))).toBe(true);
     });
@@ -232,11 +287,17 @@ describe("FileStorage", () => {
       const storage = new FileStorage(tempDir);
       await storage.initialize();
       const trajectory = createTrajectory({ title: "Legacy task" });
-      await mkdir(join(tempDir, ".trajectories", "active"), {
+      await mkdir(join(tempDir, ".agentworkforce", "trajectories", "active"), {
         recursive: true,
       });
       await writeFile(
-        join(tempDir, ".trajectories", "active", `${trajectory.id}.json`),
+        join(
+          tempDir,
+          ".agentworkforce",
+          "trajectories",
+          "active",
+          `${trajectory.id}.json`,
+        ),
         JSON.stringify(trajectory, null, 2),
         "utf-8",
       );
@@ -449,7 +510,8 @@ describe("FileStorage", () => {
       const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       const tracePath = join(
         tempDir,
-        ".trajectories",
+        ".agentworkforce",
+        "trajectories",
         "completed",
         month,
         `${completed.id}.trace.json`,
@@ -501,13 +563,19 @@ describe("FileStorage", () => {
 
       // Assert
       const { existsSync } = await import("node:fs");
-      const indexPath = join(tempDir, ".trajectories", "index.json");
+      const indexPath = join(
+        tempDir,
+        ".agentworkforce",
+        "trajectories",
+        "index.json",
+      );
       expect(existsSync(indexPath)).toBe(false);
       expect(
         existsSync(
           join(
             tempDir,
-            ".trajectories",
+            ".agentworkforce",
+            "trajectories",
             "active",
             trajectory.id,
             "trajectory.json",
@@ -529,7 +597,12 @@ describe("FileStorage", () => {
       const bootstrap = new FileStorage(tempDir);
       await bootstrap.initialize();
 
-      const completedDir = join(tempDir, ".trajectories", "completed");
+      const completedDir = join(
+        tempDir,
+        ".agentworkforce",
+        "trajectories",
+        "completed",
+      );
       await mkdir(completedDir, { recursive: true });
       const trajectory = {
         ...createTrajectory({ title: "Stale flat file" }),
@@ -559,7 +632,13 @@ describe("FileStorage", () => {
       const bootstrap = new FileStorage(tempDir);
       await bootstrap.initialize();
 
-      const monthDir = join(tempDir, ".trajectories", "completed", "2026-04");
+      const monthDir = join(
+        tempDir,
+        ".agentworkforce",
+        "trajectories",
+        "completed",
+        "2026-04",
+      );
       await mkdir(monthDir, { recursive: true });
       const trajectory = {
         ...createTrajectory({ title: "Stale month file" }),
@@ -592,9 +671,11 @@ describe("FileStorage", () => {
       await storage.reconcileIndex();
 
       const { existsSync } = await import("node:fs");
-      expect(existsSync(join(tempDir, ".trajectories", "index.json"))).toBe(
-        false,
-      );
+      expect(
+        existsSync(
+          join(tempDir, ".agentworkforce", "trajectories", "index.json"),
+        ),
+      ).toBe(false);
       const summaries = await storage.list({});
       expect(summaries.map((summary) => summary.id)).toContain(trajectory.id);
     });
@@ -640,12 +721,14 @@ describe("Environment Variable Support", () => {
       // Act
       await storage.save(trajectory);
 
-      // Assert - file should be at tempDir/active, not tempDir/.trajectories/active
+      // Assert - file should be at tempDir/active, not tempDir/.agentworkforce/trajectories/active
       const { existsSync } = await import("node:fs");
       expect(
         existsSync(join(tempDir, "active", trajectory.id, "trajectory.json")),
       ).toBe(true);
-      expect(existsSync(join(tempDir, ".trajectories"))).toBe(false);
+      expect(existsSync(join(tempDir, ".agentworkforce", "trajectories"))).toBe(
+        false,
+      );
       expect(existsSync(join(tempDir, "index.json"))).toBe(false);
     });
 
@@ -791,7 +874,7 @@ describe("Environment Variable Support", () => {
       );
     });
 
-    it("should not add .trajectories suffix when TRAJECTORIES_DATA_DIR is set", async () => {
+    it("should not add .agentworkforce/trajectories suffix when TRAJECTORIES_DATA_DIR is set", async () => {
       // Arrange
       const customDir = join(tempDir, "custom-path");
       process.env.TRAJECTORIES_DATA_DIR = customDir;
@@ -804,7 +887,9 @@ describe("Environment Variable Support", () => {
       // Assert
       const { existsSync } = await import("node:fs");
       expect(existsSync(join(customDir, "active"))).toBe(true);
-      expect(existsSync(join(customDir, ".trajectories"))).toBe(false);
+      expect(
+        existsSync(join(customDir, ".agentworkforce", "trajectories")),
+      ).toBe(false);
     });
 
     it("should expand ~ in TRAJECTORIES_DATA_DIR", async () => {
@@ -855,7 +940,7 @@ describe("Environment Variable Support", () => {
       expect(paths).toEqual([tempDir]);
     });
 
-    it("should fall back to .trajectories when no env vars set", async () => {
+    it("should fall back to .agentworkforce/trajectories when no env vars set", async () => {
       // Arrange
       process.env.TRAJECTORIES_SEARCH_PATHS = undefined;
       process.env.TRAJECTORIES_DATA_DIR = undefined;
@@ -865,7 +950,7 @@ describe("Environment Variable Support", () => {
       const paths = getSearchPaths();
 
       // Assert
-      expect(paths[0]).toContain(".trajectories");
+      expect(paths[0]).toContain(join(".agentworkforce", "trajectories"));
     });
 
     it("should filter empty paths from TRAJECTORIES_SEARCH_PATHS", async () => {

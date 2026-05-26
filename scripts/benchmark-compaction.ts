@@ -4,7 +4,7 @@
  *
  * Records a deliberately noisy trajectory (3 chapters, 5+ decisions, 10+
  * findings, 15+ low-significance noise events) using the default
- * TrajectoryClient storage (always `<cwd>/.trajectories/`). The caller is
+ * TrajectoryClient storage (always `<cwd>/.agentworkforce/trajectories/`). The caller is
  * expected to `cd` into an isolated directory before invoking this script.
  *
  * Reads TRAJECTORIES_WORKFLOW_ID from the environment and forwards it to
@@ -69,7 +69,7 @@ async function main(): Promise<void> {
   // ---------- Chapter 2: Implementation ----------
   await session.chapter("Implementation", "benchmark-agent");
   await session.finding(
-    "TrajectoryClient defaults storage to <cwd>/.trajectories",
+    "TrajectoryClient defaults storage to <cwd>/.agentworkforce/trajectories",
   );
   await session.finding("Session API is fully chainable and auto-saves");
   await session.finding("addEvent accepts arbitrary significance levels");
@@ -80,7 +80,9 @@ async function main(): Promise<void> {
   await session.event("thinking", "Will reuse default storage path", {
     significance: "low",
   });
-  await session.event("tool_call", "ls .trajectories", { significance: "low" });
+  await session.event("tool_call", "ls .agentworkforce/trajectories", {
+    significance: "low",
+  });
   await session.event("tool_result", "active/ completed/", {
     significance: "low",
   });

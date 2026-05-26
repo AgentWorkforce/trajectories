@@ -141,7 +141,7 @@ async function runWorkflow() {
       task: `Create ${TRAJ_ROOT}/scripts/benchmark-compaction.ts — a reproducible benchmark that uses the CURRENT trajectories SDK to record a deliberately noisy sample trajectory.
 
 Storage convention — IMPORTANT:
-- The script must use the default TrajectoryClient storage: it always writes into \`<cwd>/.trajectories/\`. Do NOT read TRAJECTORIES_DIR or any custom env var for the base directory. The CALLER cd's into the right directory before invoking this script; that is how isolation works.
+- The script must use the default TrajectoryClient storage: it always writes into \`<cwd>/.agentworkforce/trajectories/\`. Do NOT read TRAJECTORIES_DIR or any custom env var for the base directory. The CALLER cd's into the right directory before invoking this script; that is how isolation works.
 - The script MUST read TRAJECTORIES_WORKFLOW_ID from process.env and pass it through to the trajectory (via whatever option TrajectoryClient.start accepts, or the env var will naturally be picked up by the SDK once the feature is implemented — on the BEFORE run this is a no-op and that is expected).
 
 Content (deliberately noisy so the compaction ratio is meaningful):
@@ -393,7 +393,7 @@ Current contents (first 400 lines):
 
 Add a new selector flag \`--workflow <id>\` alongside the existing --ids / --pr / --branch / --commits filters. When present:
 - loadTrajectories() must filter to trajectories whose \`workflowId === id\`
-- The output file name must be \`workflow-<id>.json\` (and \`.md\` when --markdown). Place under .trajectories/compacted/ per existing convention.
+- The output file name must be \`workflow-<id>.json\` (and \`.md\` when --markdown). Place under .agentworkforce/trajectories/compacted/ per existing convention.
 - Surface the workflow id in any printed summary
 - All other flags continue to work as before
 
@@ -442,7 +442,7 @@ Only edit files you previously touched: src/core/types.ts, src/core/schema.ts, s
       task: `Create ${TRAJ_ROOT}/tests/sdk/workflow-compact.test.ts using vitest (this project uses vitest — see package.json scripts).
 
 IMPORTANT — isolation strategy:
-- The trajectories SDK writes to \`<cwd>/.trajectories/\` by default. For isolation, each test must EITHER (a) process.chdir() into a tmp dir and restore the cwd in afterEach, OR (b) pass an explicit baseDir to TrajectoryClient if that option exists. Do NOT rely on an env var like TRAJECTORIES_DIR — the CLI and storage honor TRAJECTORIES_DATA_DIR / TRAJECTORIES_SEARCH_PATHS, not TRAJECTORIES_DIR.
+- The trajectories SDK writes to \`<cwd>/.agentworkforce/trajectories/\` by default. For isolation, each test must EITHER (a) process.chdir() into a tmp dir and restore the cwd in afterEach, OR (b) pass an explicit baseDir to TrajectoryClient if that option exists. Do NOT rely on an env var like TRAJECTORIES_DIR — the CLI and storage honor TRAJECTORIES_DATA_DIR / TRAJECTORIES_SEARCH_PATHS, not TRAJECTORIES_DIR.
 
 Cover five cases:
 
@@ -450,7 +450,7 @@ Cover five cases:
 
 2. Without TRAJECTORIES_WORKFLOW_ID set, the created trajectory has workflowId === undefined.
 
-3. CLI filter end-to-end: cd into a tmp dir, create two trajectories, one with workflowId "wf-a", one without. Spawn the CLI via child_process.spawnSync from that cwd: \`npx tsx \${absoluteRepoRoot}/src/cli/index.ts compact --workflow wf-a --mechanical --all\`. Assert the compacted JSON file exists under \`<tmp>/.trajectories/compacted/workflow-wf-a.json\` and its sourceTrajectories array contains only the tagged trajectory id.
+3. CLI filter end-to-end: cd into a tmp dir, create two trajectories, one with workflowId "wf-a", one without. Spawn the CLI via child_process.spawnSync from that cwd: \`npx tsx \${absoluteRepoRoot}/src/cli/index.ts compact --workflow wf-a --mechanical --all\`. Assert the compacted JSON file exists under \`<tmp>/.agentworkforce/trajectories/compacted/workflow-wf-a.json\` and its sourceTrajectories array contains only the tagged trajectory id.
 
 4. compactWorkflow() SDK helper end-to-end: cd into a tmp dir containing one tagged trajectory, call await compactWorkflow("wf-a", { mechanical: true, markdown: true }), assert the returned compactedPath exists on disk.
 
@@ -499,7 +499,7 @@ Re-run \`npx vitest run tests/sdk/workflow-compact.test.ts\` until green. You ma
     .step("after-compact", {
       type: "deterministic",
       dependsOn: ["after-run"],
-      command: `cd ${TRAJ_ROOT}/.trajectories-test/after && npx tsx ${TRAJ_ROOT}/src/cli/index.ts compact --workflow bench-after --markdown --all 2>&1 | tee -a run.log && find .trajectories -type d -name compacted -exec ls -la {} \\; 2>&1 || true`,
+      command: `cd ${TRAJ_ROOT}/.trajectories-test/after && npx tsx ${TRAJ_ROOT}/src/cli/index.ts compact --workflow bench-after --markdown --all 2>&1 | tee -a run.log && find .agentworkforce/trajectories -type d -name compacted -exec ls -la {} \\; 2>&1 || true`,
       captureOutput: true,
       failOnError: true,
     })
@@ -710,7 +710,7 @@ is the default, with API providers only used on explicit opt-in.
 - TrajectoryClient stamps workflowId from TRAJECTORIES_WORKFLOW_ID env
 - New SDK helper compactWorkflow() spawns trail compact --workflow <id>
 - trail compact --workflow <id> filter selects trajectories by run
-- Output: .trajectories/compacted/workflow-<id>.{json,md}
+- Output: .agentworkforce/trajectories/compacted/workflow-<id>.{json,md}
 - resolveProvider() now prefers the CLI provider in auto mode
 - SUPPORTED_CLIS expanded to claude, codex, gemini, opencode
 - buildCliArgs() extended with one-shot invocations for gemini + opencode

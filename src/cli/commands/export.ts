@@ -9,7 +9,10 @@ import type { Command } from "commander";
 import { exportToJSON } from "../../export/json.js";
 import { exportToMarkdown } from "../../export/markdown.js";
 import { exportToTimeline } from "../../export/timeline.js";
-import { FileStorage } from "../../storage/file.js";
+import {
+  FileStorage,
+  getDefaultTrajectoryDataDir,
+} from "../../storage/file.js";
 import { generateTrajectoryHtml } from "../../web/generator.js";
 
 export function registerExportCommand(program: Command): void {
@@ -72,7 +75,10 @@ export function registerExportCommand(program: Command): void {
         }
       } else if (options.open && options.format === "html") {
         // Write to temp location and open
-        const outputDir = join(process.cwd(), ".trajectories", "html");
+        const outputDir = join(
+          process.env.TRAJECTORIES_DATA_DIR ?? getDefaultTrajectoryDataDir(),
+          "html",
+        );
         await mkdir(outputDir, { recursive: true });
         const filePath = join(outputDir, `${trajectory.id}.html`);
         await writeFile(filePath, output, "utf-8");

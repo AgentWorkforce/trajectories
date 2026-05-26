@@ -276,7 +276,12 @@ describe("LLM compaction", () => {
       expect(result.success).toBe(true);
       expect(result.output).toContain("Compacted trajectory saved to:");
 
-      const compactedDir = join(tempDir, ".trajectories", "compacted");
+      const compactedDir = join(
+        tempDir,
+        ".agentworkforce",
+        "trajectories",
+        "compacted",
+      );
       const compactedFiles = await readdir(compactedDir);
       const jsonFile = compactedFiles.find((file) => file.endsWith(".json"));
       const markdownFile = compactedFiles.find((file) => file.endsWith(".md"));
@@ -345,14 +350,21 @@ describe("LLM compaction", () => {
       expect(result.output).toContain("Compacted trajectory saved to:");
       expect(result.output).toContain("Discarded source trajectories:");
 
-      const compactedDir = join(tempDir, ".trajectories", "compacted");
+      const compactedDir = join(
+        tempDir,
+        ".agentworkforce",
+        "trajectories",
+        "compacted",
+      );
       const compactedFiles = await readdir(compactedDir);
       expect(compactedFiles.some((file) => file.endsWith(".json"))).toBe(true);
       expect(compactedFiles.some((file) => file.endsWith(".md"))).toBe(true);
 
-      expect(existsSync(join(tempDir, ".trajectories", "index.json"))).toBe(
-        false,
-      );
+      expect(
+        existsSync(
+          join(tempDir, ".agentworkforce", "trajectories", "index.json"),
+        ),
+      ).toBe(false);
       expect(existsSync(sourcePath ?? "")).toBe(false);
       expect(existsSync(sourceMarkdownPath ?? "")).toBe(false);
     },
@@ -363,7 +375,7 @@ async function findTrajectoryJson(
   rootDir: string,
   id: string,
 ): Promise<string | undefined> {
-  const root = join(rootDir, ".trajectories");
+  const root = join(rootDir, ".agentworkforce", "trajectories");
   const files = (await readdir(root, { recursive: true })) as string[];
   const match = files.find(
     (file) =>

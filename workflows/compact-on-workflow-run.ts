@@ -16,7 +16,7 @@
  *   3. A deterministic step at the very end runs
  *      `trail compact --workflow <id> --markdown`. That filters to just this
  *      run's trajectories (via the `workflowId` field) and produces one tight
- *      .json + .md in `.trajectories/compacted/workflow-<id>.{json,md}`.
+ *      .json + .md in `.agentworkforce/trajectories/compacted/workflow-<id>.{json,md}`.
  *
  *   4. No API key is ever required — compaction auto-selects a local CLI
  *      provider (claude, codex, gemini, or opencode) in auto mode. If no LLM
@@ -108,7 +108,7 @@ Exit cleanly once step 5 returns successfully. Do not run any other commands.`,
       command: `cd ${TRAJ_ROOT} && node -e '
 const { readdirSync, readFileSync, existsSync } = require("node:fs");
 const path = require("node:path");
-const completed = ".trajectories/completed";
+const completed = ".agentworkforce/trajectories/completed";
 if (!existsSync(completed)) {
   console.error("NO_COMPLETED_DIR");
   process.exit(1);
@@ -161,7 +161,7 @@ for (const f of tagged) console.log("  " + f);
       command: `cd ${TRAJ_ROOT} && node -e '
 const { readdirSync, readFileSync, statSync, existsSync } = require("node:fs");
 const path = require("node:path");
-const dir = ".trajectories/compacted";
+const dir = ".agentworkforce/trajectories/compacted";
 if (!existsSync(dir)) { console.error("NO_COMPACTED_DIR"); process.exit(1); }
 const files = readdirSync(dir).filter((f) => f.startsWith("workflow-${WORKFLOW_ID}"));
 if (files.length === 0) { console.error("NO_COMPACTED_ARTIFACT"); process.exit(1); }
@@ -188,7 +188,7 @@ if (jsonFile) {
   console.log("Workflow status:", result.status);
   console.log("Workflow id:", WORKFLOW_ID);
   console.log(
-    `Compacted artifact: .trajectories/compacted/workflow-${WORKFLOW_ID}.{json,md}`,
+    `Compacted artifact: .agentworkforce/trajectories/compacted/workflow-${WORKFLOW_ID}.{json,md}`,
   );
 }
 

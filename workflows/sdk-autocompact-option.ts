@@ -6,7 +6,7 @@
  * when the trajectory has a workflowId. This removes the need for a
  * separate compact step in any relay workflow that uses the SDK — users
  * just call complete() and the compacted artifact appears at
- * .trajectories/compacted/workflow-<id>.{json,md}.
+ * .agentworkforce/trajectories/compacted/workflow-<id>.{json,md}.
  *
  * Validation strategy (80 -> 100):
  *   1. BEFORE: deterministic tsx probe creates a trajectory with
@@ -121,7 +121,7 @@ async function runWorkflow() {
       dependsOn: ["read-client"],
       command: `cd ${TRAJ_ROOT}/.trajectories-test/autocompact/before && TRAJECTORIES_WORKFLOW_ID=wf-before TRAJECTORIES_CLI=${TRAJ_ROOT}/dist/cli/index.js npx tsx ${TRAJ_ROOT}/scripts/autocompact-probe.mts 2>&1 && node -e '
 const { existsSync, readdirSync } = require("node:fs");
-const compactedDir = ".trajectories/compacted";
+const compactedDir = ".agentworkforce/trajectories/compacted";
 const files = existsSync(compactedDir) ? readdirSync(compactedDir) : [];
 const matches = files.filter((f) => f.includes("workflow-wf-before"));
 if (matches.length > 0) {
@@ -217,12 +217,12 @@ Add these four cases inside the existing \`describe("workflow compaction", ...)\
    - process.env.TRAJECTORIES_WORKFLOW_ID = "wf-auto-on"
    - const client = new TrajectoryClient({ autoCompact: { mechanical: true, markdown: true } })
    - await client.init(); start a session; call session.done("...", 0.9)
-   - Assert .trajectories/compacted/workflow-wf-auto-on.json exists and its sourceTrajectories contains the session id
+   - Assert .agentworkforce/trajectories/compacted/workflow-wf-auto-on.json exists and its sourceTrajectories contains the session id
 
 2. "autoCompact: true + no workflowId => complete() succeeds without compacting"
    - TRAJECTORIES_WORKFLOW_ID unset
    - Same client config
-   - Assert complete() returns normally AND .trajectories/compacted has no workflow-* files
+   - Assert complete() returns normally AND .agentworkforce/trajectories/compacted has no workflow-* files
 
 3. "autoCompact: false (default) + workflowId set => complete() does NOT compact (backwards compat)"
    - process.env.TRAJECTORIES_WORKFLOW_ID = "wf-default-off"
@@ -282,9 +282,9 @@ You may edit tests/sdk/workflow-compact.test.ts OR src/sdk/client.ts to fix real
       command: `cd ${TRAJ_ROOT}/.trajectories-test/autocompact/after && TRAJECTORIES_WORKFLOW_ID=wf-after PROBE_AUTOCOMPACT=true TRAJECTORIES_CLI=${TRAJ_ROOT}/dist/cli/index.js npx tsx ${TRAJ_ROOT}/scripts/autocompact-probe.mts 2>&1 && node -e '
 const { existsSync, readdirSync, readFileSync, statSync } = require("node:fs");
 const { join } = require("node:path");
-const compactedDir = ".trajectories/compacted";
+const compactedDir = ".agentworkforce/trajectories/compacted";
 if (!existsSync(compactedDir)) {
-  console.error("AFTER_FAILED: .trajectories/compacted not created");
+  console.error("AFTER_FAILED: .agentworkforce/trajectories/compacted not created");
   process.exit(1);
 }
 const files = readdirSync(compactedDir).filter((f) => f.includes("workflow-wf-after"));
@@ -317,8 +317,8 @@ if (!Array.isArray(data.sourceTrajectories) || data.sourceTrajectories.length < 
       dependsOn: ["after-probe", "before-probe"],
       command: `cd ${TRAJ_ROOT} && node -e '
 const { existsSync, readdirSync } = require("node:fs");
-const beforeDir = ".trajectories-test/autocompact/before/.trajectories/compacted";
-const afterDir = ".trajectories-test/autocompact/after/.trajectories/compacted";
+const beforeDir = ".trajectories-test/autocompact/before/.agentworkforce/trajectories/compacted";
+const afterDir = ".trajectories-test/autocompact/after/.agentworkforce/trajectories/compacted";
 const failures = [];
 if (existsSync(beforeDir)) {
   const beforeFiles = readdirSync(beforeDir).filter((f) => f.includes("workflow-wf-before"));
@@ -461,7 +461,7 @@ options object with mechanical/markdown overrides) and the trajectory
 has a workflowId stamped, session.complete() and session.done() will
 automatically shell out to trail compact --workflow <id> after saving
 the raw trajectory. The compacted artifact appears at
-.trajectories/compacted/workflow-<id>.{json,md}.
+.agentworkforce/trajectories/compacted/workflow-<id>.{json,md}.
 
 This removes the need for a separate compact step in any SDK consumer
 running under a relay workflow — just set TRAJECTORIES_WORKFLOW_ID in
@@ -492,7 +492,7 @@ complete() produces the tight artifact as a side effect.
 BEFORE/AFTER gate PASSED. The feature is a genuine behavior change, not a no-op:
 
 - **BEFORE**: \\\`new TrajectoryClient()\\\` + session.done() produces NO compacted file (baseline locked).
-- **AFTER**: \\\`new TrajectoryClient({ autoCompact: { mechanical: true } })\\\` + session.done() with TRAJECTORIES_WORKFLOW_ID set automatically produces \\\`.trajectories/compacted/workflow-<id>.{json,md}\\\`.
+- **AFTER**: \\\`new TrajectoryClient({ autoCompact: { mechanical: true } })\\\` + session.done() with TRAJECTORIES_WORKFLOW_ID set automatically produces \\\`.agentworkforce/trajectories/compacted/workflow-<id>.{json,md}\\\`.
 
 Ran via \\\`agent-relay run workflows/sdk-autocompact-option.ts\\\` with codex impl + claude tests + claude peer review + codex self-review.
 " 2>&1

@@ -1095,7 +1095,7 @@ project/
 ├── src/
 ├── .beads/
 │   └── issues.jsonl
-├── .trajectories/
+├── .agentworkforce/trajectories/
 │   ├── index.json              # Index of all trajectories
 │   ├── bd-123.json             # Full trajectory
 │   ├── bd-123.summary.md       # Human-readable summary
@@ -1129,7 +1129,7 @@ Trajectories support multiple storage backends:
 
 | Backend | Use Case | Notes |
 |---------|----------|-------|
-| **File system** | Default, git-friendly | `.trajectories/` in repo |
+| **File system** | Default, git-friendly | `.agentworkforce/trajectories/` in repo |
 | **SQLite** | Local indexing, search | Same DB as messages |
 | **PostgreSQL** | Multi-user, cloud | Shared team access |
 | **S3/GCS** | Archive, large teams | Cold storage for old trajectories |
@@ -1137,7 +1137,7 @@ Trajectories support multiple storage backends:
 ### File System (Default)
 
 ```
-.trajectories/
+.agentworkforce/trajectories/
 ├── index.json                    # Quick lookup index
 ├── active/                       # In-progress trajectories
 │   └── traj_abc123.json
@@ -1480,7 +1480,7 @@ git notes add -m "$(agent-relay trajectory export abc123 --format summary)" abc1
 
 ### Phase 1: Foundation
 - Define trajectory JSON schema (v1)
-- File-based storage (`.trajectories/` directory)
+- File-based storage (`.agentworkforce/trajectories/` directory)
 - CLI: `trajectory new`, `trajectory status`, `trajectory complete`
 - Manual capture via `[[TRAJECTORY:*]]` blocks
 
@@ -1511,7 +1511,7 @@ git notes add -m "$(agent-relay trajectory export abc123 --format summary)" abc1
 
 ## Open Questions
 
-1. **Storage location:** `.trajectories/` in repo vs external database?
+1. **Storage location:** `.agentworkforce/trajectories/` in repo vs external database?
    - In-repo: Versioned with code, but bloats repo
    - External: Scalable, but requires infra
 

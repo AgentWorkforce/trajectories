@@ -35,7 +35,12 @@ describe("FileStorage concurrent save", () => {
     );
     await Promise.all(trajectories.map((t) => storage.save(t)));
 
-    const activeDir = join(tempDir, ".trajectories", "active");
+    const activeDir = join(
+      tempDir,
+      ".agentworkforce",
+      "trajectories",
+      "active",
+    );
     const activeEntries = await readdir(activeDir);
     expect(activeEntries).toHaveLength(count);
     for (const trajectory of trajectories) {
@@ -43,9 +48,11 @@ describe("FileStorage concurrent save", () => {
         existsSync(join(activeDir, trajectory.id, "trajectory.json")),
       ).toBe(true);
     }
-    expect(existsSync(join(tempDir, ".trajectories", "index.json"))).toBe(
-      false,
-    );
+    expect(
+      existsSync(
+        join(tempDir, ".agentworkforce", "trajectories", "index.json"),
+      ),
+    ).toBe(false);
 
     const summaries = await storage.list({});
     expect(summaries.map((summary) => summary.id).sort()).toEqual(
@@ -60,7 +67,12 @@ describe("FileStorage concurrent save", () => {
     const storage = new FileStorage(tempDir);
     await storage.initialize();
 
-    const indexPath = join(tempDir, ".trajectories", "index.json");
+    const indexPath = join(
+      tempDir,
+      ".agentworkforce",
+      "trajectories",
+      "index.json",
+    );
     await writeFile(indexPath, "{not valid json at all", "utf-8");
 
     await storage.initialize();

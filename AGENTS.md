@@ -84,7 +84,7 @@ trail complete --summary "Added JWT auth with refresh tokens" --confidence 0.85
 
 After completing work, compact the finished trajectory or merged PR into a
 durable summary. When the compacted summary is sufficient, discard the raw
-source trajectories so `.trajectories/index.json` and list output stay focused:
+source trajectories so `.agentworkforce/trajectories/index.json` and list output stay focused:
 
 ```bash
 trail compact --discard-sources

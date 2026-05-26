@@ -14,6 +14,23 @@ import { TrajectoryClient } from "agent-trajectories/sdk";
 // ---------------------------------------------------------------------------
 
 const DEFAULT_DATA_DIR = "../..";
+const DEFAULT_TRAJECTORY_DATA_DIR = join(".agentworkforce", "trajectories");
+
+function isTrajectoryDataDir(path: string): boolean {
+  const normalized = path.replace(/[\\/]+$/, "");
+  const hasDataSubdirs =
+    existsSync(join(path, "active")) && existsSync(join(path, "completed"));
+
+  return normalized.endsWith(DEFAULT_TRAJECTORY_DATA_DIR) || hasDataSubdirs;
+}
+
+function resolveTrajectoryDataDir(path: string): string {
+  if (isTrajectoryDataDir(path)) {
+    return path;
+  }
+
+  return join(path, DEFAULT_TRAJECTORY_DATA_DIR);
+}
 
 // ---------------------------------------------------------------------------
 // TrajectoryService
@@ -54,7 +71,7 @@ export class TrajectoryService {
   async switchDataDir(newDataDir: string): Promise<void> {
     this.dataDir = newDataDir;
     // Set env var so FileStorageProvider picks it up
-    process.env.TRAJECTORIES_DATA_DIR = join(newDataDir, ".trajectories");
+    process.env.TRAJECTORIES_DATA_DIR = resolveTrajectoryDataDir(newDataDir);
     this.client = new TrajectoryClient({
       dataDir: newDataDir,
       autoSave: false,
@@ -71,9 +88,9 @@ export class TrajectoryService {
     const indexed = await this.client.list();
     const indexedIds = new Set(indexed.map((t) => t.id));
 
-    // Resolve the .trajectories directory
+    // Resolve the trajectory data directory
     const dataDir = process.env.TRAJECTORIES_DATA_DIR;
-    const trajDir = dataDir ?? join(this.dataDir, ".trajectories");
+    const trajDir = dataDir ?? join(this.dataDir, DEFAULT_TRAJECTORY_DATA_DIR);
     const completedDir = join(trajDir, "completed");
     const activeDir = join(trajDir, "active");
     const indexPath = join(trajDir, "index.json");
@@ -312,7 +329,7 @@ export class TrajectoryService {
 
     // Fallback: read the raw JSON file directly (bypasses strict validation)
     const dataDir = process.env.TRAJECTORIES_DATA_DIR;
-    const trajDir = dataDir ?? join(this.dataDir, ".trajectories");
+    const trajDir = dataDir ?? join(this.dataDir, DEFAULT_TRAJECTORY_DATA_DIR);
     const indexPath = join(trajDir, "index.json");
 
     try {

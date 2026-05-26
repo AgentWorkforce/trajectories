@@ -65,7 +65,7 @@ struct WelcomeView: View {
                 .frame(maxWidth: 400)
             }
 
-            Text("Point to a repository with .trajectories/ data to get started")
+            Text("Point to a repository with .agentworkforce/trajectories data to get started")
                 .font(Typography.caption)
                 .foregroundColor(Theme.textTertiary)
                 .padding(.top, Theme.spacingMD)
