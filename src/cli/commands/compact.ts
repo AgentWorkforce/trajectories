@@ -32,7 +32,11 @@ import {
 import { serializeForLLM } from "../../compact/serializer.js";
 import { generateRandomId } from "../../core/id.js";
 import type { Decision, Trajectory } from "../../core/types.js";
-import { FileStorage, getSearchPaths } from "../../storage/file.js";
+import {
+  FileStorage,
+  getDefaultTrajectoryDataDir,
+  getSearchPaths,
+} from "../../storage/file.js";
 
 /**
  * A group of related decisions
@@ -840,7 +844,8 @@ function getDefaultOutputPath(
   compacted: CompactedTrajectory,
   workflowId?: string,
 ): string {
-  const trajDir = process.env.TRAJECTORIES_DATA_DIR || ".trajectories";
+  const trajDir =
+    process.env.TRAJECTORIES_DATA_DIR || getDefaultTrajectoryDataDir();
   const compactedDir = join(trajDir, "compacted");
 
   if (!existsSync(compactedDir)) {

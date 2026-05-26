@@ -22,7 +22,7 @@ enum AppConfiguration {
 
     /// Default directories to scan for trajectory data.
     static let defaultTrajectoryPaths: [String] = [
-        "~/.trajectories",
+        "~/.agentworkforce/trajectories",
         "./trajectories",
         "./trail-data"
     ]

@@ -1,7 +1,7 @@
 /**
  * File system storage adapter for trajectories
  *
- * Stores each trajectory in its own directory under .trajectories.
+ * Stores each trajectory in its own directory under .agentworkforce/trajectories.
  * Active trajectories go in active/<id>/, completed in completed/YYYY-MM/<id>/.
  */
 
@@ -36,6 +36,15 @@ const TRAJECTORY_FILE = "trajectory.json";
 const SUMMARY_FILE = "summary.md";
 const COMPACTION_FILE = "compaction.json";
 const LEGACY_COMPACTION_SUFFIX = ".compaction.json";
+export const DEFAULT_TRAJECTORY_DATA_DIR = join(
+  ".agentworkforce",
+  "trajectories",
+);
+export const LEGACY_TRAJECTORY_DATA_DIR = ".trajectories";
+
+export function getDefaultTrajectoryDataDir(baseDir = process.cwd()): string {
+  return join(baseDir, DEFAULT_TRAJECTORY_DATA_DIR);
+}
 
 /**
  * Expand ~ to home directory in a path
@@ -50,7 +59,7 @@ function expandPath(path: string): string {
 /**
  * Get trajectory search paths from environment variable
  * TRAJECTORIES_SEARCH_PATHS is colon-separated (like PATH)
- * Falls back to current directory's .trajectories if not set
+ * Falls back to current directory's .agentworkforce/trajectories if not set
  */
 export function getSearchPaths(): string[] {
   const searchPathsEnv = process.env.TRAJECTORIES_SEARCH_PATHS;
@@ -62,13 +71,13 @@ export function getSearchPaths(): string[] {
       .map(expandPath);
   }
 
-  // Default: check for TRAJECTORIES_DATA_DIR, then fall back to ./.trajectories
+  // Default: check for TRAJECTORIES_DATA_DIR, then fall back to ./.agentworkforce/trajectories
   const dataDir = process.env.TRAJECTORIES_DATA_DIR;
   if (dataDir) {
     return [expandPath(dataDir)];
   }
 
-  return [join(process.cwd(), ".trajectories")];
+  return [getDefaultTrajectoryDataDir()];
 }
 
 interface CompactionMarker {
@@ -174,17 +183,19 @@ export class FileStorage implements StorageAdapter {
   private activeDir: string;
   private completedDir: string;
   private lastReconcileSummary?: ReconcileSummary;
+  private shouldMigrateLegacyDefault = false;
 
   constructor(baseDir?: string) {
     this.baseDir = baseDir ?? process.cwd();
 
     // Check for TRAJECTORIES_DATA_DIR env var first
-    // When set, use the path directly (no .trajectories suffix)
+    // When set, use the path directly (no default suffix)
     const dataDir = process.env.TRAJECTORIES_DATA_DIR;
     if (dataDir) {
       this.trajectoriesDir = expandPath(dataDir);
     } else {
-      this.trajectoriesDir = join(this.baseDir, ".trajectories");
+      this.trajectoriesDir = getDefaultTrajectoryDataDir(this.baseDir);
+      this.shouldMigrateLegacyDefault = true;
     }
 
     this.activeDir = join(this.trajectoriesDir, "active");
@@ -195,6 +206,7 @@ export class FileStorage implements StorageAdapter {
    * Initialize storage directories
    */
   async initialize(): Promise<void> {
+    await this.migrateLegacyDefaultDir();
     await mkdir(this.trajectoriesDir, { recursive: true });
     await mkdir(this.activeDir, { recursive: true });
     await mkdir(this.completedDir, { recursive: true });
@@ -204,6 +216,20 @@ export class FileStorage implements StorageAdapter {
 
     // Scan on-disk trajectories so status/doctor can surface invalid files.
     await this.reconcileIndex();
+  }
+
+  private async migrateLegacyDefaultDir(): Promise<void> {
+    if (!this.shouldMigrateLegacyDefault) {
+      return;
+    }
+
+    const legacyDir = join(this.baseDir, LEGACY_TRAJECTORY_DATA_DIR);
+    if (!existsSync(legacyDir) || existsSync(this.trajectoriesDir)) {
+      return;
+    }
+
+    await mkdir(dirname(this.trajectoriesDir), { recursive: true });
+    await rename(legacyDir, this.trajectoriesDir);
   }
 
   /**
@@ -288,7 +314,7 @@ export class FileStorage implements StorageAdapter {
   }
 
   /**
-   * Move trajectory files that fail to load into `.trajectories/invalid/`
+   * Move trajectory files that fail to load into `.agentworkforce/trajectories/invalid/`
    * so reconcile no longer scans them. Only quarantines parse and schema
    * failures — transient io_error failures are left in place because the
    * file may load fine on the next attempt.

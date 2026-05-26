@@ -9,7 +9,7 @@ A lightweight local web interface for humans to browse and read trajectories in 
 1. **Zero external dependencies** - No cloud services, runs entirely local
 2. **Instant startup** - `traj view` opens browser immediately
 3. **No build step** - Works without webpack/vite in dev
-4. **Offline-first** - All data from local `.trajectories/`
+4. **Offline-first** - All data from local `.agentworkforce/trajectories/`
 
 ## Architecture Options
 
@@ -207,7 +207,7 @@ workspace.query({
 
 ## Questions to Resolve
 
-1. **Workspace location**: `.agent-workspace/` vs inside `.trajectories/workspace/`?
+1. **Workspace location**: `.agent-workspace/` vs inside `.agentworkforce/trajectories/workspace/`?
 2. **Knowledge format**: Markdown files vs JSON?
 3. **Pattern templates**: How to make patterns executable/reusable?
 4. **Multi-repo**: How does workspace work across repos?

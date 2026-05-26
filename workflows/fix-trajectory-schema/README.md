@@ -83,7 +83,7 @@ paying for another investigation pass.
 ## E2E gate (the real completion signal)
 
 Phase 2 wave 4 is a deterministic shell step that:
-1. Copies the actual `workforce/.trajectories/` to `/tmp/traj-schema-e2e/`
+1. Copies the actual `workforce/.agentworkforce/trajectories/` to `/tmp/traj-schema-e2e/`
 2. Runs the worktree-built CLI: `node <worktree>/dist/cli/index.js compact --all --dry-run`
 3. Gates on 3 hard signals:
    - No "No trajectories found" string

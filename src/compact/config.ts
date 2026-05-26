@@ -1,6 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { getSearchPaths } from "../storage/file.js";
+import {
+  getDefaultTrajectoryDataDir,
+  getSearchPaths,
+} from "../storage/file.js";
 
 export interface CompactionConfig {
   provider: string;
@@ -88,7 +91,7 @@ function loadFileConfig(): Partial<CompactionConfig> {
 
 function getPrimaryConfigDir(): string {
   const searchPaths = getSearchPaths();
-  return searchPaths[0] ?? join(process.cwd(), ".trajectories");
+  return searchPaths[0] ?? getDefaultTrajectoryDataDir();
 }
 
 function readStringEnv(name: string): string | undefined {

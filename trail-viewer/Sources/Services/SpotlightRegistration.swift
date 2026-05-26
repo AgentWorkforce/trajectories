@@ -186,13 +186,21 @@ final class SpotlightRegistration {
     }
 
     private static func resolveIndexRoot(from directory: URL) -> URL {
-        if directory.lastPathComponent == ".trajectories" {
+        if directory.lastPathComponent == "trajectories" &&
+            directory.deletingLastPathComponent().lastPathComponent == ".agentworkforce" {
             return directory
         }
 
-        let nested = directory.appendingPathComponent(".trajectories", isDirectory: true)
+        let nested = directory
+            .appendingPathComponent(".agentworkforce", isDirectory: true)
+            .appendingPathComponent("trajectories", isDirectory: true)
         if FileManager.default.fileExists(atPath: nested.path) {
             return nested
+        }
+
+        let legacyNested = directory.appendingPathComponent(".trajectories", isDirectory: true)
+        if FileManager.default.fileExists(atPath: legacyNested.path) {
+            return legacyNested
         }
 
         return directory

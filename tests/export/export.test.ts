@@ -384,11 +384,13 @@ describe("PR Summary Export", () => {
 
       // Act
       const summary = exportToPRSummary(trajectory, {
-        trajectoryPath: ".trajectories/traj_abc.md",
+        trajectoryPath: ".agentworkforce/trajectories/traj_abc.md",
       });
 
       // Assert
-      expect(summary).toContain("[Full trajectory](.trajectories/traj_abc.md)");
+      expect(summary).toContain(
+        "[Full trajectory](.agentworkforce/trajectories/traj_abc.md)",
+      );
     });
   });
 });

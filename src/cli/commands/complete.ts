@@ -13,7 +13,10 @@ import {
 } from "../../core/trailers.js";
 import { completeTrajectory } from "../../core/trajectory.js";
 import type { TraceRecord, Trajectory } from "../../core/types.js";
-import { FileStorage } from "../../storage/file.js";
+import {
+  FileStorage,
+  getDefaultTrajectoryDataDir,
+} from "../../storage/file.js";
 
 /**
  * Save trace file alongside the trajectory
@@ -24,7 +27,7 @@ async function saveTraceFile(
 ): Promise<void> {
   // Determine trajectory file location based on status
   const dataDir = process.env.TRAJECTORIES_DATA_DIR;
-  const baseDir = dataDir ? dataDir : join(process.cwd(), ".trajectories");
+  const baseDir = dataDir ? dataDir : getDefaultTrajectoryDataDir();
   const completedDir = join(baseDir, "completed");
 
   const date = new Date(trajectory.completedAt ?? trajectory.startedAt);

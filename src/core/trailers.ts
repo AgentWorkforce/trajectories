@@ -186,7 +186,7 @@ if [ "$COMMIT_SOURCE" = "merge" ] || [ "$COMMIT_SOURCE" = "squash" ] || [ "$COMM
 fi
 
 # Find the trajectories data directory
-TRAJ_DIR="\${TRAJECTORIES_DATA_DIR:-\$(git rev-parse --show-toplevel)/.trajectories}"
+TRAJ_DIR="\${TRAJECTORIES_DATA_DIR:-\$(git rev-parse --show-toplevel)/.agentworkforce/trajectories}"
 ACTIVE_DIR="$TRAJ_DIR/active"
 
 # Check if there's an active trajectory

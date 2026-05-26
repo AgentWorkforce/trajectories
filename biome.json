@@ -30,6 +30,7 @@
       ".openskills",
       ".claude",
       ".agent-relay",
+      ".agentworkforce",
       ".trajectories"
     ]
   }

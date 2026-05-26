@@ -122,15 +122,28 @@ final class LocalServerManager {
         var environment = ProcessInfo.processInfo.environment
         environment["PORT"] = String(port)
         if let trajectoryPath {
-            // The SDK's FileStorageProvider uses TRAJECTORIES_DATA_DIR directly
-            // as the .trajectories directory. If the user picked a repo root,
-            // append .trajectories so the SDK finds the data.
-            let trajDir = (trajectoryPath as NSString).appendingPathComponent(".trajectories")
-            if FileManager.default.fileExists(atPath: trajDir) {
-                environment["TRAJECTORIES_DATA_DIR"] = trajDir
+            // The SDK uses TRAJECTORIES_DATA_DIR directly as the data directory.
+            // If the user picked a repo root, append the default data path.
+            let selected = URL(fileURLWithPath: trajectoryPath)
+            let trajDirURL = selected
+                .appendingPathComponent(".agentworkforce", isDirectory: true)
+                .appendingPathComponent("trajectories", isDirectory: true)
+            let isDefaultDataDir = selected.lastPathComponent == "trajectories" &&
+                selected.deletingLastPathComponent().lastPathComponent == ".agentworkforce"
+            let hasTrajectoryChildren = FileManager.default.fileExists(
+                atPath: selected.appendingPathComponent("active", isDirectory: true).path
+            ) || FileManager.default.fileExists(
+                atPath: selected.appendingPathComponent("completed", isDirectory: true).path
+            ) || FileManager.default.fileExists(
+                atPath: selected.appendingPathComponent("index.json").path
+            )
+            let resolvedTrajectoryPath: String
+            if isDefaultDataDir || hasTrajectoryChildren {
+                resolvedTrajectoryPath = trajectoryPath
             } else {
-                environment["TRAJECTORIES_DATA_DIR"] = trajectoryPath
+                resolvedTrajectoryPath = trajDirURL.path
             }
+            environment["TRAJECTORIES_DATA_DIR"] = resolvedTrajectoryPath
         }
         process.environment = environment
 

@@ -223,7 +223,7 @@ export async function compactWorkflow(
 export interface TrajectoryClientOptions {
   /** Storage adapter to use. Defaults to FileStorage. */
   storage?: StorageAdapter;
-  /** Base directory for file storage. Defaults to .trajectories */
+  /** Base directory for default file storage. Stores under .agentworkforce/trajectories. */
   dataDir?: string;
   /** Default agent name to use when not specified */
   defaultAgent?: string;

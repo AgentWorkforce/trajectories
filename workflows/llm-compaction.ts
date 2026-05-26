@@ -263,7 +263,7 @@ c) If LLM available:
    3. provider.complete(messages) → llmOutput
    4. parseCompactionResponse(llmOutput) → llmCompacted
    5. Merge with mechanical data (files, commits, agents)
-   6. Save JSON to .trajectories/compacted/
+   6. Save JSON to .agentworkforce/trajectories/compacted/
    7. Save .md alongside if --markdown
    8. Print summary
 
@@ -272,7 +272,7 @@ e) Show cost estimate: "Estimated: ~{tokens} input tokens, ~{output} output toke
 
 Also create:
 - ${TRAJ_ROOT}/src/compact/config.ts — Configuration:
-  - getCompactionConfig(): reads from env or .trajectories/config.json
+  - getCompactionConfig(): reads from env or .agentworkforce/trajectories/config.json
   - Config: { provider, model, maxInputTokens, maxOutputTokens, temperature }
   - Defaults: provider=auto, maxInput=30000, maxOutput=4000, temperature=0.3
 
@@ -312,7 +312,7 @@ Verify:
 5. Prompt is specific enough to get useful output, not generic summaries
 6. Markdown output is clean and readable
 7. Dry-run shows prompt + cost estimate without calling LLM
-8. Config can be set via env vars OR .trajectories/config.json
+8. Config can be set via env vars OR .agentworkforce/trajectories/config.json
 9. Existing mechanical compaction still works with --mechanical flag
 10. Tests cover serializer, parser, markdown, and fallback
 
@@ -340,7 +340,7 @@ New compact/ module:
   - prompts.ts: system + user prompts for compaction
   - parser.ts: parse LLM JSON output with fallbacks
   - markdown.ts: generate readable .md summaries
-  - config.ts: env vars or .trajectories/config.json
+  - config.ts: env vars or .agentworkforce/trajectories/config.json
 
 CLI updates:
   - trail compact now uses LLM by default (if API key present)

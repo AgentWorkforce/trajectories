@@ -301,8 +301,8 @@ Trajectory files should be created with restrictive permissions:
 
 Recommend users add to `.gitignore`:
 ```
-.trajectories/active/    # Don't commit in-progress work
-.trajectories/**/*.env   # Any env files
+.agentworkforce/trajectories/active/    # Don't commit in-progress work
+.agentworkforce/trajectories/**/*.env   # Any env files
 ```
 
 ---
@@ -334,7 +334,7 @@ Warn users if trajectory exceeds reasonable size:
 ## Directory Structure
 
 ```
-.trajectories/
+.agentworkforce/trajectories/
 ├── active/                 # In-progress trajectories
 │   └── traj_abc123/
 │       └── trajectory.json

@@ -19,7 +19,7 @@ Each AI coding tool maintains its own isolated context:
 Trajectories and the workspace provide tool-agnostic project memory:
 
 ```
-.trajectories/           # What happened (work history)
+.agentworkforce/trajectories/           # What happened (work history)
 ├── active/              # Current work
 └── completed/           # Past work with full reasoning
 

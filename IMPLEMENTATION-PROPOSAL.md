@@ -81,8 +81,8 @@ What does using agent-trajectories look like day-to-day?
   │  └───────────────────────────────────────────────────────────────┘    │
   │                                                                       │
   │  ✓ Trajectory completed                                               │
-  │  ✓ Exported to .trajectories/traj_a1b2c3.json                        │
-  │  ✓ Summary written to .trajectories/traj_a1b2c3.md                   │
+  │  ✓ Exported to .agentworkforce/trajectories/traj_a1b2c3.json                        │
+  │  ✓ Summary written to .agentworkforce/trajectories/traj_a1b2c3.md                   │
   └──────────────────────────────────────────────────────────────────────┘
          │
          ▼
@@ -618,7 +618,7 @@ agent-trajectories/
 ### Option A: File System Only
 
 ```
-.trajectories/
+.agentworkforce/trajectories/
 ├── active/
 │   └── traj_abc123/
 │       └── trajectory.json
@@ -687,7 +687,7 @@ CREATE VIRTUAL TABLE trajectories_fts USING fts5(
 ### Option C: SQLite + Files (Hybrid)
 
 ```
-.trajectories/
+.agentworkforce/trajectories/
 ├── trajectories.db           # SQLite index + search
 ├── data/
 │   ├── traj_abc123.json      # Full trajectory data
@@ -1305,7 +1305,7 @@ This is the recommended path—a progressive architecture that works for a solo 
 │                                                                          │
 │  SOLO DEV (Day 1)                                                        │
 │  ├── npm install agent-trajectories                                      │
-│  ├── File storage (.trajectories/ in repo)                               │
+│  ├── File storage (.agentworkforce/trajectories/ in repo)                               │
 │  ├── CLI: start, status, complete, export                                │
 │  └── Zero config, works immediately                                      │
 │                                                                          │

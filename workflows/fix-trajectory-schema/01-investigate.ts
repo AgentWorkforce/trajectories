@@ -59,29 +59,29 @@ async function main() {
       command: `
 set -e
 echo "=== FILE LIST ==="
-ls -1 ${WORKFORCE_ROOT}/.trajectories/completed/*.json 2>/dev/null || true
-find ${WORKFORCE_ROOT}/.trajectories/completed -mindepth 2 -name "*.json" 2>/dev/null || true
+ls -1 ${WORKFORCE_ROOT}/.agentworkforce/trajectories/completed/*.json 2>/dev/null || true
+find ${WORKFORCE_ROOT}/.agentworkforce/trajectories/completed -mindepth 2 -name "*.json" 2>/dev/null || true
 echo ""
 echo "=== COUNT ==="
-find ${WORKFORCE_ROOT}/.trajectories/completed -name "*.json" -type f | wc -l
+find ${WORKFORCE_ROOT}/.agentworkforce/trajectories/completed -name "*.json" -type f | wc -l
 echo ""
 echo "=== INDEX.JSON ==="
-cat ${WORKFORCE_ROOT}/.trajectories/index.json 2>/dev/null || echo "(missing)"
+cat ${WORKFORCE_ROOT}/.agentworkforce/trajectories/index.json 2>/dev/null || echo "(missing)"
 echo ""
 echo "=== UNIQUE TRAJECTORY IDS ==="
-find ${WORKFORCE_ROOT}/.trajectories -name "traj_*.json" -type f -exec basename {} .json \\; | sort -u
+find ${WORKFORCE_ROOT}/.agentworkforce/trajectories -name "traj_*.json" -type f -exec basename {} .json \\; | sort -u
 echo ""
 echo "=== UNIQUE AGENT ROLES ==="
-find ${WORKFORCE_ROOT}/.trajectories/completed -name "*.json" -type f -exec grep -h '"role"' {} \\; | sort -u
+find ${WORKFORCE_ROOT}/.agentworkforce/trajectories/completed -name "*.json" -type f -exec grep -h '"role"' {} \\; | sort -u
 echo ""
 echo "=== UNIQUE SOURCE.SYSTEM VALUES ==="
-find ${WORKFORCE_ROOT}/.trajectories/completed -name "*.json" -type f -exec grep -hA1 '"source"' {} \\; | grep '"system"' | sort -u
+find ${WORKFORCE_ROOT}/.agentworkforce/trajectories/completed -name "*.json" -type f -exec grep -hA1 '"source"' {} \\; | grep '"system"' | sort -u
 echo ""
 echo "=== STATUS VALUES ==="
-find ${WORKFORCE_ROOT}/.trajectories/completed -name "*.json" -type f -exec grep -h '"status"' {} \\; | sort -u | head -20
+find ${WORKFORCE_ROOT}/.agentworkforce/trajectories/completed -name "*.json" -type f -exec grep -h '"status"' {} \\; | sort -u | head -20
 echo ""
 echo "=== SAMPLE FIRST FILE (first 60 lines) ==="
-find ${WORKFORCE_ROOT}/.trajectories/completed -name "*.json" -type f | head -1 | xargs head -60
+find ${WORKFORCE_ROOT}/.agentworkforce/trajectories/completed -name "*.json" -type f | head -1 | xargs head -60
 `.trim(),
       captureOutput: true,
       failOnError: false,
@@ -123,7 +123,7 @@ Observed data from disk:
 {{steps.dump-workforce-data.output}}
 
 Your job:
-1. Search ${WORKFORCE_ROOT}/packages for any code that writes to .trajectories/
+1. Search ${WORKFORCE_ROOT}/packages for any code that writes to .agentworkforce/trajectories/
    or imports from 'agent-trajectories'. Use grep/rg.
 2. Search ${WORKFORCE_ROOT}/node_modules/agent-trajectories/dist for the code
    paths that emit files with role values like "workflow-runner", "specialist",
@@ -175,7 +175,7 @@ For each constraint, report:
 - Risk if relaxed: what guarantees would be lost
 - Observed real values that violate the constraint (cross-reference with
   any values you can see from the workforce audit — the data is at
-  ${WORKFORCE_ROOT}/.trajectories/completed)
+  ${WORKFORCE_ROOT}/.agentworkforce/trajectories/completed)
 
 Also answer:
 - Is validateTrajectory called on save() or only on read()? (Look at

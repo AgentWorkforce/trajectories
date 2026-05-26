@@ -29,7 +29,7 @@ const FIXTURE_ROOT = join(
 );
 
 async function seedFixtureInto(tempDir: string): Promise<void> {
-  const trajRoot = join(tempDir, ".trajectories");
+  const trajRoot = join(tempDir, ".agentworkforce", "trajectories");
   await mkdir(join(trajRoot, "active"), { recursive: true });
   await mkdir(join(trajRoot, "completed"), { recursive: true });
   await cp(join(FIXTURE_ROOT, "completed"), join(trajRoot, "completed"), {
@@ -107,9 +107,11 @@ describe("FileStorage reconcile — real workforce fixtures", () => {
     const storage = new FileStorage(tempDir);
     await storage.initialize();
 
-    expect(existsSync(join(tempDir, ".trajectories", "index.json"))).toBe(
-      false,
-    );
+    expect(
+      existsSync(
+        join(tempDir, ".agentworkforce", "trajectories", "index.json"),
+      ),
+    ).toBe(false);
     const summaries = await storage.list({ status: "completed" });
     expect(summaries.map((summary) => summary.id).sort()).toEqual([
       "traj_1775734701264_ba65c69b",
@@ -138,7 +140,7 @@ describe("FileStorage reconcile — real workforce fixtures", () => {
     const { FileStorage } = await import("../../src/storage/file.js");
     const { writeFile } = await import("node:fs/promises");
 
-    const trajRoot = join(tempDir, ".trajectories");
+    const trajRoot = join(tempDir, ".agentworkforce", "trajectories");
     await mkdir(join(trajRoot, "completed"), { recursive: true });
     await writeFile(
       join(trajRoot, "completed", "traj_broken0000_deadbeef.json"),
@@ -159,7 +161,7 @@ describe("FileStorage reconcile — real workforce fixtures", () => {
     const { FileStorage } = await import("../../src/storage/file.js");
     const { writeFile } = await import("node:fs/promises");
 
-    const trajRoot = join(tempDir, ".trajectories");
+    const trajRoot = join(tempDir, ".agentworkforce", "trajectories");
     await mkdir(join(trajRoot, "completed"), { recursive: true });
     await writeFile(
       join(trajRoot, "completed", "traj_nothing0000_0000.json"),
@@ -183,7 +185,7 @@ describe("FileStorage reconcile — real workforce fixtures", () => {
     const { FileStorage } = await import("../../src/storage/file.js");
     const { writeFile, readdir } = await import("node:fs/promises");
 
-    const trajRoot = join(tempDir, ".trajectories");
+    const trajRoot = join(tempDir, ".agentworkforce", "trajectories");
     await mkdir(join(trajRoot, "active"), { recursive: true });
     await mkdir(join(trajRoot, "completed", "2026-04"), { recursive: true });
 

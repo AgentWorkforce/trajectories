@@ -101,7 +101,7 @@ process.exit(result.status ?? 1);
 }
 
 function findTrajectoryJson(rootDir: string, id: string): string | undefined {
-  const root = join(rootDir, ".trajectories");
+  const root = join(rootDir, ".agentworkforce", "trajectories");
   const files = readdirSync(root, { recursive: true }) as string[];
   const match = files.find(
     (file) =>
@@ -174,7 +174,8 @@ describe("workflow compaction", () => {
 
     const activePath = join(
       tempDir,
-      ".trajectories",
+      ".agentworkforce",
+      "trajectories",
       "active",
       trajectoryId,
       "trajectory.json",
@@ -205,7 +206,8 @@ describe("workflow compaction", () => {
     const trajectoryId = startResult.stdout.trim();
     const activePath = join(
       tempDir,
-      ".trajectories",
+      ".agentworkforce",
+      "trajectories",
       "active",
       trajectoryId,
       "trajectory.json",
@@ -268,7 +270,10 @@ describe("workflow compaction", () => {
 
     const compactedPath = join(
       tempDir,
-      ".trajectories/compacted/workflow-wf-a.json",
+      ".agentworkforce",
+      "trajectories",
+      "compacted",
+      "workflow-wf-a.json",
     );
     expect(existsSync(compactedPath)).toBe(true);
 
@@ -334,9 +339,11 @@ describe("workflow compaction", () => {
     expect(compacted.sourceTrajectories).toHaveLength(1);
     expect(compacted.sourceTrajectories).toContain(sessionId);
 
-    expect(existsSync(join(tempDir, ".trajectories", "index.json"))).toBe(
-      false,
-    );
+    expect(
+      existsSync(
+        join(tempDir, ".agentworkforce", "trajectories", "index.json"),
+      ),
+    ).toBe(false);
     expect(existsSync(sourcePath ?? "")).toBe(false);
   }, 60_000);
 
@@ -345,7 +352,7 @@ describe("workflow compaction", () => {
     // the canonical TrajectoryEventType values. The schema must be lenient
     // enough to still load the file so `trail compact` emits a compacted
     // summary that includes it.
-    const dataDir = join(tempDir, ".trajectories");
+    const dataDir = join(tempDir, ".agentworkforce", "trajectories");
     const monthDir = join(dataDir, "completed", "2026-04");
     mkdirSync(monthDir, { recursive: true });
 
@@ -429,7 +436,10 @@ describe("workflow compaction", () => {
 
     const compactedPath = join(
       tempDir,
-      ".trajectories/compacted/workflow-wf-lenient.json",
+      ".agentworkforce",
+      "trajectories",
+      "compacted",
+      "workflow-wf-lenient.json",
     );
     expect(existsSync(compactedPath)).toBe(true);
 
@@ -494,7 +504,10 @@ describe("workflow compaction", () => {
 
       const compactedPath = join(
         workspaceDir,
-        ".trajectories/compacted/workflow-wf-auto-on.json",
+        ".agentworkforce",
+        "trajectories",
+        "compacted",
+        "workflow-wf-auto-on.json",
       );
       expect(existsSync(compactedPath)).toBe(true);
 
@@ -522,7 +535,12 @@ describe("workflow compaction", () => {
 
       expect(result.status).toBe("completed");
 
-      const compactedDir = join(tempDir, ".trajectories", "compacted");
+      const compactedDir = join(
+        tempDir,
+        ".agentworkforce",
+        "trajectories",
+        "compacted",
+      );
       if (existsSync(compactedDir)) {
         const files = readdirSync(compactedDir);
         const workflowFiles = files.filter((f) => f.startsWith("workflow-"));
@@ -544,7 +562,10 @@ describe("workflow compaction", () => {
 
       const compactedPath = join(
         tempDir,
-        ".trajectories/compacted/workflow-wf-default-off.json",
+        ".agentworkforce",
+        "trajectories",
+        "compacted",
+        "workflow-wf-default-off.json",
       );
       expect(existsSync(compactedPath)).toBe(false);
     }, 60_000);
@@ -568,7 +589,12 @@ describe("workflow compaction", () => {
       expect(result.status).toBe("completed");
       expect(result.id).toBe(sessionId);
 
-      const completedDir = join(tempDir, ".trajectories", "completed");
+      const completedDir = join(
+        tempDir,
+        ".agentworkforce",
+        "trajectories",
+        "completed",
+      );
       expect(existsSync(completedDir)).toBe(true);
       const monthDirs = readdirSync(completedDir);
       expect(monthDirs.length).toBeGreaterThan(0);

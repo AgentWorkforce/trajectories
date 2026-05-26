@@ -21,7 +21,7 @@ A **trajectory** is the complete story of agent work on a task:
 Works with any task system: Beads, Linear, Jira, GitHub Issues, or standalone. Trajectories are a universal format—like Markdown for documentation.
 
 ### Multiple Storage Backends
-- **File system** (default) - `.trajectories/` directory, git-friendly
+- **File system** (default) - `.agentworkforce/trajectories/` directory, git-friendly
 - **SQLite** - Local indexing and search
 - **PostgreSQL/S3** - For teams and archival
 
@@ -145,7 +145,7 @@ Use `--discard-sources` when the compacted summary should replace the raw source
       - name: Compact trajectories
         run: |
           PR_COMMITS=$(git log ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} --format=%H | paste -sd, -)
-          OUTPUT=".trajectories/compacted/pr-${{ github.event.pull_request.number }}.json"
+          OUTPUT=".agentworkforce/trajectories/compacted/pr-${{ github.event.pull_request.number }}.json"
           if [ -n "$PR_COMMITS" ]; then
             npx agent-trajectories compact --commits "$PR_COMMITS" --output "$OUTPUT" --discard-sources
           else
@@ -153,7 +153,7 @@ Use `--discard-sources` when the compacted summary should replace the raw source
           fi
       - name: Commit compacted trajectories
         run: |
-          git add .trajectories/ || true
+          git add .agentworkforce/trajectories/ || true
           git diff --cached --quiet || \
             (git commit -m "chore: compact trajectories for PR #${{ github.event.pull_request.number }}" && git push)
 ```
@@ -463,7 +463,7 @@ The client manages trajectories with persistent storage.
 ```typescript
 const client = new TrajectoryClient({
   defaultAgent: 'my-agent',    // Default agent name
-  dataDir: '.trajectories',     // Storage directory
+  dataDir: '.',                // Base directory; stores under .agentworkforce/trajectories
   autoSave: true,               // Auto-save after operations
 });
 
@@ -542,7 +542,7 @@ const t = TrajectoryBuilder.create('Task')
 This project is in early development. See [PROPOSAL-trajectories.md](./PROPOSAL-trajectories.md) for the full design document.
 
 **v1.0 (current)**
-- [x] File-based storage (`.trajectories/`)
+- [x] File-based storage (`.agentworkforce/trajectories/`)
 - [x] Core CLI commands (`start`, `decision`, `complete`, `list`, `show`, `export`)
 - [x] Agent Trace spec compliance (`.trace.json` generation)
 - [x] Multi-agent participation tracking
