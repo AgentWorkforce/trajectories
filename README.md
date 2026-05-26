@@ -95,17 +95,25 @@ Over time, trajectories become a searchable knowledge base:
 ### CLI
 
 ```bash
-# Install globally (trail command available directly)
-npm install -g agent-trajectories
+# Run without installing globally
+npx --yes agent-trajectories start "Implement auth module"
 
-# Or install locally (requires npx prefix)
+# Or install globally if you prefer the short trail command
+npm install -g agent-trajectories
+trail start "Implement auth module"
+
+# Or install locally in a project
 npm install agent-trajectories
+npx --no-install trail start "Implement auth module"
+# or
+npm exec -- trail start "Implement auth module"
 ```
 
 ```bash
 # Start tracking a task
 trail start "Implement auth module"
-# (use `npx trail start ...` if installed locally)
+# (for non-global installs, replace `trail` with
+#  `npx --yes agent-trajectories`, `npx --no-install trail`, or `npm exec -- trail`)
 
 # View current status
 trail status
