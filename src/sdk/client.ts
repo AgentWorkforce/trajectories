@@ -9,6 +9,7 @@ import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, resolve as resolvePath } from "node:path";
+import { resolveProjectId } from "../core/project-id.js";
 import {
   TrajectoryError,
   abandonTrajectory,
@@ -541,7 +542,7 @@ export class TrajectoryClient {
   constructor(options: TrajectoryClientOptions = {}) {
     this.storage = options.storage ?? new FileStorage(options.dataDir);
     this.defaultAgent = options.defaultAgent ?? process.env.TRAJECTORIES_AGENT;
-    this.projectId = options.projectId ?? process.env.TRAJECTORIES_PROJECT;
+    this.projectId = resolveProjectId(options.projectId);
     this.autoSave = options.autoSave ?? true;
     this.autoCompact = normalizeAutoCompactOptions(options.autoCompact);
     this.autoCompactCwd = options.storage ? undefined : options.dataDir;

@@ -238,7 +238,7 @@ export interface CreateTrajectoryInput {
   description?: string;
   /** Optional external task reference */
   source?: TaskSource;
-  /** Optional project ID (defaults to cwd) */
+  /** Optional project ID */
   projectId?: string;
   /** Optional initial tags */
   tags?: string[];

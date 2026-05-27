@@ -61,6 +61,13 @@ export {
   abandonTrajectory,
 } from "./trajectory.js";
 
+// Project ID resolution
+export {
+  normalizeRepositoryId,
+  resolveDefaultProjectId,
+  resolveProjectId,
+} from "./project-id.js";
+
 // Trace operations
 export {
   isGitRepo,

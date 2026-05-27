@@ -69,7 +69,7 @@ export function createTrajectory(input: CreateTrajectoryInput): Trajectory {
     chapters: [],
     commits: [],
     filesChanged: [],
-    projectId: input.projectId ?? process.cwd(),
+    projectId: input.projectId,
     tags: input.tags ?? [],
   };
 }
