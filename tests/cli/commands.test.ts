@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -436,6 +436,30 @@ describe("CLI Commands", () => {
       await storage.initialize();
       const active = await storage.getActive();
       expect(active?.projectId).toBe("relay");
+    });
+
+    it("should use a stable repository project ID by default", async () => {
+      // Arrange
+      const { runCommand } = await import("../../src/cli/runner.js");
+      await writeFile(
+        join(tempDir, "package.json"),
+        JSON.stringify({
+          repository: "https://github.com/AgentWorkforce/trajectories.git",
+        }),
+      );
+
+      // Act
+      const result = await runCommand(["start", "Test task"]);
+
+      // Assert
+      expect(result.success).toBe(true);
+      expect(result.output).toContain("Project: AgentWorkforce/trajectories");
+
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const storage = new FileStorage(tempDir);
+      await storage.initialize();
+      const active = await storage.getActive();
+      expect(active?.projectId).toBe("AgentWorkforce/trajectories");
     });
 
     it("should support --quiet flag for scripting", async () => {

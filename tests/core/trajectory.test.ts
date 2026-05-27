@@ -30,6 +30,7 @@ describe("Trajectory", () => {
       expect(trajectory.startedAt).toBeDefined();
       expect(trajectory.agents).toEqual([]);
       expect(trajectory.chapters).toEqual([]);
+      expect(trajectory.projectId).toBeUndefined();
     });
 
     it("should create a trajectory with external task reference", async () => {

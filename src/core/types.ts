@@ -267,7 +267,7 @@ export interface CreateTrajectoryInput {
   description?: string;
   /** Optional external task reference */
   source?: TaskSource;
-  /** Optional project ID (defaults to cwd) */
+  /** Optional project ID */
   projectId?: string;
   /** Opaque id set by the workflow runner via TRAJECTORIES_WORKFLOW_ID env var. Lets trail compact --workflow <id> collate all trajectories from a single workflow run. */
   workflowId?: string;

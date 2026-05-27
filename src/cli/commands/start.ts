@@ -3,6 +3,7 @@
  */
 
 import type { Command } from "commander";
+import { resolveProjectId } from "../../core/project-id.js";
 import { captureGitState, createTraceRef } from "../../core/trace.js";
 import { addChapter, createTrajectory } from "../../core/trajectory.js";
 import type { TaskSource } from "../../core/types.js";
@@ -56,8 +57,7 @@ export function registerStartCommand(program: Command): void {
         options.agent ?? process.env.TRAJECTORIES_AGENT ?? undefined;
 
       // Resolve project ID from CLI flag or env var
-      const projectId =
-        options.project ?? process.env.TRAJECTORIES_PROJECT ?? undefined;
+      const projectId = resolveProjectId(options.project);
 
       // Resolve workflow id from CLI flag or env var. When set, the trajectory
       // is stamped so `trail compact --workflow <id>` can collate an entire
