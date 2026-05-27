@@ -1,3 +1,4 @@
+## [0.6.1](https://github.com/AgentWorkforce/trajectories/compare/v0.6.0...v0.6.1) (2026-05-27)
 # [0.6.0](https://github.com/AgentWorkforce/trajectories/compare/v0.5.9...v0.6.0) (2026-05-26)
 
 
