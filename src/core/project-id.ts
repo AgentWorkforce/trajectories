@@ -32,10 +32,12 @@ export function resolveProjectId(
 export function resolveDefaultProjectId(
   cwd = process.cwd(),
 ): string | undefined {
+  const packageJson = readNearestPackageJson(cwd);
+
   return (
-    resolvePackageRepositoryId(cwd) ??
+    resolvePackageRepositoryId(packageJson) ??
     resolveGitRemoteProjectId(cwd) ??
-    resolvePackageName(cwd)
+    resolvePackageName(packageJson)
   );
 }
 
@@ -60,6 +62,13 @@ export function normalizeRepositoryId(value: string): string | undefined {
     return cleanRepositoryPath(ownerRepo[1]);
   }
 
+  const sshUrlScpLike = withoutGitPrefix.match(
+    /^ssh:\/\/[^@/\s]+@[^:/\s]+:(.+)$/i,
+  );
+  if (sshUrlScpLike) {
+    return cleanRepositoryPath(sshUrlScpLike[1]);
+  }
+
   const scpLike = withoutGitPrefix.match(/^[^@/\s]+@[^:/\s]+:(.+)$/);
   if (scpLike) {
     return cleanRepositoryPath(scpLike[1]);
@@ -79,8 +88,9 @@ export function normalizeRepositoryId(value: string): string | undefined {
   return cleanRepositoryPath(parsed.pathname);
 }
 
-function resolvePackageRepositoryId(cwd: string): string | undefined {
-  const packageJson = readNearestPackageJson(cwd);
+function resolvePackageRepositoryId(
+  packageJson: PackageJson | undefined,
+): string | undefined {
   if (!packageJson) {
     return undefined;
   }
@@ -99,8 +109,10 @@ function resolvePackageRepositoryId(cwd: string): string | undefined {
   return undefined;
 }
 
-function resolvePackageName(cwd: string): string | undefined {
-  return readString(readNearestPackageJson(cwd)?.name);
+function resolvePackageName(
+  packageJson: PackageJson | undefined,
+): string | undefined {
+  return readString(packageJson?.name);
 }
 
 function resolveGitRemoteProjectId(cwd: string): string | undefined {
@@ -141,9 +153,11 @@ function readNearestPackageJson(cwd: string): PackageJson | undefined {
     if (existsSync(candidate)) {
       try {
         const parsed = JSON.parse(readFileSync(candidate, "utf-8")) as unknown;
-        return isPackageJson(parsed) ? parsed : undefined;
+        if (isPackageJson(parsed)) {
+          return parsed;
+        }
       } catch {
-        return undefined;
+        // Ignore malformed package files and keep walking toward repo roots.
       }
     }
 
@@ -174,7 +188,12 @@ function cleanRepositoryPath(path: string): string | undefined {
 
 function cleanRepositoryDirectory(directory: unknown): string | undefined {
   const raw = readString(directory);
-  if (!raw || raw.startsWith("/")) {
+  if (
+    !raw ||
+    raw.startsWith("/") ||
+    raw.startsWith("\\") ||
+    /^[A-Za-z]:[\\/]/.test(raw)
+  ) {
     return undefined;
   }
 
@@ -203,9 +222,9 @@ function readString(value: unknown): string | undefined {
 }
 
 function isPackageJson(value: unknown): value is PackageJson {
-  return value !== null && typeof value === "object";
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function isRepositoryObject(value: unknown): value is RepositoryObject {
-  return value !== null && typeof value === "object";
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
