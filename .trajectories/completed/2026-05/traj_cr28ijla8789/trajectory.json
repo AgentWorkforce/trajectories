@@ -1,0 +1,53 @@
+{
+  "id": "traj_cr28ijla8789",
+  "version": 1,
+  "task": {
+    "title": "Review and fix PR #33 in AgentWorkforce/trajectories"
+  },
+  "status": "completed",
+  "startedAt": "2026-05-30T17:24:27.764Z",
+  "completedAt": "2026-05-30T17:26:14.732Z",
+  "agents": [
+    {
+      "name": "default",
+      "role": "lead",
+      "joinedAt": "2026-05-30T17:25:44.911Z"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "chap_ba1h7lq1p28j",
+      "title": "Work",
+      "agentName": "default",
+      "startedAt": "2026-05-30T17:25:44.911Z",
+      "endedAt": "2026-05-30T17:26:14.732Z",
+      "events": [
+        {
+          "ts": 1780161944911,
+          "type": "decision",
+          "content": "Ignore connector-generated github mirror in Biome: Ignore connector-generated github mirror in Biome",
+          "raw": {
+            "question": "Ignore connector-generated github mirror in Biome",
+            "chosen": "Ignore connector-generated github mirror in Biome",
+            "alternatives": [],
+            "reasoning": "Local PR review tools materialize github/repos/.../.relay JSON under the workspace; npm run lint scans it even though it is not product source or PR content."
+          },
+          "significance": "high"
+        }
+      ]
+    }
+  ],
+  "retrospective": {
+    "summary": "Reviewed PR #33, confirmed Pullfrog workflow removal has no remaining repo references, checked bot review feedback, added Biome ignore for connector-generated github mirror so local lint remains green, and verified lint/typecheck/build/tests pass.",
+    "approach": "Standard approach",
+    "confidence": 0.9
+  },
+  "commits": [],
+  "filesChanged": [],
+  "projectId": "/home/daytona/workspace",
+  "tags": [],
+  "_trace": {
+    "startRef": "4200731c30c11864d4eccbca13ec90ac7522cf48",
+    "endRef": "4200731c30c11864d4eccbca13ec90ac7522cf48"
+  }
+}
