@@ -45,7 +45,7 @@ export function createTrajectory(input: CreateTrajectoryInput): Trajectory {
   // Validate input
   const validation = CreateTrajectoryInputSchema.safeParse(input);
   if (!validation.success) {
-    const firstError = validation.error.errors[0];
+    const firstError = validation.error.issues[0];
     throw new TrajectoryError(
       firstError.message,
       "VALIDATION_ERROR",
@@ -215,7 +215,7 @@ export function completeTrajectory(
   // Validate input
   const validation = CompleteTrajectoryInputSchema.safeParse(input);
   if (!validation.success) {
-    const firstError = validation.error.errors[0];
+    const firstError = validation.error.issues[0];
     throw new TrajectoryError(
       firstError.message,
       "VALIDATION_ERROR",
