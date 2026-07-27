@@ -25,7 +25,7 @@ export const TaskSourceSystemSchema = z.union([
 export const TaskSourceSchema = z.object({
   system: TaskSourceSystemSchema,
   id: z.string().min(1, "Task ID is required"),
-  url: z.string().url().optional(),
+  url: z.url().optional(),
 });
 
 /**
@@ -124,8 +124,8 @@ export const DecisionSchema = z.object({
 export const AgentParticipationSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
   role: z.string().min(1, "Agent role is required"),
-  joinedAt: z.string().datetime(),
-  leftAt: z.string().datetime().optional(),
+  joinedAt: z.iso.datetime(),
+  leftAt: z.iso.datetime().optional(),
 });
 
 /**
@@ -135,8 +135,8 @@ export const ChapterSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1, "Chapter title is required"),
   agentName: z.string().min(1, "Agent name is required"),
-  startedAt: z.string().datetime(),
-  endedAt: z.string().datetime().optional(),
+  startedAt: z.iso.datetime(),
+  endedAt: z.iso.datetime().optional(),
   events: z.array(TrajectoryEventSchema),
 });
 
@@ -196,7 +196,7 @@ export const TraceContributorSchema = z.object({
  */
 export const TraceConversationSchema = z.object({
   contributor: TraceContributorSchema,
-  url: z.string().url().optional(),
+  url: z.url().optional(),
   ranges: z.array(TraceRangeSchema),
 });
 
@@ -215,7 +215,7 @@ export const TraceFileSchema = z.object({
 export const TraceRecordSchema = z.object({
   version: z.string().min(1, "Version is required"),
   id: z.string().min(1, "Trace ID is required"),
-  timestamp: z.string().datetime(),
+  timestamp: z.iso.datetime(),
   trajectory: z.string().optional(),
   files: z.array(TraceFileSchema),
 });
@@ -237,8 +237,8 @@ export const TrajectorySchema = z.object({
   version: z.literal(1),
   task: TaskReferenceSchema,
   status: TrajectoryStatusSchema,
-  startedAt: z.string().datetime(),
-  completedAt: z.string().datetime().optional(),
+  startedAt: z.iso.datetime(),
+  completedAt: z.iso.datetime().optional(),
   agents: z.array(AgentParticipationSchema),
   chapters: z.array(ChapterSchema),
   retrospective: RetrospectiveSchema.optional(),
@@ -304,8 +304,8 @@ export const CompleteTrajectoryInputSchema = z.object({
  */
 export const TrajectoryQuerySchema = z.object({
   status: TrajectoryStatusSchema.optional(),
-  since: z.string().datetime().optional(),
-  until: z.string().datetime().optional(),
+  since: z.iso.datetime().optional(),
+  until: z.iso.datetime().optional(),
   limit: z.number().int().positive().max(100).optional(),
   offset: z.number().int().nonnegative().optional(),
   sortBy: z.enum(["startedAt", "completedAt", "title"]).optional(),
