@@ -318,6 +318,49 @@ describe("Trajectory", () => {
     });
   });
 
+  describe("addLearning", () => {
+    it("should record a pending-review learning without changing durable instructions", async () => {
+      const { addLearning, createTrajectory } = await import(
+        "../../src/core/trajectory.js"
+      );
+      const trajectory = createTrajectory({ title: "Test task" });
+
+      const updated = addLearning(trajectory, {
+        summary: "Keep auth validation at the API boundary",
+        source: "code-review",
+        area: "src/auth",
+        evidence: "PR review #42",
+        recurrenceKey: "auth-validation-boundary",
+        promotionStatus: "pending_review",
+      });
+
+      const event = updated.chapters[0].events[0];
+      expect(event.type).toBe("learning");
+      expect(event.significance).toBe("high");
+      expect(event.raw).toMatchObject({
+        promotionStatus: "pending_review",
+        recurrenceKey: "auth-validation-boundary",
+      });
+      expect(updated).not.toHaveProperty("instructions");
+    });
+
+    it("should reject an unsupported promotion status", async () => {
+      const { addLearning, createTrajectory } = await import(
+        "../../src/core/trajectory.js"
+      );
+      const trajectory = createTrajectory({ title: "Test task" });
+
+      expect(() =>
+        addLearning(trajectory, {
+          summary: "Update durable instructions immediately",
+          source: "other",
+          area: "AGENTS.md",
+          promotionStatus: "approved",
+        } as never),
+      ).toThrow();
+    });
+  });
+
   describe("completeTrajectory", () => {
     it("should mark trajectory as completed with retrospective", async () => {
       // Arrange
