@@ -344,6 +344,24 @@ describe("Trajectory", () => {
       expect(updated).not.toHaveProperty("instructions");
     });
 
+    it("should persist only schema-validated learning fields", async () => {
+      const { addLearning, createTrajectory } = await import(
+        "../../src/core/trajectory.js"
+      );
+      const trajectory = createTrajectory({ title: "Test task" });
+
+      const updated = addLearning(trajectory, {
+        summary: "Keep auth validation at the API boundary",
+        source: "code-review",
+        area: "src/auth",
+        promotionStatus: "archived",
+        unexpected: "must not be persisted",
+      } as never);
+
+      const event = updated.chapters[0].events[0];
+      expect(event.raw).not.toHaveProperty("unexpected");
+    });
+
     it("should reject an unsupported promotion status", async () => {
       const { addLearning, createTrajectory } = await import(
         "../../src/core/trajectory.js"

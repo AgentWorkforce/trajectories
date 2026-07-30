@@ -214,19 +214,20 @@ export function addLearning(
       "Check the learning fields and try again",
     );
   }
+  const learningData = validation.data;
 
   return addEvent(trajectory, {
     type: "learning",
-    content: learning.summary,
-    raw: learning,
+    content: learningData.summary,
+    raw: learningData,
     significance:
-      learning.promotionStatus === "pending_review" ? "high" : "medium",
+      learningData.promotionStatus === "pending_review" ? "high" : "medium",
     tags: [
-      `learning-source:${learning.source}`,
-      `learning-area:${learning.area}`,
-      `promotion:${learning.promotionStatus}`,
-      ...(learning.recurrenceKey
-        ? [`recurrence:${learning.recurrenceKey}`]
+      `learning-source:${learningData.source}`,
+      `learning-area:${learningData.area}`,
+      `promotion:${learningData.promotionStatus}`,
+      ...(learningData.recurrenceKey
+        ? [`recurrence:${learningData.recurrenceKey}`]
         : []),
     ],
   });
