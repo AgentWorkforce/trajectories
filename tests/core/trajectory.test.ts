@@ -337,7 +337,11 @@ describe("Trajectory", () => {
       const event = updated.chapters[0].events[0];
       expect(event.type).toBe("learning");
       expect(event.significance).toBe("high");
-      expect(event.raw).toMatchObject({
+      expect(event.raw).toEqual({
+        summary: "Keep auth validation at the API boundary",
+        source: "code-review",
+        area: "src/auth",
+        evidence: "PR review #42",
         promotionStatus: "pending_review",
         recurrenceKey: "auth-validation-boundary",
       });
@@ -359,23 +363,33 @@ describe("Trajectory", () => {
       } as never);
 
       const event = updated.chapters[0].events[0];
+      expect(event.raw).toEqual({
+        summary: "Keep auth validation at the API boundary",
+        source: "code-review",
+        area: "src/auth",
+        promotionStatus: "archived",
+      });
       expect(event.raw).not.toHaveProperty("unexpected");
     });
 
     it("should reject an unsupported promotion status", async () => {
-      const { addLearning, createTrajectory } = await import(
+      const { addLearning, createTrajectory, TrajectoryError } = await import(
         "../../src/core/trajectory.js"
       );
       const trajectory = createTrajectory({ title: "Test task" });
 
-      expect(() =>
+      try {
         addLearning(trajectory, {
           summary: "Update durable instructions immediately",
           source: "other",
           area: "AGENTS.md",
           promotionStatus: "approved",
-        } as never),
-      ).toThrow();
+        } as never);
+        expect.fail("Expected unsupported promotion status to be rejected");
+      } catch (error) {
+        expect(error).toBeInstanceOf(TrajectoryError);
+        expect(error).toMatchObject({ code: "VALIDATION_ERROR" });
+      }
     });
   });
 
