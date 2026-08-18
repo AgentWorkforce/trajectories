@@ -265,9 +265,16 @@ describe("CLI Commands", () => {
       ]);
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain(
-        'Invalid option: expected one of "human-steer"|"pr-feedback"|"failed-attempt"|"code-review"|"other"',
-      );
+      expect(result.error).toMatch(/Invalid (?:option|enum value)/);
+      for (const source of [
+        "human-steer",
+        "pr-feedback",
+        "failed-attempt",
+        "code-review",
+        "other",
+      ]) {
+        expect(result.error).toContain(source);
+      }
     });
   });
 
