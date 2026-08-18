@@ -59,6 +59,7 @@ export const TrajectoryEventTypeSchema = z.union([
   z.literal("message_received"),
   z.literal("decision"),
   z.literal("finding"),
+  z.literal("learning"),
   z.literal("reflection"),
   z.literal("note"),
   z.literal("error"),
@@ -116,6 +117,31 @@ export const DecisionSchema = z.object({
     .min(0, "Confidence must be between 0 and 1")
     .max(1, "Confidence must be between 0 and 1")
     .optional(),
+});
+
+/**
+ * Project learning schemas
+ */
+export const LearningSourceSchema = z.enum([
+  "human-steer",
+  "pr-feedback",
+  "failed-attempt",
+  "code-review",
+  "other",
+]);
+
+export const LearningPromotionStatusSchema = z.enum([
+  "archived",
+  "pending_review",
+]);
+
+export const LearningSchema = z.object({
+  summary: z.string().min(1, "Learning summary is required"),
+  source: LearningSourceSchema,
+  area: z.string().min(1, "Affected area is required"),
+  evidence: z.string().min(1).optional(),
+  recurrenceKey: z.string().min(1).optional(),
+  promotionStatus: LearningPromotionStatusSchema,
 });
 
 /**
