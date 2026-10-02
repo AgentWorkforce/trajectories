@@ -1,0 +1,37 @@
+{
+  "id": "compact_0qkc7s4mhclm",
+  "version": 1,
+  "type": "compacted",
+  "compactedAt": "2026-10-02T05:36:27.364Z",
+  "sourceTrajectories": [
+    "traj_acmbldvc9ifd"
+  ],
+  "dateRange": {
+    "start": "2026-10-02T05:35:40.198Z",
+    "end": "2026-10-02T05:36:10.691Z"
+  },
+  "summary": {
+    "totalDecisions": 1,
+    "totalEvents": 1,
+    "uniqueAgents": [
+      "default"
+    ]
+  },
+  "decisionGroups": [
+    {
+      "category": "testing",
+      "decisions": [
+        {
+          "question": "Pin publishing npm to 11.10.1",
+          "chosen": "Pin publishing npm to 11.10.1",
+          "reasoning": "The original failure came from npm latest selecting npm 12.2.0, incompatible with Node 22.14.0. Review identified dependency-resolution regressions in the initial 11.6.2 pin. Upstream npm/cli PR 8981 shipped in 11.10.1, which retains the Node ^20.17.0 || >=22.9.0 engine range and OIDC support. Keep an exact pin to prevent future engine drift.",
+          "fromTrajectory": "traj_acmbldvc9ifd"
+        }
+      ]
+    }
+  ],
+  "keyLearnings": [],
+  "keyFindings": [],
+  "filesAffected": [],
+  "commits": []
+}
