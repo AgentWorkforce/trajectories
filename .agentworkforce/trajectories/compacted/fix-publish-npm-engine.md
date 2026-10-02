@@ -9,7 +9,7 @@
 - Commits: 0
 
 ## Testing
-- Pin publishing npm to 11.6.2 -> Pin publishing npm to 11.6.2 (traj_meidug4svdq6)
+- Pin publishing npm to 11.10.1 -> Pin publishing npm to 11.10.1 (traj_acmbldvc9ifd)
 
 ## Key Learnings
 - None
