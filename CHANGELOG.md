@@ -1,3 +1,16 @@
+# [0.7.0](https://github.com/AgentWorkforce/trajectories/compare/v0.6.1...v0.7.0) (2026-10-02)
+
+
+### Bug Fixes
+
+* **ci:** pin npm to a Node-compatible version for publishing ([a8d6e7a](https://github.com/AgentWorkforce/trajectories/commit/a8d6e7a8e462915feb464d31a59bfea00deae3cf))
+* **ci:** use npm 11.10.1 to avoid dependency resolution regression ([71a40e0](https://github.com/AgentWorkforce/trajectories/commit/71a40e05ea35e80a7f4a634d9c0ea7926087f152))
+* **deps:** keep zod floor at ^4.4.3 ([d13ee5f](https://github.com/AgentWorkforce/trajectories/commit/d13ee5f270235c1a9002ad8e856571fa46378876))
+
+
+### Features
+
+* **deps:** zod 4 runtime dependency (zod ^4.6.5) ([0a9e601](https://github.com/AgentWorkforce/trajectories/commit/0a9e6018cf2257adb6d6e0d3d5d0b523d349ee71)), closes [AgentWorkforce/cloud#4080](https://github.com/AgentWorkforce/cloud/issues/4080)
 ## [0.6.1](https://github.com/AgentWorkforce/trajectories/compare/v0.6.0...v0.6.1) (2026-05-27)
 # [0.6.0](https://github.com/AgentWorkforce/trajectories/compare/v0.5.9...v0.6.0) (2026-05-26)
 
