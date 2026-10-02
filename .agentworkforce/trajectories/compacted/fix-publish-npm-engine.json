@@ -1,0 +1,37 @@
+{
+  "id": "compact_e7jbm673zcff",
+  "version": 1,
+  "type": "compacted",
+  "compactedAt": "2026-10-02T04:46:51.102Z",
+  "sourceTrajectories": [
+    "traj_meidug4svdq6"
+  ],
+  "dateRange": {
+    "start": "2026-10-02T04:45:22.365Z",
+    "end": "2026-10-02T04:46:33.584Z"
+  },
+  "summary": {
+    "totalDecisions": 1,
+    "totalEvents": 1,
+    "uniqueAgents": [
+      "default"
+    ]
+  },
+  "decisionGroups": [
+    {
+      "category": "testing",
+      "decisions": [
+        {
+          "question": "Pin publishing npm to 11.6.2",
+          "chosen": "Pin publishing npm to 11.6.2",
+          "reasoning": "npm latest resolved to 12.2.0 requiring Node 22.22.2, but the workflow pins Node 22.14.0. npm 11.6.2 supports Node >=22.9.0 and exceeds the OIDC minimum 11.5.1. An exact npm pin prevents future engine drift.",
+          "fromTrajectory": "traj_meidug4svdq6"
+        }
+      ]
+    }
+  ],
+  "keyLearnings": [],
+  "keyFindings": [],
+  "filesAffected": [],
+  "commits": []
+}
