@@ -9,6 +9,7 @@ import type { Command } from "commander";
 import { migrateTraceRecord } from "../../core/trace.js";
 import type {
   Decision,
+  Learning,
   TraceConversation,
   TraceRecord,
   Trajectory,
@@ -112,6 +113,7 @@ export function registerShowCommand(program: Command): void {
     .command("show <id>")
     .description("Show trajectory details")
     .option("-d, --decisions", "Show decisions only")
+    .option("--learnings", "Show project learnings only")
     .option("-t, --trace", "Show trace information")
     .action(async (id: string, options) => {
       const trajectory = await findTrajectory(id);
@@ -195,6 +197,31 @@ export function registerShowCommand(program: Command): void {
         return;
       }
 
+      if (options.learnings) {
+        const learnings = extractLearnings(trajectory);
+
+        if (learnings.length === 0) {
+          console.log("No project learnings recorded");
+          return;
+        }
+
+        console.log(`Project learnings for ${trajectory.task.title}:\n`);
+        for (const learning of learnings) {
+          console.log(`• ${learning.summary}`);
+          console.log(`  Source: ${learning.source}`);
+          console.log(`  Area: ${learning.area}`);
+          console.log(`  Promotion: ${learning.promotionStatus}`);
+          if (learning.evidence) {
+            console.log(`  Evidence: ${learning.evidence}`);
+          }
+          if (learning.recurrenceKey) {
+            console.log(`  Recurrence key: ${learning.recurrenceKey}`);
+          }
+          console.log("");
+        }
+        return;
+      }
+
       // Show full details
       console.log(`Trajectory: ${trajectory.id}`);
       console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -225,6 +252,14 @@ export function registerShowCommand(program: Command): void {
         );
       }
     });
+}
+
+function extractLearnings(trajectory: Trajectory): Learning[] {
+  return trajectory.chapters.flatMap((chapter) =>
+    chapter.events
+      .filter((event) => event.type === "learning" && event.raw)
+      .map((event) => event.raw as Learning),
+  );
 }
 
 function extractDecisions(trajectory: any): Decision[] {

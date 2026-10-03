@@ -176,6 +176,108 @@ describe("CLI Commands", () => {
     });
   });
 
+  describe("trail learning", () => {
+    it("should record a structured promotion candidate for human review", async () => {
+      const { runCommand } = await import("../../src/cli/runner.js");
+      await runCommand(["start", "Test task"]);
+
+      const result = await runCommand([
+        "learning",
+        "Keep auth validation at the API boundary",
+        "--source",
+        "code-review",
+        "--area",
+        "src/auth",
+        "--evidence",
+        "PR review #42",
+        "--recurrence-key",
+        "auth-validation-boundary",
+        "--promotion-candidate",
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(result.output).toContain("Promotion: pending_review");
+      expect(result.output).toContain("Human review required");
+
+      const { FileStorage } = await import("../../src/storage/file.js");
+      const storage = new FileStorage(tempDir);
+      await storage.initialize();
+      const active = await storage.getActive();
+      const event = active?.chapters[0]?.events[0];
+      expect(event?.type).toBe("learning");
+      expect(event?.raw).toMatchObject({
+        source: "code-review",
+        area: "src/auth",
+        promotionStatus: "pending_review",
+      });
+    });
+
+    it("should archive a one-off learning by default", async () => {
+      const { runCommand } = await import("../../src/cli/runner.js");
+      await runCommand(["start", "Test task"]);
+
+      const result = await runCommand([
+        "learning",
+        "This fixture uses a legacy date format",
+        "--source",
+        "failed-attempt",
+        "--area",
+        "tests/fixtures",
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(result.output).toContain("Promotion: archived");
+    });
+
+    it("should show learnings separately", async () => {
+      const { runCommand } = await import("../../src/cli/runner.js");
+      await runCommand(["start", "Test task"]);
+      await runCommand([
+        "learning",
+        "Keep auth validation at the API boundary",
+        "--source",
+        "human-steer",
+        "--area",
+        "src/auth",
+      ]);
+      const status = await runCommand(["status"]);
+      const id = status.output.match(/traj_[a-z0-9]+/)?.[0];
+
+      const result = await runCommand(["show", id!, "--learnings"]);
+
+      expect(result.success).toBe(true);
+      expect(result.output).toContain("Project learnings for Test task");
+      expect(result.output).toContain("Source: human-steer");
+      expect(result.output).toContain("Promotion: archived");
+    });
+
+    it("should reject unsupported learning sources", async () => {
+      const { runCommand } = await import("../../src/cli/runner.js");
+      await runCommand(["start", "Test task"]);
+
+      const result = await runCommand([
+        "learning",
+        "Invalid source",
+        "--source",
+        "agent-guess",
+        "--area",
+        "src",
+      ]);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/Invalid (?:option|enum value)/);
+      for (const source of [
+        "human-steer",
+        "pr-feedback",
+        "failed-attempt",
+        "code-review",
+        "other",
+      ]) {
+        expect(result.error).toContain(source);
+      }
+    });
+  });
+
   describe("trail complete", () => {
     it("should complete the trajectory with retrospective", async () => {
       // Arrange

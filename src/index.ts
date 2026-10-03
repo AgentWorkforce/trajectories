@@ -21,6 +21,7 @@ export {
   addChapter,
   addEvent,
   addDecision,
+  addLearning,
   completeTrajectory,
   abandonTrajectory,
   TrajectoryError,
@@ -34,6 +35,9 @@ export {
   ChapterSchema,
   TrajectoryEventSchema,
   DecisionSchema,
+  LearningSchema,
+  LearningSourceSchema,
+  LearningPromotionStatusSchema,
   RetrospectiveSchema,
 } from "./core/schema.js";
 
@@ -61,6 +65,9 @@ export type {
   Chapter,
   TrajectoryEvent,
   Decision,
+  Learning,
+  LearningSource,
+  LearningPromotionStatus,
   Retrospective,
   TaskReference,
   TaskSource,
@@ -72,6 +79,7 @@ export type {
   CreateTrajectoryInput,
   AddChapterInput,
   AddEventInput,
+  AddLearningInput,
   CompleteTrajectoryInput,
   TrajectoryQuery,
 } from "./core/types.js";
