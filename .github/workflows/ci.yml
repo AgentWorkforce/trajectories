@@ -8,6 +8,7 @@ on:
 
 jobs:
   lint:
+    if: (github.event_name != 'pull_request' && github.event_name != 'pull_request_target') || github.head_ref == 'trunk'
     name: Lint
     runs-on: ubuntu-latest
     steps:
@@ -27,6 +28,7 @@ jobs:
         run: npm run lint
 
   typecheck:
+    if: (github.event_name != 'pull_request' && github.event_name != 'pull_request_target') || github.head_ref == 'trunk'
     name: Type Check
     runs-on: ubuntu-latest
     steps:
@@ -46,6 +48,7 @@ jobs:
         run: npm run typecheck
 
   test:
+    if: (github.event_name != 'pull_request' && github.event_name != 'pull_request_target') || github.head_ref == 'trunk'
     name: Test (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     strategy:
@@ -75,6 +78,7 @@ jobs:
         run: npm run test:run
 
   build:
+    if: (github.event_name != 'pull_request' && github.event_name != 'pull_request_target') || github.head_ref == 'trunk'
     name: Build
     runs-on: ubuntu-latest
     steps:
@@ -103,7 +107,9 @@ jobs:
     name: CI Success
     needs: [lint, typecheck, test, build]
     runs-on: ubuntu-latest
-    if: always()
+    if: >-
+      ((github.event_name != 'pull_request' && github.event_name != 'pull_request_target') || github.head_ref == 'trunk') &&
+      (always())
     steps:
       - name: Check all jobs passed
         run: |
