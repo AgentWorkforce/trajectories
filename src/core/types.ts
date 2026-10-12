@@ -58,6 +58,7 @@ export type TrajectoryEventType =
   | "message_received"
   | "decision"
   | "finding"
+  | "learning"
   | "reflection"
   | "note"
   | "error"
@@ -147,6 +148,45 @@ export interface Finding {
   /** Confidence in this finding (0-1) */
   confidence?: number;
 }
+
+/**
+ * Where a project learning originated.
+ */
+export type LearningSource =
+  | "human-steer"
+  | "pr-feedback"
+  | "failed-attempt"
+  | "code-review"
+  | "other";
+
+/**
+ * Promotion is deliberately two-stage: candidates require a separate review
+ * before any durable project instruction can be changed.
+ */
+export type LearningPromotionStatus = "archived" | "pending_review";
+
+/**
+ * A codebase-specific learning captured during a trajectory.
+ */
+export interface Learning {
+  /** Concise statement of what future work should know. */
+  summary: string;
+  /** How the learning was discovered. */
+  source: LearningSource;
+  /** File, component, workflow, or other affected project area. */
+  area: string;
+  /** Supporting context, such as a review comment or failed attempt. */
+  evidence?: string;
+  /** Stable key used to group repeated occurrences. */
+  recurrenceKey?: string;
+  /** Archived by default; candidates remain pending until human review. */
+  promotionStatus: LearningPromotionStatus;
+}
+
+/**
+ * Input for recording a project learning.
+ */
+export type AddLearningInput = Learning;
 
 /**
  * Agent participation record

@@ -9,10 +9,12 @@ import { generateChapterId, generateTrajectoryId } from "./id.js";
 import {
   CompleteTrajectoryInputSchema,
   CreateTrajectoryInputSchema,
+  LearningSchema,
 } from "./schema.js";
 import type {
   AddChapterInput,
   AddEventInput,
+  AddLearningInput,
   AgentParticipation,
   Chapter,
   CompleteTrajectoryInput,
@@ -190,6 +192,44 @@ export function addDecision(
     content: `${decision.question}: ${decision.chosen}`,
     raw: decision,
     significance: "high",
+  });
+}
+
+/**
+ * Add a structured project learning to the trajectory.
+ *
+ * This only records a trajectory event. A pending-review candidate does not
+ * modify durable instruction files or imply that promotion was approved.
+ */
+export function addLearning(
+  trajectory: Trajectory,
+  learning: AddLearningInput,
+): Trajectory {
+  const validation = LearningSchema.safeParse(learning);
+  if (!validation.success) {
+    const firstError = validation.error.issues[0];
+    throw new TrajectoryError(
+      firstError.message,
+      "VALIDATION_ERROR",
+      "Check the learning fields and try again",
+    );
+  }
+  const learningData = validation.data;
+
+  return addEvent(trajectory, {
+    type: "learning",
+    content: learningData.summary,
+    raw: learningData,
+    significance:
+      learningData.promotionStatus === "pending_review" ? "high" : "medium",
+    tags: [
+      `learning-source:${learningData.source}`,
+      `learning-area:${learningData.area}`,
+      `promotion:${learningData.promotionStatus}`,
+      ...(learningData.recurrenceKey
+        ? [`recurrence:${learningData.recurrenceKey}`]
+        : []),
+    ],
   });
 }
 
