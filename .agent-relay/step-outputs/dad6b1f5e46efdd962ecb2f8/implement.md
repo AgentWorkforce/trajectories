@@ -1,1 +1,0 @@
-Created [LocalServerManager.swift](/Users/khaliqgant/Projects/AgentWorkforce/trajectories/trail-viewer/Sources/Services/LocalServerManager.swift) with the exact provided contents. No other files were created or modified.
