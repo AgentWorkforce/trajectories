@@ -34,3 +34,11 @@ trail-viewer/.build
 .agentworkforce/trajectories/active/
 .trajectories/active/
 .agent-relay/
+
+# Agent MCP configs: these can hold live workspace keys and agent tokens
+/.agentworkforce/relay/
+/.mcp.json
+/.cursor/mcp.json
+/opencode.json
+/.gemini/
+/.codex/

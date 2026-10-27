@@ -1,1 +1,0 @@
-Spotlight integration files present
