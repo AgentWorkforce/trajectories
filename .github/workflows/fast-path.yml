@@ -88,7 +88,11 @@ jobs:
           SHA: ${{ needs.check.outputs.sha }}
         run: |
           base=$(node -p "require('./package.json').version")
-          version="${base%%-*}-fast.${SHA:0:7}"
+          # A numeric prerelease identifier must not start with 0, so an
+          # all-digit short SHA gets a "g" prefix to stay valid SemVer.
+          id="${SHA:0:7}"
+          if [[ "$id" =~ ^[0-9]+$ ]]; then id="g$id"; fi
+          version="${base%%-*}-fast.$id"
           npm version "$version" --no-git-tag-version --allow-same-version
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - run: npm run build
