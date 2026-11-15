@@ -1,0 +1,119 @@
+# Fast path: check and package agent-trajectories on Blacksmith runners,
+# outside the shared GitHub-hosted queue. Anyone with write access (people or
+# agents) may start it; nothing runs until Khaliq approves the fast-path
+# environment.
+#
+# It runs the same checks as ci.yml (lint, typecheck, build + tests on Node 20
+# and 22, CLI smoke), then packs the package at <version>-fast.<sha7> and
+# uploads the tarball as a workflow artifact. It does not publish to npm: the
+# package uses npm trusted publishing (OIDC) bound to publish.yml, so only that
+# workflow can publish. It never moves a dist-tag, commits, tags or creates a
+# release.
+name: fast-path
+run-name: fast-path ${{ inputs.ref }} (${{ inputs.reason }})
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag or commit to check (a PR branch is fine)
+        required: true
+        default: main
+      reason:
+        description: Why this needs the fast path
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: fast-path-${{ inputs.ref }}
+  cancel-in-progress: false
+env:
+  NPM_CONFIG_FUND: false
+jobs:
+  check:
+    environment: fast-path
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Verify CLI is executable
+        run: |
+          node dist/cli/index.js --version
+          node dist/cli/index.js --help
+      # Some tests spawn the built CLI, so they run after the build.
+      - run: npm run test:run
+
+  test-node22:
+    needs: check
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.check.outputs.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:run
+
+  pack:
+    needs: [check, test-node22]
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.check.outputs.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.14.0"
+          cache: npm
+      - run: npm ci
+      - name: Set the fast version
+        id: version
+        env:
+          SHA: ${{ needs.check.outputs.sha }}
+        run: |
+          base=$(node -p "require('./package.json').version")
+          version="${base%%-*}-fast.${SHA:0:7}"
+          npm version "$version" --no-git-tag-version --allow-same-version
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - run: npm run build
+      - name: Pack
+        run: |
+          mkdir -p fast-tarballs
+          npm pack --ignore-scripts --pack-destination fast-tarballs
+          ls -l fast-tarballs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trajectories-npm-fast-${{ needs.check.outputs.sha }}
+          path: fast-tarballs/*.tgz
+          if-no-files-found: error
+      - name: Summary
+        env:
+          REF: ${{ inputs.ref }}
+          SHA: ${{ needs.check.outputs.sha }}
+          REASON: ${{ inputs.reason }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          {
+            echo "### trajectories fast path"
+            echo "- ref: \`$REF\` at \`$SHA\`"
+            echo "- reason: $REASON"
+            echo "- version: \`agent-trajectories@$VERSION\` (not published; npm uses trusted publishing via publish.yml)"
+            echo "- artifact: \`trajectories-npm-fast-$SHA\`"
+            for f in fast-tarballs/*.tgz; do echo "  - \`$(basename "$f")\`"; done
+          } >> "$GITHUB_STEP_SUMMARY"
