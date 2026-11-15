@@ -4,7 +4,8 @@
 # environment.
 #
 # It runs the same checks as ci.yml (lint, typecheck, build + tests on Node 20
-# and 22, CLI smoke), then packs the package at <version>-fast.<sha7> and
+# and 22, CLI smoke), then packs the package at <version>-fast.<sha7> (g<sha7> if the
+# short SHA is all digits) and
 # uploads the tarball as a workflow artifact. It does not publish to npm: the
 # package uses npm trusted publishing (OIDC) bound to publish.yml, so only that
 # workflow can publish. It never moves a dist-tag, commits, tags or creates a
