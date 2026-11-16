@@ -122,6 +122,17 @@ trail status
 trail decision "Chose JWT over sessions" \
   --reasoning "Stateless scaling requirements"
 
+# Record a codebase learning. Candidates are queued for human review and never
+# modify AGENTS.md, CLAUDE.md, or skills automatically.
+trail learning "Auth validation belongs at the API boundary" \
+  --source code-review \
+  --area src/auth \
+  --recurrence-key auth-validation \
+  --promotion-candidate
+
+# Query project learnings separately from decisions and reflections
+trail show traj_abc123 --learnings
+
 # Complete with retrospective
 trail complete --summary "Added JWT auth" --confidence 0.85
 

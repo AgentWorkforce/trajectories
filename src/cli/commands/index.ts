@@ -27,6 +27,7 @@ import { registerDecisionCommand } from "./decision.js";
 import { registerDoctorCommand } from "./doctor.js";
 import { registerEnableCommand } from "./enable.js";
 import { registerExportCommand } from "./export.js";
+import { registerLearningCommand } from "./learning.js";
 import { registerListCommand } from "./list.js";
 import { registerReflectCommand } from "./reflect.js";
 import { registerShowCommand } from "./show.js";
@@ -42,6 +43,7 @@ export function registerCommands(program: Command): void {
   registerCompleteCommand(program);
   registerAbandonCommand(program);
   registerDecisionCommand(program);
+  registerLearningCommand(program);
   registerReflectCommand(program);
   registerListCommand(program);
   registerShowCommand(program);
